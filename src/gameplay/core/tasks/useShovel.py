@@ -10,6 +10,8 @@ class UseShovelTask(BaseTask):
     def __init__(self, waypoint: Waypoint):
         super().__init__()
         self.name = 'useShovel'
+        self.delayBeforeStart = 1
+        self.delayAfterComplete = 0.5
         self.waypoint = waypoint
 
     def shouldIgnore(self, context: Context) -> bool:
@@ -20,7 +22,7 @@ class UseShovelTask(BaseTask):
         slot = gameWindowCore.getSlotFromCoordinate(
             context['ng_radar']['coordinate'], self.waypoint['coordinate'])
         sleep(0.2)
-        keyboard.press(context['general_hotkeys']['shovel_hotkey'])
+        keyboard.press('p')
         sleep(0.2)
         gameWindowSlot.clickSlot(slot, context['gameWindow']['coordinate'])
         sleep(0.2)

@@ -12,7 +12,7 @@ def setTibiaWindowMiddleware(context: Context) -> Context:
             lambda hwnd, param: param.append(hwnd), windowsList)
         windowsNames = list(
             map(lambda hwnd: win32gui.GetWindowText(hwnd), windowsList))
-        regex = re.compile(r'Tibia - .*')
+        regex = re.compile(r'.*tibia.*', re.IGNORECASE)
         windowsFilter = list(
             filter(lambda windowName: regex.match(windowName), windowsNames))
         if len(windowsFilter) > 0:

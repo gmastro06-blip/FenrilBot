@@ -2,6 +2,7 @@ from os.path import exists
 import time
 from tinydb import Query, TinyDB
 from tkinter import messagebox
+import pygetwindow as gw
 from src.gameplay.core.load import loadContextFromConfig, loadNgCfgs
 from src.repositories.chat.core import resetOldList
 # from src.utils.core import getScreenshot
@@ -18,6 +19,9 @@ class Context:
         self.enabledProfile = self.getEnabledProfile()
         self.context = loadContextFromConfig(
             self.enabledProfile['config'], context)
+        window_title = self.enabledProfile['config'].get('window_title')
+        if window_title:
+            self.setWindowTitle(window_title, persist=False)
 
     def updateMainBackpack(self, backpack: str):
         self.context['ng_backpacks']['main'] = backpack
@@ -28,6 +32,7 @@ class Context:
         self.db.insert({
             'enabled': True,
             'config': {
+                'window_title': None,
                 'ng_backpacks': {
                     'main': None,
                     'loot': None
@@ -171,11 +176,21 @@ class Context:
         self.enabledProfile['config']['alert'] = self.context['alert']
         self.enabledProfile['config']['clear_stats'] = self.context['clear_stats']
         self.enabledProfile['config']['ng_comboSpells']['enabled'] = self.context['ng_comboSpells']['enabled']
+        self.enabledProfile['config']['ng_comboSpells']['items'] = []
         for comboSpellsItem in self.context['ng_comboSpells']['items']:
             comboSpellsItem['currentSpellIndex'] = 0
             self.enabledProfile['config']['ng_comboSpells']['items'].append(comboSpellsItem)
         self.enabledProfile['config']['healing'] = self.context['healing']
         self.db.update(self.enabledProfile)
+
+    def setWindowTitle(self, window_title: str, persist: bool = True) -> bool:
+        self.context['window_title'] = window_title
+        windows = gw.getWindowsWithTitle(window_title)
+        self.context['window'] = windows[0] if windows else None
+        if persist:
+            self.enabledProfile['config']['window_title'] = window_title
+            self.db.update(self.enabledProfile)
+        return self.context['window'] is not None
 
     def getEnabledProfile(self):
         return self.db.search(Query().enabled == True)[0]

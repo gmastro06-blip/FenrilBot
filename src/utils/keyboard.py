@@ -1,6 +1,10 @@
+from typing import Iterable, List, Tuple
+
+import pyautogui
+
 from .ino import sendCommandArduino
 
-def getAsciiFromKey(key):
+def getAsciiFromKey(key: str | None) -> int:
     if not key:
         return 0
 
@@ -61,32 +65,55 @@ def getAsciiFromKey(key):
     else:
         return 0
 
-def hotkey(*args):
-    for key in args:
+def _normalize_keys(args: Tuple[object, ...]) -> Tuple[List[object], bool]:
+    if len(args) == 1 and isinstance(args[0], (list, tuple)):
+        return list(args[0]), True
+    return list(args), False
+
+def hotkey(*args: object) -> None:
+    keys, had_list = _normalize_keys(args)
+    commands = []
+    for key in keys:
         asciiKey = getAsciiFromKey(key)
         if asciiKey != 0:
-            sendCommandArduino(f"keyDown,{asciiKey}")
-
-    for key in args:
+            commands.append(f"keyDown,{asciiKey}")
+    for key in keys:
         asciiKey = getAsciiFromKey(key)
         if asciiKey != 0:
-            sendCommandArduino(f"keyUp,{asciiKey}")
+            commands.append(f"keyUp,{asciiKey}")
 
-def keyDown(key: str):
+    if not commands or any(not sendCommandArduino(command) for command in commands):
+        if had_list:
+            pyautogui.hotkey(keys)
+        else:
+            pyautogui.hotkey(*keys)
+
+def keyDown(key: str) -> None:
     asciiKey = getAsciiFromKey(key)
     if asciiKey != 0:
-        sendCommandArduino(f"keyDown,{asciiKey}")
+        if not sendCommandArduino(f"keyDown,{asciiKey}"):
+            pyautogui.keyDown(key)
 
-def keyUp(key: str):
+def keyUp(key: str) -> None:
     asciiKey = getAsciiFromKey(key)
     if asciiKey != 0:
-        sendCommandArduino(f"keyUp,{asciiKey}")
+        if not sendCommandArduino(f"keyUp,{asciiKey}"):
+            pyautogui.keyUp(key)
 
-def press(*args):
-    for key in args:
+def press(*args: object) -> None:
+    keys, had_list = _normalize_keys(args)
+    commands = []
+    for key in keys:
         asciiKey = getAsciiFromKey(key)
         if asciiKey != 0:
-            sendCommandArduino(f"press,{asciiKey}")
+            commands.append(f"press,{asciiKey}")
 
-def write(phrase: str):
-    sendCommandArduino(f"write,{phrase}")
+    if not commands or any(not sendCommandArduino(command) for command in commands):
+        if had_list:
+            pyautogui.press(keys)
+        else:
+            pyautogui.press(*keys)
+
+def write(phrase: str) -> None:
+    if not sendCommandArduino(f"write,{phrase}"):
+        pyautogui.write(phrase)

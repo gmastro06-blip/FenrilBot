@@ -29,6 +29,11 @@ class ConfigPage(customtkinter.CTkToplevel):
             self.windowsFrame, values=self.getGameWindows(), state='readonly',
             command=self.onChangeWindow)
         self.windowsCombobox.grid(row=1, column=0, sticky='ew', padx=10, pady=10)
+        saved_title = self.context.context.get('window_title')
+        if saved_title:
+            current_values = self.windowsCombobox.cget('values')
+            if saved_title in current_values:
+                self.windowsCombobox.set(saved_title)
 
         self.button = customtkinter.CTkButton(
             self.windowsFrame, text='Atualizar', command=self.refreshWindows,
@@ -197,19 +202,27 @@ class ConfigPage(customtkinter.CTkToplevel):
         def enum_windows_callback(hwnd, results):
             if win32gui.IsWindowVisible(hwnd):
                 window_title = win32gui.GetWindowText(hwnd)
-                if re.search(r"Windowed", window_title, re.IGNORECASE):
+                if window_title:
                     results.append(window_title)
+
         results = []
         win32gui.EnumWindows(enum_windows_callback, results)
-        return results
+
+        tibia_windows = [
+            title for title in results
+            if re.search(r"tibia", title, re.IGNORECASE)
+            or re.search(r"windowed", title, re.IGNORECASE)
+        ]
+
+        return tibia_windows if tibia_windows else results
 
     def refreshWindows(self):
         self.windowsCombobox['values'] = self.getGameWindows()
 
     def onChangeWindow(self, _):
         selectedWindow = self.windowsCombobox.get()
-        self.context.context['window'] = gw.getWindowsWithTitle(selectedWindow)[
-            0]
+        if not self.context.setWindowTitle(selectedWindow):
+            messagebox.showerror('Erro', 'Tibia window not found.')
         
     def onChangeShovelHotkey(self, event):
         key = event.char

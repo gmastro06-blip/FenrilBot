@@ -1,9 +1,24 @@
 import cv2
 import dxcam
-from farmhash import FarmHash64
 import numpy as np
-from typing import Callable, Union
+import hashlib
+from typing import Callable, List, Optional, Union
 from src.shared.typings import BBox, GrayImage
+
+
+try:
+    from farmhash import FarmHash64
+
+    def _hash_bytes(data: bytes) -> int:
+        return FarmHash64(data)
+except Exception:
+
+    def _hash_bytes(data: bytes) -> int:
+        return int.from_bytes(
+            hashlib.blake2b(data, digest_size=8).digest(),
+            "little",
+            signed=False,
+        )
 
 
 camera = dxcam.create(device_idx=0, output_idx=1, output_color='BGRA')
@@ -11,14 +26,14 @@ latestScreenshot = None
 
 
 # TODO: add unit tests
-def cacheObjectPosition(func: Callable) -> Callable:
+def cacheObjectPosition(func: Callable[[GrayImage], Optional[BBox]]) -> Callable[[GrayImage], Optional[BBox]]:
     lastX = None
     lastY = None
     lastW = None
     lastH = None
     lastImgHash = None
 
-    def inner(screenshot):
+    def inner(screenshot: GrayImage) -> Optional[BBox]:
         nonlocal lastX, lastY, lastW, lastH, lastImgHash
         if lastX != None and lastY != None and lastW != None and lastH != None:
             if hashit(screenshot[lastY:lastY + lastH, lastX:lastX + lastW]) == lastImgHash:
@@ -38,11 +53,12 @@ def cacheObjectPosition(func: Callable) -> Callable:
 
 # TODO: add unit tests
 def hashit(arr: np.ndarray) -> int:
-    return FarmHash64(np.ascontiguousarray(arr))
+    data = np.ascontiguousarray(arr).tobytes()
+    return _hash_bytes(data)
 
 
 # TODO: add unit tests
-def locate(compareImage: GrayImage, img: GrayImage, confidence: float = 0.85, type = cv2.TM_CCOEFF_NORMED) -> Union[BBox, None]:
+def locate(compareImage: GrayImage, img: GrayImage, confidence: float = 0.85, type: int = cv2.TM_CCOEFF_NORMED) -> Optional[BBox]:
     match = cv2.matchTemplate(compareImage, img, type)
     res = cv2.minMaxLoc(match)
     if res[1] <= confidence:
@@ -51,7 +67,7 @@ def locate(compareImage: GrayImage, img: GrayImage, confidence: float = 0.85, ty
 
 
 # TODO: add unit tests
-def locateMultiple(compareImg: GrayImage, img: GrayImage, confidence: float = 0.85) -> Union[BBox, None]:
+def locateMultiple(compareImg: GrayImage, img: GrayImage, confidence: float = 0.85) -> List[BBox]:
     match = cv2.matchTemplate(compareImg, img, cv2.TM_CCOEFF_NORMED)
     loc = np.where(match >= confidence)
     resultList = []
@@ -61,7 +77,7 @@ def locateMultiple(compareImg: GrayImage, img: GrayImage, confidence: float = 0.
 
 
 # TODO: add unit tests
-def getScreenshot() -> GrayImage:
+def getScreenshot() -> Optional[GrayImage]:
     global camera, latestScreenshot
     screenshot = camera.grab()
     if screenshot is None:

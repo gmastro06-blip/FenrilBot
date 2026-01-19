@@ -1,6 +1,6 @@
 from src.repositories.inventory.core import images
 from src.shared.typings import Waypoint
-from ...typings import Context
+from src.gameplay.typings import Context
 from .common.vector import VectorTask
 from .closeContainer import CloseContainerTask
 from .dragItems import DragItemsTask
@@ -11,7 +11,6 @@ from .openDepot import OpenDepotTask
 from .openLocker import OpenLockerTask
 from .scrollToItem import ScrollToItemTask
 from .setNextWaypoint import SetNextWaypointTask
-from .expandBackpack import ExpandBackpackTask
 
 class DepositItemsTask(VectorTask):
     def __init__(self, waypoint: Waypoint):
@@ -27,7 +26,6 @@ class DepositItemsTask(VectorTask):
             GoToFreeDepotTask(self.waypoint).setParentTask(self).setRootTask(self),
             OpenLockerTask().setParentTask(self).setRootTask(self),
             OpenBackpackTask(context['ng_backpacks']['main']).setParentTask(self).setRootTask(self),
-            ExpandBackpackTask(context['ng_backpacks']['main']).setParentTask(self).setRootTask(self),
             ScrollToItemTask(images['containersBars'][context['ng_backpacks']['main']], images['slots'][context['ng_backpacks']['loot']]).setParentTask(self).setRootTask(self),
             DropBackpackIntoStashTask(context['ng_backpacks']['loot']).setParentTask(self).setRootTask(self),
             OpenDepotTask().setParentTask(self).setRootTask(self),

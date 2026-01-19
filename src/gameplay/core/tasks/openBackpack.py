@@ -2,7 +2,7 @@ from src.repositories.inventory.config import images
 import src.repositories.inventory.core as inventoryCore
 import src.utils.core as utilsCore
 import src.utils.mouse as utilsMouse
-from ...typings import Context
+from src.gameplay.typings import Context
 from .common.base import BaseTask
 
 
@@ -19,7 +19,7 @@ class OpenBackpackTask(BaseTask):
 
     def do(self, context: Context) -> Context:
         backpackPosition = utilsCore.locate(
-            context['ng_screenshot'], images['slots'][self.backpack], confidence=0.75)
+            context['ng_screenshot'], images['slots'][self.backpack], confidence=0.8)
         if backpackPosition is None:
             return context
         # TODO: click in random BBOX coordinate

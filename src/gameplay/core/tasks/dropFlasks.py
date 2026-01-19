@@ -1,4 +1,4 @@
-from ...typings import Context
+from src.gameplay.typings import Context
 from .common.vector import VectorTask
 from .dropEachFlask import DropEachFlaskTask
 from .expandBackpack import ExpandBackpackTask
@@ -7,9 +7,11 @@ from .setNextWaypoint import SetNextWaypointTask
 
 
 class DropFlasksTask(VectorTask):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.name = 'dropFlasks'
+        self.delayBeforeStart = 1
+        self.delayAfterComplete = True
         self.isRootTask = True
 
     def onBeforeStart(self, context: Context) -> Context:

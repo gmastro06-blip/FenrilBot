@@ -187,5 +187,6 @@ context = {
     'window': None,
     'ng_lastLootIndex': None,
     'ng_lastUsedSpellLoot': None,
-    'healCount': 0
+    'healCount': 0,
+    'window_title': None
 }

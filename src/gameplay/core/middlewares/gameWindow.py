@@ -73,8 +73,15 @@ def setHandleLootMiddleware(context: Context) -> Context:
 
 # TODO: add unit tests
 def setGameWindowMiddleware(context: Context) -> Context:
+    if context['ng_screenshot'] is None:
+        context['gameWindow']['coordinate'] = None
+        context['gameWindow']['image'] = None
+        return context
     context['gameWindow']['coordinate'] = getCoordinate(
         context['ng_screenshot'], (gameWindowSizes[1080][0], gameWindowSizes[1080][1]))
+    if context['gameWindow']['coordinate'] is None:
+        context['gameWindow']['image'] = None
+        return context
     context['gameWindow']['image'] = getImageByCoordinate(
         context['ng_screenshot'], context['gameWindow']['coordinate'], (gameWindowSizes[1080][0], gameWindowSizes[1080][1]))
     return context
