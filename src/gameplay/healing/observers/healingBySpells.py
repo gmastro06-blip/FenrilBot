@@ -3,17 +3,39 @@ from src.gameplay.core.tasks.useHotkey import UseHotkeyTask
 from src.gameplay.core.tasks.useSpellHealHotkey import UseSpellHealHotkeyTask
 from src.repositories.actionBar.core import hasCooldownByName
 from src.wiki.spells import spells
-from ...typings import Context
+from src.gameplay.typings import Context
+from src.utils.safety import safe_int
 
 
 tasksOrchestrator = TasksOrchestrator()
 
 
 # TODO: add unit tests
-def healingBySpells(context: Context):
-    if context['ng_statusBar']['hpPercentage'] <= context['healing']['potions']['firstHealthPotion']['hpPercentageLessThanOrEqual'] and context['healing']['potions']['firstHealthPotion']['enabled']:
+def healingBySpells(context: Context) -> None:
+    status_bar = context.get('ng_statusBar') or {}
+    healing_cfg = context.get('healing') or {}
+    potions_cfg = healing_cfg.get('potions', {})
+    spells_cfg = healing_cfg.get('spells', {})
+
+    hp_percentage = safe_int(status_bar.get('hpPercentage'), label="hpPercentage")
+    mana_percentage = safe_int(status_bar.get('manaPercentage'), label="manaPercentage")
+    mana = safe_int(status_bar.get('mana'), label="mana")
+    hp_limit = safe_int(potions_cfg.get('firstHealthPotion', {}).get('hpPercentageLessThanOrEqual'), label="hpLimit")
+
+    if (
+        hp_percentage is not None
+        and hp_limit is not None
+        and hp_percentage <= hp_limit
+        and potions_cfg.get('firstHealthPotion', {}).get('enabled')
+    ):
         return
-    if context['ng_statusBar']['manaPercentage'] <= 30 and context['healing']['potions']['firstManaPotion']['enabled']:
+    if (
+        mana_percentage is not None
+        and mana_percentage <= 30
+        and potions_cfg.get('firstManaPotion', {}).get('enabled')
+    ):
+        return
+    if hp_percentage is None or mana is None:
         return
     currentTask = tasksOrchestrator.getCurrentTask(context)
     if currentTask is not None:
@@ -22,22 +44,52 @@ def healingBySpells(context: Context):
         else:
             tasksOrchestrator.do(context)
             return
-    if context['healing']['spells']['criticalHealing']['enabled']:
-        if context['ng_statusBar']['hpPercentage'] <= context['healing']['spells']['criticalHealing']['hpPercentageLessThanOrEqual'] and context['ng_statusBar']['mana'] >= spells[context['healing']['spells']['lightHealing']['spell']]['manaNeeded'] and not hasCooldownByName(context['ng_screenshot'], context['healing']['spells']['criticalHealing']['spell']):
-            tasksOrchestrator.setRootTask(
-                context, UseHotkeyTask(context['healing']['spells']['criticalHealing']['hotkey']))
+    critical_cfg = spells_cfg.get('criticalHealing', {})
+    if critical_cfg.get('enabled'):
+        critical_limit = safe_int(critical_cfg.get('hpPercentageLessThanOrEqual'), label="criticalHpLimit")
+        critical_spell = critical_cfg.get('spell')
+        mana_needed = safe_int(spells.get(critical_spell or "", {}).get('manaNeeded'), label="criticalManaNeeded")
+        if (
+            critical_limit is not None
+            and hp_percentage <= critical_limit
+            and mana_needed is not None
+            and mana >= mana_needed
+            and critical_spell
+            and not hasCooldownByName(context['ng_screenshot'], critical_spell)
+        ):
+            hotkey = critical_cfg.get('hotkey')
+            if hotkey:
+                tasksOrchestrator.setRootTask(context, UseHotkeyTask(hotkey))
             return
-    if context['healing']['spells']['lightHealing']['enabled']:
-        if context['ng_statusBar']['hpPercentage'] <= context['healing']['spells']['lightHealing']['hpPercentageLessThanOrEqual'] and context['ng_statusBar']['mana'] >= spells[context['healing']['spells']['lightHealing']['spell']]['manaNeeded'] and not hasCooldownByName(context['ng_screenshot'], context['healing']['spells']['lightHealing']['spell']):
-            tasksOrchestrator.setRootTask(
-                context, UseSpellHealHotkeyTask(context['healing']['spells']['lightHealing']['hotkey']))
+    light_cfg = spells_cfg.get('lightHealing', {})
+    if light_cfg.get('enabled'):
+        light_limit = safe_int(light_cfg.get('hpPercentageLessThanOrEqual'), label="lightHpLimit")
+        light_spell = light_cfg.get('spell')
+        mana_needed = safe_int(spells.get(light_spell or "", {}).get('manaNeeded'), label="lightManaNeeded")
+        if (
+            light_limit is not None
+            and hp_percentage <= light_limit
+            and mana_needed is not None
+            and mana >= mana_needed
+            and light_spell
+            and not hasCooldownByName(context['ng_screenshot'], light_spell)
+        ):
+            hotkey = light_cfg.get('hotkey')
+            if hotkey:
+                tasksOrchestrator.setRootTask(context, UseSpellHealHotkeyTask(hotkey))
             return
-    if context['healing']['spells']['utura']['enabled']:
-        if context['ng_statusBar']['mana'] >= spells['utura']['manaNeeded'] and not hasCooldownByName(context['ng_screenshot'], 'utura'):
-            tasksOrchestrator.setRootTask(
-                context, UseHotkeyTask(context['healing']['spells']['utura']['hotkey']))
+    utura_cfg = spells_cfg.get('utura', {})
+    if utura_cfg.get('enabled'):
+        mana_needed = safe_int(spells.get('utura', {}).get('manaNeeded'), label="uturaManaNeeded")
+        if mana_needed is not None and mana >= mana_needed and not hasCooldownByName(context['ng_screenshot'], 'utura'):
+            hotkey = utura_cfg.get('hotkey')
+            if hotkey:
+                tasksOrchestrator.setRootTask(context, UseHotkeyTask(hotkey))
             return
-    if context['healing']['spells']['uturaGran']['enabled']:
-        if context['ng_statusBar']['mana'] >= spells['utura gran']['manaNeeded'] and not hasCooldownByName(context['ng_screenshot'], 'utura gran'):
-            tasksOrchestrator.setRootTask(
-                context, UseHotkeyTask(context['healing']['spells']['uturaGran']['hotkey']))
+    utura_gran_cfg = spells_cfg.get('uturaGran', {})
+    if utura_gran_cfg.get('enabled'):
+        mana_needed = safe_int(spells.get('utura gran', {}).get('manaNeeded'), label="uturaGranManaNeeded")
+        if mana_needed is not None and mana >= mana_needed and not hasCooldownByName(context['ng_screenshot'], 'utura gran'):
+            hotkey = utura_gran_cfg.get('hotkey')
+            if hotkey:
+                tasksOrchestrator.setRootTask(context, UseHotkeyTask(hotkey))

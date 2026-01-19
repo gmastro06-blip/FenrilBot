@@ -1,5 +1,5 @@
 import pathlib
-from typing import Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 from src.shared.typings import BBox, GrayImage
 from src.repositories.gameWindow.core import getLeftArrowPosition
 from src.utils.core import cacheObjectPosition, hashit, locate, locateMultiple
@@ -15,16 +15,16 @@ chatOffImg = loadFromRGBToGray(f'{currentPath}/images/chatOff.png')
 chatOffImg = loadFromRGBToGray(f'{currentPath}/images/chatOff.png')
 lootOfTextImg = loadFromRGBToGray(f'{currentPath}/images/lootOfText.png')
 nothingTextImg = loadFromRGBToGray(f'{currentPath}/images/nothingText.png')
-oldListOfLootCheck = []
+oldListOfLootCheck: List[int] = []
 
 
 # TODO: add unit tests
 # TODO: add perf
 # TODO: add tests
-def getTabs(screenshot: GrayImage):
+def getTabs(screenshot: GrayImage) -> Dict[str, Dict[str, Any]]:
     shouldFindTabs = True
     tabIndex = 0
-    tabs = {}
+    tabs: Dict[str, Dict[str, Any]] = {}
     leftSidebarArrowsPosition = getLeftArrowPosition(screenshot)
     chatMenuPosition = getChatMenuPosition(screenshot)
     if leftSidebarArrowsPosition is not None and chatMenuPosition is not None:
@@ -72,13 +72,13 @@ def hasNewLoot(screenshot: GrayImage) -> bool:
     oldListOfLootCheck = listOfLootCheck
     return False
 
-def resetOldList():
+def resetOldList() -> None:
     global oldListOfLootCheck
     oldListOfLootCheck = []
 
 # TODO: add unit tests
 # TODO: add perf
-def getLootLines(screenshot: GrayImage) -> GrayImage:
+def getLootLines(screenshot: GrayImage) -> List[Tuple[GrayImage, BBox]]:
     messageContainerPosition = getChatMessagesContainerPosition(screenshot)
     if messageContainerPosition is None:
         return []
@@ -112,7 +112,7 @@ def getChatOffPosition(screenshot: GrayImage) -> Union[BBox, None]:
 
 # TODO: add unit tests
 # TODO: add perf
-def getChatStatus(screenshot: GrayImage) -> Tuple[BBox, bool]:
+def getChatStatus(screenshot: GrayImage) -> Tuple[Optional[BBox], bool]:
     # TODO: chat off/on pos is always the same. Get it by hash
     chatOffPos = getChatOffPosition(screenshot)
     if chatOffPos:
@@ -124,13 +124,13 @@ def getChatStatus(screenshot: GrayImage) -> Tuple[BBox, bool]:
 # TODO: add unit tests
 # TODO: add perf
 @cacheObjectPosition
-def getChatMessagesContainerPosition(screenshot: GrayImage) -> BBox:
+def getChatMessagesContainerPosition(screenshot: GrayImage) -> Optional[BBox]:
     leftSidebarArrows = getLeftArrowPosition(screenshot)
     chatMenu = getChatMenuPosition(screenshot)
     chatStatus = getChatStatus(screenshot)
     if leftSidebarArrows is not None and all(leftSidebarArrows) \
         and chatMenu is not None and all(chatMenu) \
-        and chatStatus is not None:
+        and chatStatus is not None and chatStatus[0] is not None:
         return leftSidebarArrows[0] + 5, chatMenu[1] + 18, chatStatus[0][0] + 40, (chatStatus[0][1] - 6) - (chatMenu[1] + 13)
     else:
         return None

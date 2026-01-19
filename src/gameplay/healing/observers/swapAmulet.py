@@ -1,12 +1,13 @@
 from src.gameplay.core.tasks.orchestrator import TasksOrchestrator
 from src.gameplay.core.tasks.useHotkey import UseHotkeyTask
 from src.repositories.actionBar.core import slotIsAvailable, slotIsEquipped
-from ...typings import Context
+from src.gameplay.typings import Context
+from src.utils.safety import safe_int
 
 tasksOrchestrator = TasksOrchestrator()
 
 # TODO: add unit tests
-def swapAmulet(context: Context):
+def swapAmulet(context: Context) -> None:
     currentTask = tasksOrchestrator.getCurrentTask(context)
     if currentTask is not None:
         if currentTask.status == 'completed':
@@ -19,29 +20,45 @@ def swapAmulet(context: Context):
     currentTaskName = context['ng_tasksOrchestrator'].getCurrentTaskName(context)
     if currentTaskName in ['depositGold', 'refill', 'buyBackpack', 'selectChatTab', 'travel']:
         return
-    tankAmuletSlotIsEquipped = slotIsEquipped(context['ng_screenshot'], context['healing']['highPriority']['swapAmulet']['tankAmulet']['slot'])
-    tankAmuletSlotIsAvailable = slotIsAvailable(context['ng_screenshot'], context['healing']['highPriority']['swapAmulet']['tankAmulet']['slot'])
-    if context['ng_statusBar']['hpPercentage'] <= context['healing']['highPriority']['swapAmulet']['tankAmulet']['hpPercentageLessThanOrEqual']:
-        if not tankAmuletSlotIsEquipped and tankAmuletSlotIsAvailable:
-            tasksOrchestrator.setRootTask(context, UseHotkeyTask(
-                context['healing']['highPriority']['swapAmulet']['tankAmulet']['hotkey'], delayAfterComplete=2))
+    status_bar = context.get('ng_statusBar') or {}
+    swap_cfg = context.get('healing', {}).get('highPriority', {}).get('swapAmulet', {})
+    hp_percentage = safe_int(status_bar.get('hpPercentage'), label="hpPercentage")
+    tank_limit = safe_int(swap_cfg.get('tankAmulet', {}).get('hpPercentageLessThanOrEqual'), label="tankAmuletHpLimit")
+    main_limit = safe_int(swap_cfg.get('mainAmulet', {}).get('hpPercentageGreaterThan'), label="mainAmuletHpLimit")
+    if hp_percentage is None:
         return
-    mainAmuletSlotIsEquipped = slotIsEquipped(context['ng_screenshot'], context['healing']['highPriority']['swapAmulet']['mainAmulet']['slot'])
-    mainAmuletSlotIsAvailable = slotIsAvailable(context['ng_screenshot'], context['healing']['highPriority']['swapAmulet']['mainAmulet']['slot'])
-    if context['ng_statusBar']['hpPercentage'] > context['healing']['highPriority']['swapAmulet']['mainAmulet']['hpPercentageGreaterThan']:
+    tank_slot = swap_cfg.get('tankAmulet', {}).get('slot')
+    main_slot = swap_cfg.get('mainAmulet', {}).get('slot')
+    if tank_slot is None or main_slot is None:
+        return
+    tankAmuletSlotIsEquipped = slotIsEquipped(context['ng_screenshot'], tank_slot)
+    tankAmuletSlotIsAvailable = slotIsAvailable(context['ng_screenshot'], tank_slot)
+    if tank_limit is not None and hp_percentage <= tank_limit:
+        if not tankAmuletSlotIsEquipped and tankAmuletSlotIsAvailable:
+            hotkey = swap_cfg.get('tankAmulet', {}).get('hotkey')
+            if hotkey:
+                tasksOrchestrator.setRootTask(context, UseHotkeyTask(hotkey, delayAfterComplete=2))
+        return
+    mainAmuletSlotIsEquipped = slotIsEquipped(context['ng_screenshot'], main_slot)
+    mainAmuletSlotIsAvailable = slotIsAvailable(context['ng_screenshot'], main_slot)
+    if main_limit is not None and hp_percentage > main_limit:
         if not mainAmuletSlotIsEquipped and mainAmuletSlotIsAvailable:
-            tasksOrchestrator.setRootTask(context, UseHotkeyTask(
-                context['healing']['highPriority']['swapAmulet']['mainAmulet']['hotkey'], delayAfterComplete=2))
+            hotkey = swap_cfg.get('mainAmulet', {}).get('hotkey')
+            if hotkey:
+                tasksOrchestrator.setRootTask(context, UseHotkeyTask(hotkey, delayAfterComplete=2))
         return
-    if context['healing']['highPriority']['swapAmulet']['tankAmuletAlwaysEquipped']:
+    if swap_cfg.get('tankAmuletAlwaysEquipped'):
         if not tankAmuletSlotIsEquipped and tankAmuletSlotIsAvailable:
-            tasksOrchestrator.setRootTask(context, UseHotkeyTask(
-                context['healing']['highPriority']['swapAmulet']['tankAmulet']['hotkey'], delayAfterComplete=2))
+            hotkey = swap_cfg.get('tankAmulet', {}).get('hotkey')
+            if hotkey:
+                tasksOrchestrator.setRootTask(context, UseHotkeyTask(hotkey, delayAfterComplete=2))
         return
     if tankAmuletSlotIsEquipped:
-        tasksOrchestrator.setRootTask(context, UseHotkeyTask(
-            context['healing']['highPriority']['swapAmulet']['tankAmulet']['hotkey'], delayAfterComplete=2))
+        hotkey = swap_cfg.get('tankAmulet', {}).get('hotkey')
+        if hotkey:
+            tasksOrchestrator.setRootTask(context, UseHotkeyTask(hotkey, delayAfterComplete=2))
         return
     if mainAmuletSlotIsEquipped:
-        tasksOrchestrator.setRootTask(context, UseHotkeyTask(
-            context['healing']['highPriority']['swapAmulet']['mainAmulet']['hotkey'], delayAfterComplete=2))
+        hotkey = swap_cfg.get('mainAmulet', {}).get('hotkey')
+        if hotkey:
+            tasksOrchestrator.setRootTask(context, UseHotkeyTask(hotkey, delayAfterComplete=2))

@@ -2,7 +2,7 @@ import src.repositories.gameWindow.core as gameWindowCore
 import src.repositories.gameWindow.slot as gameWindowSlot
 from src.shared.typings import Waypoint
 import src.utils.keyboard as keyboard
-from ...typings import Context
+from src.gameplay.typings import Context
 from .common.base import BaseTask
 from time import sleep
 
@@ -21,6 +21,8 @@ class UseShovelTask(BaseTask):
     def do(self, context: Context) -> Context:
         slot = gameWindowCore.getSlotFromCoordinate(
             context['ng_radar']['coordinate'], self.waypoint['coordinate'])
+        if slot is None:
+            return context
         sleep(0.2)
         keyboard.press('p')
         sleep(0.2)

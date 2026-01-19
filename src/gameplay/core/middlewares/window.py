@@ -1,7 +1,7 @@
 import pygetwindow as gw
 import re
 import win32gui
-from ...typings import Context
+from src.gameplay.typings import Context
 
 
 # TODO: add unit tests

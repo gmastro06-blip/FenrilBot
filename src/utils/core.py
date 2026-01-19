@@ -2,7 +2,8 @@ import cv2
 import dxcam
 import numpy as np
 import hashlib
-from typing import Callable, List, Optional, Union
+import os
+from typing import Callable, List, Optional, Tuple, cast
 from src.shared.typings import BBox, GrayImage
 
 
@@ -21,7 +22,13 @@ except Exception:
         )
 
 
-camera = dxcam.create(device_idx=0, output_idx=1, output_color='BGRA')
+def _create_camera(output_idx: int) -> dxcam.DXCamera:
+    return dxcam.create(device_idx=0, output_idx=output_idx, output_color='BGRA')
+
+
+_preferred_output_idx = int(os.getenv('FENRIL_OUTPUT_IDX', '1'))
+camera = _create_camera(_preferred_output_idx)
+_camera_output_idx = _preferred_output_idx
 latestScreenshot = None
 
 
@@ -35,9 +42,13 @@ def cacheObjectPosition(func: Callable[[GrayImage], Optional[BBox]]) -> Callable
 
     def inner(screenshot: GrayImage) -> Optional[BBox]:
         nonlocal lastX, lastY, lastW, lastH, lastImgHash
-        if lastX != None and lastY != None and lastW != None and lastH != None:
-            if hashit(screenshot[lastY:lastY + lastH, lastX:lastX + lastW]) == lastImgHash:
-                return (lastX, lastY, lastW, lastH)
+        if lastX is not None and lastY is not None and lastW is not None and lastH is not None:
+            x = cast(int, lastX)
+            y = cast(int, lastY)
+            w = cast(int, lastW)
+            h = cast(int, lastH)
+            if hashit(screenshot[y:y + h, x:x + w]) == lastImgHash:
+                return (x, y, w, h)
         res = func(screenshot)
         if res is None:
             return None
@@ -77,9 +88,22 @@ def locateMultiple(compareImg: GrayImage, img: GrayImage, confidence: float = 0.
 
 
 # TODO: add unit tests
-def getScreenshot() -> Optional[GrayImage]:
-    global camera, latestScreenshot
-    screenshot = camera.grab()
+def getScreenshot(region: Optional[Tuple[int, int, int, int]] = None) -> Optional[GrayImage]:
+    global camera, latestScreenshot, _camera_output_idx
+    try:
+        screenshot = camera.grab(region=region) if region is not None else camera.grab()
+    except Exception:
+        screenshot = None
+
+    # Fallback for single-monitor setups where output_idx=1 doesn't exist/doesn't capture.
+    if screenshot is None and _camera_output_idx != 0:
+        try:
+            camera = _create_camera(0)
+            _camera_output_idx = 0
+            screenshot = camera.grab(region=region) if region is not None else camera.grab()
+        except Exception:
+            screenshot = None
+
     if screenshot is None:
         return latestScreenshot
     latestScreenshot = cv2.cvtColor(screenshot, cv2.COLOR_BGRA2GRAY)

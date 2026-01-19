@@ -1,5 +1,8 @@
 import customtkinter
 from tkinter import BooleanVar
+from typing import Optional
+
+from src.ui.context import Context
 from .pages.config import ConfigPage
 from .pages.comboSpells import ComboSpellsPage
 from .pages.inventory import InventoryPage
@@ -8,7 +11,7 @@ from .pages.healing.healingPage import HealingPage
 from .utils import genRanStr
 
 class Application(customtkinter.CTk):
-    def __init__(self, context):
+    def __init__(self, context: Context) -> None:
         super().__init__()
         
         customtkinter.set_appearance_mode("dark")
@@ -17,11 +20,11 @@ class Application(customtkinter.CTk):
         self.title(genRanStr())
         self.resizable(False, False)
 
-        self.configPage = None
-        self.inventoryPage = None
-        self.cavebotPage = None
-        self.healingPage = None
-        self.comboPage = None
+        self.configPage: Optional[ConfigPage] = None
+        self.inventoryPage: Optional[InventoryPage] = None
+        self.cavebotPage: Optional[CavebotPage] = None
+        self.healingPage: Optional[HealingPage] = None
+        self.comboPage: Optional[ComboSpellsPage] = None
         self.canvasWindow = None
 
         configurationBtn = customtkinter.CTkButton(self, text="Configuration", corner_radius=32,
@@ -60,40 +63,59 @@ class Application(customtkinter.CTk):
             hover_color="#870125", fg_color='#C20034')
         self.checkbutton.grid(column=2, row=1, padx=20, pady=20, sticky='w')
 
-    def configurationWindow(self):
+        self.protocol("WM_DELETE_WINDOW", self.onClose)
+
+    def configurationWindow(self) -> None:
         if self.configPage is None or not self.configPage.winfo_exists():
             self.configPage = ConfigPage(self.context)
         else:
             self.configPage.focus()
 
-    def inventoryWindow(self):
+    def inventoryWindow(self) -> None:
         if self.inventoryPage is None or not self.inventoryPage.winfo_exists():
             self.inventoryPage = InventoryPage(self.context)
         else:
             self.inventoryPage.focus()
 
-    def caveWindow(self):
+    def caveWindow(self) -> None:
         if self.cavebotPage is None or not self.cavebotPage.winfo_exists():
             self.cavebotPage = CavebotPage(self.context)
         else:
             self.cavebotPage.focus()
 
-    def healingWindow(self):
+    def healingWindow(self) -> None:
         if self.healingPage is None or not self.healingPage.winfo_exists():
             self.healingPage = HealingPage(self.context)
         else:
             self.healingPage.focus()
 
-    def comboWindow(self):
+    def comboWindow(self) -> None:
         if self.comboPage is None or not self.comboPage.winfo_exists():
             self.comboPage = ComboSpellsPage(self.context)
         else:
             self.comboPage.focus()
 
-    def onToggleEnabledButton(self):
+    def onToggleEnabledButton(self) -> None:
         varStatus = self.enabledVar.get()
 
         if varStatus is True:
             self.context.play()
         else:
             self.context.pause()
+
+    def onClose(self) -> None:
+        self.context.context['ng_should_stop'] = True
+        self.context.pause()
+        try:
+            if self.configPage is not None and self.configPage.winfo_exists():
+                self.configPage.destroy()
+            if self.inventoryPage is not None and self.inventoryPage.winfo_exists():
+                self.inventoryPage.destroy()
+            if self.cavebotPage is not None and self.cavebotPage.winfo_exists():
+                self.cavebotPage.destroy()
+            if self.healingPage is not None and self.healingPage.winfo_exists():
+                self.healingPage.destroy()
+            if self.comboPage is not None and self.comboPage.winfo_exists():
+                self.comboPage.destroy()
+        finally:
+            self.destroy()

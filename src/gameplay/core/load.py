@@ -1,6 +1,9 @@
 # TODO: add types
 # TODO: add unit tests
-def loadContextFromConfig(config, context):
+from typing import Any, Dict
+
+
+def loadContextFromConfig(config: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
     context['window_title'] = config.get('window_title')
     context['ng_backpacks'] = config['ng_backpacks'].copy()
     context['general_hotkeys'] = config['general_hotkeys'].copy()
@@ -19,7 +22,7 @@ def loadContextFromConfig(config, context):
     context['healing'] = config['healing'].copy()
     return context
 
-def loadNgCfgs(config, context):
+def loadNgCfgs(config: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
     context['ng_backpacks'] = config['ng_backpacks'].copy()
     context['general_hotkeys'] = config['general_hotkeys'].copy()
     context['auto_hur'] = config['auto_hur'].copy()

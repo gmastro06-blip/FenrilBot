@@ -1,5 +1,5 @@
-from src.repositories.radar.typings import Coordinate
-from ...typings import Context
+from src.shared.typings import Coordinate
+from src.gameplay.typings import Context
 from .common.vector import VectorTask
 from .setNextWaypoint import SetNextWaypointTask
 from .walkToCoordinate import WalkToCoordinateTask

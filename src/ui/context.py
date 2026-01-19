@@ -1,5 +1,7 @@
 from os.path import exists
 import time
+from typing import Any, Callable, Dict, List, Optional, cast
+
 from tinydb import Query, TinyDB
 from tkinter import messagebox
 import pygetwindow as gw
@@ -11,24 +13,25 @@ from src.repositories.chat.core import resetOldList
 class Context:
     filePath: str = 'file.json'
 
-    def __init__(self, context):
+    def __init__(self, context: Dict[str, Any]) -> None:
         shouldInsertProfile = not exists(self.filePath)
         self.db = TinyDB(self.filePath)
         if shouldInsertProfile:
             self.insertProfile()
         self.enabledProfile = self.getEnabledProfile()
-        self.context = loadContextFromConfig(
+        load_context = cast(Callable[[Dict[str, Any], Dict[str, Any]], Dict[str, Any]], loadContextFromConfig)
+        self.context = load_context(
             self.enabledProfile['config'], context)
         window_title = self.enabledProfile['config'].get('window_title')
         if window_title:
             self.setWindowTitle(window_title, persist=False)
 
-    def updateMainBackpack(self, backpack: str):
+    def updateMainBackpack(self, backpack: str) -> None:
         self.context['ng_backpacks']['main'] = backpack
         self.enabledProfile['config']['ng_backpacks']['main'] = backpack
         self.db.update(self.enabledProfile)
 
-    def insertProfile(self):
+    def insertProfile(self) -> None:
         self.db.insert({
             'enabled': True,
             'config': {
@@ -163,13 +166,14 @@ class Context:
             }
         })
 
-    def loadScript(self, script):
+    def loadScript(self, script: List[Dict[str, Any]]) -> None:
         self.context['ng_cave']['waypoints']['items'] = script.copy()
         self.enabledProfile['config']['ng_cave']['waypoints']['items'] = script.copy()
         self.db.update(self.enabledProfile)
 
-    def loadCfg(self, cfg):
-        self.context = loadNgCfgs(cfg, self.context)
+    def loadCfg(self, cfg: Dict[str, Any]) -> None:
+        load_cfgs = cast(Callable[[Dict[str, Any], Dict[str, Any]], Dict[str, Any]], loadNgCfgs)
+        self.context = load_cfgs(cfg, self.context)
         self.enabledProfile['config']['ng_backpacks'] = self.context['ng_backpacks']
         self.enabledProfile['config']['general_hotkeys'] = self.context['general_hotkeys']
         self.enabledProfile['config']['auto_hur'] = self.context['auto_hur']
@@ -192,49 +196,51 @@ class Context:
             self.db.update(self.enabledProfile)
         return self.context['window'] is not None
 
-    def getEnabledProfile(self):
+    def getEnabledProfile(self) -> Dict[str, Any]:
         return self.db.search(Query().enabled == True)[0]
 
-    def updateLootBackpack(self, backpack: str):
+    def updateLootBackpack(self, backpack: str) -> None:
         self.context['ng_backpacks']['loot'] = backpack
         self.enabledProfile['config']['ng_backpacks']['loot'] = backpack
         self.db.update(self.enabledProfile)
 
-    def addWaypoint(self, waypoint):
+    def addWaypoint(self, waypoint: Dict[str, Any]) -> None:
         self.context['ng_cave']['waypoints']['items'].append(waypoint)
         self.enabledProfile['config']['ng_cave']['waypoints']['items'].append(
             waypoint)
         self.db.update(self.enabledProfile)
 
-    def addCombo(self, combo):
+    def addCombo(self, combo: Dict[str, Any]) -> None:
         self.context['ng_comboSpells']['items'].append(combo)
         self.enabledProfile['config']['ng_comboSpells']['items'].append(
             combo)
         self.db.update(self.enabledProfile)
 
-    def addIgnorableCreature(self, creature):
+    def addIgnorableCreature(self, creature: str) -> None:
         self.context['ignorable_creatures'].append(creature)
         self.enabledProfile['config']['ignorable_creatures'].append(creature)
         self.db.update(self.enabledProfile)
 
-    def addSpellByIndex(self, index, spell):
+    def addSpellByIndex(self, index: int, spell: Dict[str, Any]) -> None:
         self.context['ng_comboSpells']['items'][index]['spells'].append(spell)
         # self.enabledProfile['config']['ng_comboSpells']['items'][index]['spells'].append(
         #     spell)
         self.db.update(self.enabledProfile)
 
-    def getAllWaypointLabels(self):
+    def getAllWaypointLabels(self) -> List[str]:
         waypointsLabels = [waypointItem['label'] for waypointItem in self.context['ng_cave']
                         ['waypoints']['items'] if waypointItem['label'] != '']
         return waypointsLabels
 
-    def hasWaypointWithLabel(self, label: str, ignoreLabel=None) -> bool:
-        for waypoint in self.context['ng_cave']['waypoints']['points']:
+    def hasWaypointWithLabel(self, label: str, ignoreLabel: Optional[str] = None) -> bool:
+        for waypoint in self.context['ng_cave']['waypoints']['items']:
             if waypoint['label'] == label and ignoreLabel is not None:
                 return True
         return False
 
-    def updateWaypointByIndex(self, waypointIndex, label=None, options={}):
+    def updateWaypointByIndex(self, waypointIndex: int, label: Optional[str] = None, options: Optional[Dict[str, Any]] = None) -> None:
+        if options is None:
+            options = {}
         if label is not None:
             self.context['ng_cave']['waypoints']['items'][waypointIndex]['label'] = label
             self.enabledProfile['config']['ng_cave']['waypoints']['items'][waypointIndex]['label'] = label
@@ -242,30 +248,30 @@ class Context:
         self.enabledProfile['config']['ng_cave']['waypoints']['items'][waypointIndex]['options'] = options
         self.db.update(self.enabledProfile)
 
-    def updateIgnorableCreatureByIndex(self, creatureIndex, name=None):
+    def updateIgnorableCreatureByIndex(self, creatureIndex: int, name: Optional[str] = None) -> None:
         if name is not None:
             self.context['ignorable_creatures'][creatureIndex] = name
             self.enabledProfile['config']['ignorable_creatures'][creatureIndex] = name
             self.db.update(self.enabledProfile)
 
-    def removeWaypointByIndex(self, index):
+    def removeWaypointByIndex(self, index: int) -> None:
         self.context['ng_cave']['waypoints']['items'].pop(index)
         self.enabledProfile['config']['ng_cave']['waypoints']['items'].pop(
             index)
         self.db.update(self.enabledProfile)
 
-    def removeComboByIndex(self, index):
+    def removeComboByIndex(self, index: int) -> None:
         self.context['ng_comboSpells']['items'].pop(index)
         self.enabledProfile['config']['ng_comboSpells']['items'].pop(
             index)
         self.db.update(self.enabledProfile)
 
-    def removeIgnorableCreatureByIndex(self, index):
+    def removeIgnorableCreatureByIndex(self, index: int) -> None:
         self.context['ignorable_creatures'].pop(index)
         self.enabledProfile['config']['ignorable_creatures'].pop(index)
         self.db.update(self.enabledProfile)
 
-    def play(self):
+    def play(self) -> None:
         if self.context['window'] is None:
             messagebox.showerror(
                 'Erro', 'Tibia window is not set!')
@@ -280,283 +286,286 @@ class Context:
         #     return
         self.context['ng_pause'] = False
 
-    def pause(self):
+    def pause(self) -> None:
         self.context['ng_pause'] = True
         self.context['ng_tasksOrchestrator'].setRootTask(self.context, None)
         self.context['ng_cave']['waypoints']['currentIndex'] = None
         self.context['loot']['corpsesToLoot'] = []
-        resetOldList()
+        reset_old_list = cast(Callable[[], None], resetOldList)
+        reset_old_list()
 
-    def toggleHealingPotionsByKey(self, healthPotionType, enabled):
+    def toggleHealingPotionsByKey(self, healthPotionType: str, enabled: bool) -> None:
         self.context['healing']['potions'][healthPotionType]['enabled'] = enabled
         self.enabledProfile['config']['healing']['potions'][healthPotionType]['enabled'] = enabled
         self.db.update(self.enabledProfile)
 
-    def toggleFoodByKey(self, enabled):
+    def toggleFoodByKey(self, enabled: bool) -> None:
         self.context['healing']['eatFood']['enabled'] = enabled
         self.enabledProfile['config']['healing']['eatFood']['enabled'] = enabled
         self.db.update(self.enabledProfile)
 
-    def toggleHealingHighPriorityByKey(self, key, enabled):
+    def toggleHealingHighPriorityByKey(self, key: str, enabled: bool) -> None:
         self.context['healing']['highPriority'][key]['enabled'] = enabled
         self.enabledProfile['config']['healing']['highPriority'][key]['enabled'] = enabled
         self.db.update(self.enabledProfile)
 
-    def setShovelHotkey(self, hotkey):
+    def setShovelHotkey(self, hotkey: str) -> None:
         self.context['general_hotkeys']['shovel_hotkey'] = hotkey
         self.enabledProfile['config']['general_hotkeys']['shovel_hotkey'] = hotkey
         self.db.update(self.enabledProfile)
 
-    def setRopeHotkey(self, hotkey):
+    def setRopeHotkey(self, hotkey: str) -> None:
         self.context['general_hotkeys']['rope_hotkey'] = hotkey
         self.enabledProfile['config']['general_hotkeys']['rope_hotkey'] = hotkey
         self.db.update(self.enabledProfile)
 
-    def setHotkeyHealingHighPriorityByKey(self, key, hotkey):
+    def setHotkeyHealingHighPriorityByKey(self, key: str, hotkey: str) -> None:
         self.context['healing']['highPriority'][key]['hotkey'] = hotkey
         self.enabledProfile['config']['healing']['highPriority'][key]['hotkey'] = hotkey
         self.db.update(self.enabledProfile)
 
-    def setHealthFoodHpPercentageLessThanOrEqual(self, hpPercentageLessThanOrEqual):
+    def setHealthFoodHpPercentageLessThanOrEqual(self, hpPercentageLessThanOrEqual: int) -> None:
         self.context['healing']['highPriority']['healthFood']['hpPercentageLessThanOrEqual'] = hpPercentageLessThanOrEqual
         self.enabledProfile['config']['healing']['highPriority']['healthFood'][
             'hpPercentageLessThanOrEqual'] = hpPercentageLessThanOrEqual
         self.db.update(self.enabledProfile)
 
-    def setManaFoodHpPercentageLessThanOrEqual(self, manaPercentageLessThanOrEqual):
+    def setManaFoodHpPercentageLessThanOrEqual(self, manaPercentageLessThanOrEqual: int) -> None:
         self.context['healing']['highPriority']['manaFood']['manaPercentageLessThanOrEqual'] = manaPercentageLessThanOrEqual
         self.enabledProfile['config']['healing']['highPriority']['manaFood'][
             'manaPercentageLessThanOrEqual'] = manaPercentageLessThanOrEqual
         self.db.update(self.enabledProfile)
 
-    def toggleSpellByKey(self, healthPotionType, enabled):
+    def toggleSpellByKey(self, healthPotionType: str, enabled: bool) -> None:
         self.context['healing']['spells'][healthPotionType]['enabled'] = enabled
         self.enabledProfile['config']['healing']['spells'][healthPotionType]['enabled'] = enabled
         self.db.update(self.enabledProfile)
 
-    def setFoodHotkey(self, hotkey):
+    def setFoodHotkey(self, hotkey: str) -> None:
         self.context['healing']['eatFood']['hotkey'] = hotkey
         self.enabledProfile['config']['healing']['eatFood']['hotkey'] = hotkey
         self.db.update(self.enabledProfile)
 
-    def setHealthPotionHotkeyByKey(self, healthPotionType, hotkey):
+    def setHealthPotionHotkeyByKey(self, healthPotionType: str, hotkey: str) -> None:
         self.context['healing']['potions'][healthPotionType]['hotkey'] = hotkey
         self.enabledProfile['config']['healing']['potions'][healthPotionType]['hotkey'] = hotkey
         self.db.update(self.enabledProfile)
 
-    def setHealthPotionSlotByKey(self, healthPotionType, slot):
+    def setHealthPotionSlotByKey(self, healthPotionType: str, slot: int) -> None:
         self.context['healing']['potions'][healthPotionType]['slot'] = slot
         self.enabledProfile['config']['healing']['potions'][healthPotionType]['slot'] = slot
         self.db.update(self.enabledProfile)
 
-    def setSpellHotkeyByKey(self, healthPotionType, hotkey):
+    def setSpellHotkeyByKey(self, healthPotionType: str, hotkey: str) -> None:
         self.context['healing']['spells'][healthPotionType]['hotkey'] = hotkey
         self.enabledProfile['config']['healing']['spells'][healthPotionType]['hotkey'] = hotkey
         self.db.update(self.enabledProfile)
 
-    def setHealthPotionHpPercentageLessThanOrEqual(self, healthPotionType, hpPercentage):
+    def setHealthPotionHpPercentageLessThanOrEqual(self, healthPotionType: str, hpPercentage: int) -> None:
         self.context['healing']['potions'][healthPotionType]['hpPercentageLessThanOrEqual'] = hpPercentage
         self.enabledProfile['config']['healing']['potions'][healthPotionType]['hpPercentageLessThanOrEqual'] = hpPercentage
         self.db.update(self.enabledProfile)
 
-    def setSwapRingHpPercentageLessThanOrEqual(self, hpPercentageLessThanOrEqual):
+    def setSwapRingHpPercentageLessThanOrEqual(self, hpPercentageLessThanOrEqual: int) -> None:
         self.context['healing']['highPriority']['swapRing']['tankRing']['hpPercentageLessThanOrEqual'] = hpPercentageLessThanOrEqual
         self.enabledProfile['config']['healing']['highPriority']['swapRing']['tankRing'][
             'hpPercentageLessThanOrEqual'] = hpPercentageLessThanOrEqual
         self.db.update(self.enabledProfile)
 
-    def setSwapTankRingHotkey(self, hotkey):
+    def setSwapTankRingHotkey(self, hotkey: str) -> None:
         self.context['healing']['highPriority']['swapRing']['tankRing']['hotkey'] = hotkey
         self.enabledProfile['config']['healing']['highPriority']['swapRing']['tankRing']['hotkey'] = hotkey
         self.db.update(self.enabledProfile)
 
-    def setSwapTankRingSlotByKey(self, slot):
+    def setSwapTankRingSlotByKey(self, slot: int) -> None:
         self.context['healing']['highPriority']['swapRing']['tankRing']['slot'] = slot
         self.enabledProfile['config']['healing']['highPriority']['swapRing']['tankRing']['slot'] = slot
         self.db.update(self.enabledProfile)
 
-    def setSwapMainRingSlotByKey(self, slot):
+    def setSwapMainRingSlotByKey(self, slot: int) -> None:
         self.context['healing']['highPriority']['swapRing']['mainRing']['slot'] = slot
         self.enabledProfile['config']['healing']['highPriority']['swapRing']['mainRing']['slot'] = slot
         self.db.update(self.enabledProfile)
 
-    def setSwapMainRingHotkey(self, hotkey):
+    def setSwapMainRingHotkey(self, hotkey: str) -> None:
         self.context['healing']['highPriority']['swapRing']['mainRing']['hotkey'] = hotkey
         self.enabledProfile['config']['healing']['highPriority']['swapRing']['mainRing']['hotkey'] = hotkey
         self.db.update(self.enabledProfile)
 
-    def setSwapRingHpPercentageGreaterThan(self, hpPercentageGreaterThan):
+    def setSwapRingHpPercentageGreaterThan(self, hpPercentageGreaterThan: int) -> None:
         self.context['healing']['highPriority']['swapRing']['mainRing']['hpPercentageGreaterThan'] = hpPercentageGreaterThan
         self.enabledProfile['config']['healing']['highPriority']['swapRing']['mainRing'][
             'hpPercentageGreaterThan'] = hpPercentageGreaterThan
         self.db.update(self.enabledProfile)
 
-    def setSwapAmuletHpPercentageLessThanOrEqual(self, hpPercentageLessThanOrEqual):
+    def setSwapAmuletHpPercentageLessThanOrEqual(self, hpPercentageLessThanOrEqual: int) -> None:
         self.context['healing']['highPriority']['swapAmulet']['tankAmulet']['hpPercentageLessThanOrEqual'] = hpPercentageLessThanOrEqual
         self.enabledProfile['config']['healing']['highPriority']['swapAmulet']['tankAmulet'][
             'hpPercentageLessThanOrEqual'] = hpPercentageLessThanOrEqual
         self.db.update(self.enabledProfile)
 
-    def setSwapAmuletHpPercentageGreaterThan(self, hpPercentageGreaterThan):
+    def setSwapAmuletHpPercentageGreaterThan(self, hpPercentageGreaterThan: int) -> None:
         self.context['healing']['highPriority']['swapAmulet']['mainAmulet']['hpPercentageGreaterThan'] = hpPercentageGreaterThan
         self.enabledProfile['config']['healing']['highPriority']['swapAmulet']['mainAmulet'][
             'hpPercentageGreaterThan'] = hpPercentageGreaterThan
         self.db.update(self.enabledProfile)
 
-    def setSwapTankAmuletHotkey(self, hotkey):
+    def setSwapTankAmuletHotkey(self, hotkey: str) -> None:
         self.context['healing']['highPriority']['swapAmulet']['tankAmulet']['hotkey'] = hotkey
         self.enabledProfile['config']['healing']['highPriority']['swapAmulet']['tankAmulet']['hotkey'] = hotkey
         self.db.update(self.enabledProfile)
 
-    def setSwapMainAmuletHotkey(self, hotkey):
+    def setSwapMainAmuletHotkey(self, hotkey: str) -> None:
         self.context['healing']['highPriority']['swapAmulet']['mainAmulet']['hotkey'] = hotkey
         self.enabledProfile['config']['healing']['highPriority']['swapAmulet']['mainAmulet']['hotkey'] = hotkey
         self.db.update(self.enabledProfile)
 
-    def setSwapTankAmuletSlotByKey(self, slot):
+    def setSwapTankAmuletSlotByKey(self, slot: int) -> None:
         self.context['healing']['highPriority']['swapAmulet']['tankAmulet']['slot'] = slot
         self.enabledProfile['config']['healing']['highPriority']['swapAmulet']['tankAmulet']['slot'] = slot
         self.db.update(self.enabledProfile)
 
-    def setSwapMainAmuletSlotByKey(self, slot):
+    def setSwapMainAmuletSlotByKey(self, slot: int) -> None:
         self.context['healing']['highPriority']['swapAmulet']['mainAmulet']['slot'] = slot
         self.enabledProfile['config']['healing']['highPriority']['swapAmulet']['mainAmulet']['slot'] = slot
         self.db.update(self.enabledProfile)
 
-    def setSpellHpPercentageLessThanOrEqual(self, spellType, hpPercentage):
+    def setSpellHpPercentageLessThanOrEqual(self, spellType: str, hpPercentage: int) -> None:
         self.context['healing']['spells'][spellType]['hpPercentageLessThanOrEqual'] = hpPercentage
         self.enabledProfile['config']['healing']['spells'][spellType]['hpPercentageLessThanOrEqual'] = hpPercentage
         self.db.update(self.enabledProfile)
 
-    def setSpellManaPercentageGreaterThanOrEqual(self, spellType, hpPercentage):
+    def setSpellManaPercentageGreaterThanOrEqual(self, spellType: str, hpPercentage: int) -> None:
         self.context['healing']['spells'][spellType]['manaPercentageGreaterThanOrEqual'] = hpPercentage
         self.enabledProfile['config']['healing']['spells'][spellType]['manaPercentageGreaterThanOrEqual'] = hpPercentage
         self.db.update(self.enabledProfile)
 
-    def setSpellName(self, spellType, spell):
+    def setSpellName(self, spellType: str, spell: Optional[str]) -> None:
         self.context['healing']['spells'][spellType]['spell'] = spell
         self.enabledProfile['config']['healing']['spells'][spellType]['spell'] = spell
         self.db.update(self.enabledProfile)
 
-    def setHealthPotionManaPercentageGreaterThanOrEqual(self, healthPotionType, hpPercentage):
+    def setHealthPotionManaPercentageGreaterThanOrEqual(self, healthPotionType: str, hpPercentage: int) -> None:
         self.context['healing']['potions'][healthPotionType]['manaPercentageGreaterThanOrEqual'] = hpPercentage
         self.enabledProfile['config']['healing']['potions'][healthPotionType]['manaPercentageGreaterThanOrEqual'] = hpPercentage
         self.db.update(self.enabledProfile)
 
-    def setHealthPotionManaPercentageLessThanOrEqual(self, healthPotionType, hpPercentage):
+    def setHealthPotionManaPercentageLessThanOrEqual(self, healthPotionType: str, hpPercentage: int) -> None:
         self.context['healing']['potions'][healthPotionType]['manaPercentageLessThanOrEqual'] = hpPercentage
         self.enabledProfile['config']['healing']['potions'][healthPotionType]['manaPercentageLessThanOrEqual'] = hpPercentage
         self.db.update(self.enabledProfile)
 
-    def toggleCavebot(self, enabled):
+    def toggleCavebot(self, enabled: bool) -> None:
         self.context['ng_cave']['enabled'] = enabled
         self.enabledProfile['config']['ng_cave']['enabled'] = enabled
         self.db.update(self.enabledProfile)
+        if enabled and self.context.get('ng_pause'):
+            self.play()
 
-    def toggleRunToCreatures(self, enabled):
+    def toggleRunToCreatures(self, enabled: bool) -> None:
         self.context['ng_cave']['runToCreatures'] = enabled
         self.enabledProfile['config']['ng_cave']['runToCreatures'] = enabled
         self.db.update(self.enabledProfile)
 
-    def toggleComboSpells(self, enabled):
+    def toggleComboSpells(self, enabled: bool) -> None:
         self.context['ng_comboSpells']['enabled'] = enabled
         self.enabledProfile['config']['ng_comboSpells']['enabled'] = enabled
         self.db.update(self.enabledProfile)
 
-    def toggleSingleCombo(self, enabled, index):
+    def toggleSingleCombo(self, enabled: bool, index: int) -> None:
         self.context['ng_comboSpells']['items'][index]['enabled'] = enabled
         self.enabledProfile['config']['ng_comboSpells']['items'][index]['enabled'] = enabled
         self.db.update(self.enabledProfile)
 
-    def removeSpellByIndex(self, index, indexTable):
+    def removeSpellByIndex(self, index: int, indexTable: int) -> None:
         self.context['ng_comboSpells']['items'][index]['spells'].pop(indexTable)
         # self.enabledProfile['config']['ng_comboSpells']['items'][index]['spells'].pop(
         #     index)
         self.db.update(self.enabledProfile)
 
-    def changeComboName(self, name, index):
+    def changeComboName(self, name: str, index: int) -> None:
         self.context['ng_comboSpells']['items'][index]['name'] = name
         self.enabledProfile['config']['ng_comboSpells']['items'][index]['name'] = name
         self.db.update(self.enabledProfile)
 
-    def setCompare(self, compare, index):
+    def setCompare(self, compare: str, index: int) -> None:
         self.context['ng_comboSpells']['items'][index]['creatures']['compare'] = compare
         self.enabledProfile['config']['ng_comboSpells']['items'][index]['creatures']['compare'] = compare
         self.db.update(self.enabledProfile)
 
-    def changeCompareValue(self, value, index):
+    def changeCompareValue(self, value: str, index: int) -> None:
         if not value:
             return
         self.context['ng_comboSpells']['items'][index]['creatures']['value'] = int(value)
         self.enabledProfile['config']['ng_comboSpells']['items'][index]['creatures']['value'] = int(value)
         self.db.update(self.enabledProfile)
 
-    def setComboSpellName(self, name, index, indexSecond):
+    def setComboSpellName(self, name: str, index: int, indexSecond: int) -> None:
         self.context['ng_comboSpells']['items'][index]['spells'][indexSecond]['name'] = name
         self.enabledProfile['config']['ng_comboSpells']['items'][index]['spells'][indexSecond]['name'] = name
         self.db.update(self.enabledProfile)
 
-    def setComboSpellHotkey(self, key, index, indexSecond):
+    def setComboSpellHotkey(self, key: str, index: int, indexSecond: int) -> None:
         self.context['ng_comboSpells']['items'][index]['spells'][indexSecond]['hotkey'] = key
         self.enabledProfile['config']['ng_comboSpells']['items'][index]['spells'][indexSecond]['hotkey'] = key
         self.db.update(self.enabledProfile)
 
-    def toggleAutoHur(self, enabled):
+    def toggleAutoHur(self, enabled: bool) -> None:
         self.context['auto_hur']['enabled'] = enabled
         self.enabledProfile['config']['auto_hur']['enabled'] = enabled
         self.db.update(self.enabledProfile)
 
-    def toggleAutoHurPz(self, enabled):
+    def toggleAutoHurPz(self, enabled: bool) -> None:
         self.context['auto_hur']['pz'] = enabled
         self.enabledProfile['config']['auto_hur']['pz'] = enabled
         self.db.update(self.enabledProfile)
 
-    def setAutoHurHotkey(self, hotkey):
+    def setAutoHurHotkey(self, hotkey: str) -> None:
         self.context['auto_hur']['hotkey'] = hotkey
         self.enabledProfile['config']['auto_hur']['hotkey'] = hotkey
         self.db.update(self.enabledProfile)
 
-    def setAutoHurSpell(self, spell):
+    def setAutoHurSpell(self, spell: str) -> None:
         self.context['auto_hur']['spell'] = spell
         self.enabledProfile['config']['auto_hur']['spell'] = spell
         self.db.update(self.enabledProfile)
 
-    def toggleAlert(self, enabled):
+    def toggleAlert(self, enabled: bool) -> None:
         self.context['alert']['enabled'] = enabled
         self.enabledProfile['config']['alert']['enabled'] = enabled
         self.db.update(self.enabledProfile)
 
-    def toggleAlertCave(self, enabled):
+    def toggleAlertCave(self, enabled: bool) -> None:
         self.context['alert']['cave'] = enabled
         self.enabledProfile['config']['alert']['cave'] = enabled
         self.db.update(self.enabledProfile)
 
-    def toggleAlertSayPlayer(self, enabled):
+    def toggleAlertSayPlayer(self, enabled: bool) -> None:
         self.context['alert']['sayPlayer'] = enabled
         self.enabledProfile['config']['alert']['sayPlayer'] = enabled
         self.db.update(self.enabledProfile)
 
-    def toggleClearStatsPoison(self, enabled):
+    def toggleClearStatsPoison(self, enabled: bool) -> None:
         self.context['clear_stats']['poison'] = enabled
         self.enabledProfile['config']['clear_stats']['poison'] = enabled
         self.db.update(self.enabledProfile)
 
-    def setClearStatsPoisonHotkey(self, hotkey):
+    def setClearStatsPoisonHotkey(self, hotkey: str) -> None:
         self.context['clear_stats']['poison_hotkey'] = hotkey
         self.enabledProfile['config']['clear_stats']['poison_hotkey'] = hotkey
         self.db.update(self.enabledProfile)
 
-    def toggleManaPotionsByKey(self, manaPotionType, enabled):
+    def toggleManaPotionsByKey(self, manaPotionType: str, enabled: bool) -> None:
         self.context['healing']['potions'][manaPotionType]['enabled'] = enabled
 
-    def setManaPotionManaPercentageLessThanOrEqual(self, manaPotionType, manaPercentage):
+    def setManaPotionManaPercentageLessThanOrEqual(self, manaPotionType: str, manaPercentage: int) -> None:
         self.context['healing']['potions'][manaPotionType]['manaPercentageLessThanOrEqual'] = manaPercentage
 
-    def toggleHealingSpellsByKey(self, contextKey, enabled):
+    def toggleHealingSpellsByKey(self, contextKey: str, enabled: bool) -> None:
         self.context['healing']['spells'][contextKey]['enabled'] = enabled
 
-    def setHealingSpellsHpPercentage(self, contextKey, hpPercentage):
+    def setHealingSpellsHpPercentage(self, contextKey: str, hpPercentage: int) -> None:
         self.context['healing']['spells'][contextKey]['hpPercentageLessThanOrEqual'] = hpPercentage
 
-    def setHealingSpellsHotkey(self, contextKey, hotkey):
+    def setHealingSpellsHotkey(self, contextKey: str, hotkey: str) -> None:
         self.context['healing']['spells'][contextKey]['hotkey'] = hotkey

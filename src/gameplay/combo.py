@@ -5,6 +5,7 @@ from src.repositories.gameWindow.creatures import getNearestCreaturesCount
 from src.wiki.spells import spells
 from .core.tasks.useComboHotkey import UseComboHotkeyTask
 from .typings import Context
+from src.utils.safety import safe_int
 
 
 tasksOrchestrator = TasksOrchestrator()
@@ -13,8 +14,12 @@ tasksOrchestrator = TasksOrchestrator()
 # TODO: do not execute algorithm when has no combo spells
 # TODO: add unit tests
 # TODO: check if spell is casted, if not try cast again
-def comboSpells(context: Context):
-    if context['ng_statusBar']['mana'] is None or context['ng_comboSpells']['enabled'] == False:
+def comboSpells(context: Context) -> None:
+    status_bar = context.get('ng_statusBar') or {}
+    healing_cfg = context.get('healing') or {}
+    potions_cfg = healing_cfg.get('potions', {})
+    mana = safe_int(status_bar.get('mana'), label="mana")
+    if mana is None or context.get('ng_comboSpells', {}).get('enabled') == False:
         return
     currentTask = tasksOrchestrator.getCurrentTask(context)
     if currentTask is not None:
@@ -27,9 +32,12 @@ def comboSpells(context: Context):
         context['gameWindow']['monsters'])
     if nearestCreaturesCount == 0:
         return
-    if context['ng_statusBar']['hpPercentage'] <= context['healing']['potions']['firstHealthPotion']['hpPercentageLessThanOrEqual']:
+    hp_percentage = safe_int(status_bar.get('hpPercentage'), label="hpPercentage")
+    hp_limit = safe_int(potions_cfg.get('firstHealthPotion', {}).get('hpPercentageLessThanOrEqual'), label="hpLimit")
+    if hp_percentage is not None and hp_limit is not None and hp_percentage <= hp_limit:
         return
-    if context['ng_statusBar']['manaPercentage'] <= 30:
+    mana_percentage = safe_int(status_bar.get('manaPercentage'), label="manaPercentage")
+    if mana_percentage is not None and mana_percentage <= 30:
         return
     for key, comboSpell in enumerate(context['ng_comboSpells']['items']):
         if comboSpell['enabled'] == False:
@@ -39,7 +47,8 @@ def comboSpells(context: Context):
             # TODO: JUST COMBO WHEN CAITING WITH PALADIN (NOT FOR NOW)
             if context['ng_cave']['isAttackingSomeCreature'] == False:
                 return
-            if context['ng_statusBar']['mana'] < spells[spell['name']]['manaNeeded']:
+            mana_needed = safe_int(spells.get(spell['name'], {}).get('manaNeeded'), label="comboManaNeeded")
+            if mana_needed is None or mana < mana_needed:
                 return
             # TODO: ADD SPELL CATEGORY IN WIKI
             if spell['name'] in ['utito tempo', 'utamo tempo']:

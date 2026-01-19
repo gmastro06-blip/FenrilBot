@@ -138,6 +138,11 @@ context = {
     },
     'ng_lastPressedKey': None,
     'ng_pause': True,
+    'ng_should_stop': False,
+    'ng_debug': {
+        'last_tick_reason': None,
+        'last_exception': None,
+    },
     'ng_radar': {
         'coordinate': None,
         'previousCoordinate': None,

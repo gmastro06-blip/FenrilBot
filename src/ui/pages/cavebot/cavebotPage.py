@@ -1,4 +1,8 @@
 from tkinter import messagebox, ttk, StringVar, BooleanVar, filedialog
+from typing import Any, Dict, Optional
+import pathlib
+
+import cv2
 from src.repositories.radar.core import getCoordinate
 from src.utils.core import getScreenshot
 from .baseModal import BaseModal
@@ -10,10 +14,11 @@ from .refillCheckerModal import RefillCheckerModal
 from .ignoreCreaturesPage import IgnoreCreaturesPage
 import customtkinter
 import json
-from ...utils import genRanStr
+from src.ui.context import Context
+from src.ui.utils import genRanStr
 
 class CavebotPage(customtkinter.CTkToplevel):
-    def __init__(self, context):
+    def __init__(self, context: Context) -> None:
         super().__init__()
         self.context = context
 
@@ -273,22 +278,47 @@ class CavebotPage(customtkinter.CTkToplevel):
         self.saveConfigFrame.columnconfigure(0, weight=1, uniform='equal')
         self.saveConfigFrame.columnconfigure(1, weight=1, uniform='equal')
 
-    def openBaseModal(self):
+        self.statusFrame = customtkinter.CTkFrame(self)
+        self.statusFrame.grid(column=0, row=2, padx=10, pady=10, sticky='nsew')
+        self.statusFrame.columnconfigure(0, weight=1)
+        self.statusFrame.rowconfigure(0, weight=1)
+        self.statusLabel = customtkinter.CTkLabel(
+            self.statusFrame,
+            text='Coord: -\nWaypoint: -\nTask: -\nStatus: -',
+            anchor='w',
+            justify='left',
+            wraplength=600,
+        )
+        self.statusLabel.grid(row=0, column=0, sticky='nsew')
+        self.debugScreenshotButton = customtkinter.CTkButton(
+            self.statusFrame,
+            text='Save Debug Screenshot',
+            corner_radius=16,
+            fg_color="transparent",
+            border_color="#C20034",
+            border_width=2,
+            hover_color="#C20034",
+            command=self.saveDebugScreenshot,
+        )
+        self.debugScreenshotButton.grid(row=1, column=0, pady=(8, 0), sticky='w')
+        self.after(250, self.updateStatusBar)
+
+    def openBaseModal(self) -> None:
         if self.baseModal is None or not self.baseModal.winfo_exists():
             self.baseModal = BaseModal(self, onConfirm=lambda label, options: self.addWaypoint(
                 'refill', options))
 
-    def openRefillModal(self):
+    def openRefillModal(self) -> None:
         if self.refillModal is None or not self.refillModal.winfo_exists():
             self.refillModal = RefillModal(self, onConfirm=lambda label, options: self.addWaypoint(
                 'refill', options))
             
-    def openBackpackModal(self):
+    def openBackpackModal(self) -> None:
         if self.backpackModal is None or not self.backpackModal.winfo_exists():
             self.backpackModal = BuyBackpackModal(self, onConfirm=lambda label, options: self.addWaypoint(
                 'buyBackpack', options))
 
-    def openRefillCheckerModal(self):
+    def openRefillCheckerModal(self) -> None:
         waypointsLabels = self.context.getAllWaypointLabels()
         if len(waypointsLabels) == 0:
             messagebox.showerror(
@@ -298,8 +328,11 @@ class CavebotPage(customtkinter.CTkToplevel):
                 'refillChecker', options), waypointsLabels=waypointsLabels)
 
     # TODO: verificar se a coordenada é walkable
-    def addWaypoint(self, waypointType, options=None, ignore=False, passinho=False):
+    def addWaypoint(self, waypointType: str, options: Optional[Dict[str, Any]] = None, ignore: bool = False, passinho: bool = False) -> None:
         screenshot = getScreenshot()
+        if screenshot is None:
+            messagebox.showerror('Erro', 'The Tibia minimap needs to be visible!')
+            return
         coordinate = getCoordinate(screenshot)
         
         if coordinate is None:
@@ -317,11 +350,10 @@ class CavebotPage(customtkinter.CTkToplevel):
         elif waypointDirection == 'west':
             coordinate = (coordinate[0] - 1, coordinate[1], coordinate[2])
         
-        if options is None:
-            options = {}  # Cria um novo dicionário se options for None
+        options_dict: Dict[str, Any] = {} if options is None else options
         
-        waypoint = {'label': '', 'type': waypointType,
-                    'coordinate': coordinate, 'options': options.copy(), 'ignore': ignore, 'passinho': passinho}
+        waypoint: Dict[str, Any] = {'label': '', 'type': waypointType,
+                'coordinate': coordinate, 'options': options_dict.copy(), 'ignore': ignore, 'passinho': passinho}
         
         if waypointType == 'moveUp' or waypointType == 'moveDown' or waypointType == 'singleMove' or waypointType == 'rightClickDirection':
             if waypointDirection == 'center':
@@ -333,14 +365,14 @@ class CavebotPage(customtkinter.CTkToplevel):
         self.table.insert('', 'end', values=(
             waypoint['label'], waypoint['type'], waypoint['coordinate'], waypoint['options']))
 
-    def removeSelectedWaypoints(self):
+    def removeSelectedWaypoints(self) -> None:
         selectedWaypoints = self.table.selection()
         for waypoint in selectedWaypoints:
             index = self.table.index(waypoint)
             self.table.delete(waypoint)
             self.context.removeWaypointByIndex(index)
 
-    def onWaypointDoubleClick(self, event):
+    def onWaypointDoubleClick(self, event: Any) -> None:
         item = self.table.identify_row(event.y)
         if item:
             index = self.table.index(item)
@@ -371,32 +403,34 @@ class CavebotPage(customtkinter.CTkToplevel):
                     self.baseModal = BaseModal(
                         self, waypoint=waypoint, onConfirm=lambda label, options: self.updateWaypointByIndex(index, label=label, options=options))
 
-    def updateWaypointByIndex(self, index, label=None, options={}):
+    def updateWaypointByIndex(self, index: int, label: Optional[str] = None, options: Optional[Dict[str, Any]] = None) -> None:
+        if options is None:
+            options = {}
         self.context.updateWaypointByIndex(index, label=label, options=options)
         selecionado = self.table.focus()
         if selecionado:
-            currentValues = self.table.item(selecionado)['values']
+            currentValues = list(self.table.item(selecionado).get('values', []))
             if label is not None:
                 currentValues[0] = label
             currentValues[3] = options
             self.table.item(selecionado, values=currentValues)
             self.table.update()
 
-    def onToggleEnabledButton(self):
+    def onToggleEnabledButton(self) -> None:
         enabled = self.enabledVar.get()
         self.context.toggleCavebot(enabled)
 
-    def onToggleRunButton(self):
+    def onToggleRunButton(self) -> None:
         enabled = self.runToCreaturesVar.get()
         self.context.toggleRunToCreatures(enabled)
 
-    def ignoreCreaturesWindow(self):
+    def ignoreCreaturesWindow(self) -> None:
         if self.ignoreCreaturesPage is None or not self.ignoreCreaturesPage.winfo_exists():
             self.ignoreCreaturesPage = IgnoreCreaturesPage(self.context)
         else:
             self.ignoreCreaturesPage.focus()
 
-    def saveScript(self):
+    def saveScript(self) -> None:
         file = filedialog.asksaveasfilename(
             defaultextension=".pilotscript",
             filetypes=[("PilotNG Script", "*.pilotscript"), ("Todos os arquivos", "*.*")]
@@ -407,7 +441,7 @@ class CavebotPage(customtkinter.CTkToplevel):
                 json.dump(self.context.context['ng_cave']['waypoints']['items'], f, indent=4)
             messagebox.showinfo('Sucesso', 'Script salvo com sucesso!')
 
-    def loadScript(self):
+    def loadScript(self) -> None:
         file = filedialog.askopenfilename(
             defaultextension=".pilotscript",
             filetypes=[("PilotNG Script", "*.pilotscript"), ("Todos os arquivos", "*.*")]
@@ -415,10 +449,68 @@ class CavebotPage(customtkinter.CTkToplevel):
 
         if file:
             with open(file, 'r') as f:
-                self.table.delete()
+                self.table.delete(*self.table.get_children())
                 script = json.load(f)
                 self.context.loadScript(script)
                 for waypoint in script:
                     self.table.insert('', 'end', values=(
                         waypoint['label'], waypoint['type'], waypoint['coordinate'], waypoint['options']))
             messagebox.showinfo('Sucesso', 'Script carregado com sucesso!')
+
+    def updateStatusBar(self) -> None:
+        ng_radar = self.context.context.get('ng_radar', {})
+        coordinate = ng_radar.get('coordinate')
+        ng_cave = self.context.context.get('ng_cave', {})
+        waypoints = ng_cave.get('waypoints', {})
+        current_index = waypoints.get('currentIndex')
+        state = waypoints.get('state')
+        ng_debug = self.context.context.get('ng_debug', {})
+        last_reason = ng_debug.get('last_tick_reason')
+        last_exc = ng_debug.get('last_exception')
+        reasons = []
+        if self.context.context.get('ng_pause'):
+            reasons.append('paused')
+        if not ng_cave.get('enabled', False):
+            reasons.append('disabled')
+        if self.context.context.get('window') is None:
+            reasons.append('window not set')
+        if coordinate is None:
+            reasons.append('no coord')
+        if not waypoints.get('items'):
+            reasons.append('no waypoints')
+        if current_index is None:
+            reasons.append('no currentIndex')
+        orchestrator = self.context.context.get('ng_tasksOrchestrator')
+        current_task = orchestrator.getCurrentTask(self.context.context) if orchestrator is not None else None
+        if current_task is None:
+            reasons.append('no task')
+        status_text = 'ok' if not reasons else ', '.join(reasons)
+        task_text = f"{getattr(current_task, 'name', '-')}/{getattr(current_task, 'status', '-')}" if current_task is not None else '-'
+        coord_text = str(coordinate) if coordinate is not None else '-'
+        index_text = str(current_index) if current_index is not None else '-'
+        state_text = str(state) if state is not None else '-'
+        debug_text = str(last_reason) if last_reason is not None else '-'
+        exc_text = str(last_exc) if last_exc is not None else '-'
+        wrap = max(250, self.statusFrame.winfo_width() - 20)
+        self.statusLabel.configure(
+            wraplength=wrap,
+            text=(
+                f"Coord: {coord_text} | Waypoint: {index_text} | State: {state_text}\n"
+                f"Task: {task_text}\n"
+                f"Status: {status_text}\n"
+                f"Debug: {debug_text}\n"
+                f"Err: {exc_text}"
+            ),
+        )
+        self.after(250, self.updateStatusBar)
+
+    def saveDebugScreenshot(self) -> None:
+        screenshot = self.context.context.get('ng_screenshot')
+        if screenshot is None:
+            messagebox.showerror('Erro', 'No screenshot available yet.')
+            return
+        out_dir = pathlib.Path('debug')
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out_path = out_dir / 'cavebot_screenshot.png'
+        cv2.imwrite(str(out_path), screenshot)
+        messagebox.showinfo('Sucesso', f'Debug screenshot saved to {out_path}')

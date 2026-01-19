@@ -78,7 +78,7 @@ def parse_coord(text: str) -> Optional[Tuple[int, int, int]]:
 
 
 def parse_random_coords(text: str) -> List[Tuple[int, int, int]]:
-    coords = []
+    coords: List[Tuple[int, int, int]] = []
     match = RANDOM_RE.search(text)
     if not match:
         return coords
@@ -162,16 +162,16 @@ def convert_file(path: pathlib.Path, report: Dict) -> List[Dict]:
         if token == "random":
             coords = parse_random_coords(line)
             if coords:
-                coord = coords[0]
-                last_coord = coord
+                random_coord = coords[0]
+                last_coord = random_coord
                 waypoints.append(
-                    make_waypoint("walk", coord, current_label, {}, True, False)
+                    make_waypoint("walk", random_coord, current_label, {}, True, False)
                 )
                 if len(coords) > 1:
                     report.setdefault("random_choices", []).append({
                         "file": str(path),
                         "line": line,
-                        "used": coord,
+                        "used": random_coord,
                         "choices": coords,
                     })
                 current_label = ""
@@ -329,7 +329,7 @@ def convert_file(path: pathlib.Path, report: Dict) -> List[Dict]:
     return waypoints
 
 
-def convert_all():
+def convert_all() -> None:
     OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
     report: Dict = {}
 

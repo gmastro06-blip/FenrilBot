@@ -3,12 +3,13 @@ import re
 import win32gui
 import customtkinter
 import tkinter as tk
-from ..utils import genRanStr
+from typing import Any, List
+from src.ui.utils import genRanStr
 from tkinter import filedialog, messagebox
 import json
 
 class ConfigPage(customtkinter.CTkToplevel):
-    def __init__(self, context):
+    def __init__(self, context: Any) -> None:
         super().__init__()
         self.context = context
 
@@ -198,14 +199,14 @@ class ConfigPage(customtkinter.CTkToplevel):
         self.saveConfigFrame.columnconfigure(0, weight=1)
         self.saveConfigFrame.columnconfigure(1, weight=1)
 
-    def getGameWindows(self):
-        def enum_windows_callback(hwnd, results):
+    def getGameWindows(self) -> List[str]:
+        def enum_windows_callback(hwnd: int, results: List[str]) -> None:
             if win32gui.IsWindowVisible(hwnd):
                 window_title = win32gui.GetWindowText(hwnd)
                 if window_title:
                     results.append(window_title)
 
-        results = []
+        results: List[str] = []
         win32gui.EnumWindows(enum_windows_callback, results)
 
         tibia_windows = [
@@ -216,15 +217,15 @@ class ConfigPage(customtkinter.CTkToplevel):
 
         return tibia_windows if tibia_windows else results
 
-    def refreshWindows(self):
+    def refreshWindows(self) -> None:
         self.windowsCombobox['values'] = self.getGameWindows()
 
-    def onChangeWindow(self, _):
+    def onChangeWindow(self, _: Any) -> None:
         selectedWindow = self.windowsCombobox.get()
         if not self.context.setWindowTitle(selectedWindow):
             messagebox.showerror('Erro', 'Tibia window not found.')
         
-    def onChangeShovelHotkey(self, event):
+    def onChangeShovelHotkey(self, event: Any) -> None:
         key = event.char
         key_pressed = event.keysym
         if key == '\b':
@@ -236,7 +237,7 @@ class ConfigPage(customtkinter.CTkToplevel):
             self.context.setShovelHotkey(key_pressed)
             self.shovelHotkeyEntryVar.set(key_pressed)
 
-    def onChangeRopeHotkey(self, event):
+    def onChangeRopeHotkey(self, event: Any) -> None:
         key = event.char
         key_pressed = event.keysym
         if key == '\b':
@@ -248,7 +249,7 @@ class ConfigPage(customtkinter.CTkToplevel):
             self.context.setRopeHotkey(key_pressed)
             self.ropeHotkeyEntryVar.set(key_pressed)
 
-    def onChangeAutoHurHotkey(self, event):
+    def onChangeAutoHurHotkey(self, event: Any) -> None:
         key = event.char
         key_pressed = event.keysym
         if key == '\b':
@@ -260,7 +261,7 @@ class ConfigPage(customtkinter.CTkToplevel):
             self.context.setAutoHurHotkey(key_pressed)
             self.autoHurHotkeyEntryVar.set(key_pressed)
 
-    def onChangePoisonHotkey(self, event):
+    def onChangePoisonHotkey(self, event: Any) -> None:
         key = event.char
         key_pressed = event.keysym
         if key == '\b':
@@ -272,28 +273,28 @@ class ConfigPage(customtkinter.CTkToplevel):
             self.context.setClearStatsPoisonHotkey(key_pressed)
             self.poisonHotkeyEntryVar.set(key_pressed)
 
-    def onToggleAutoHur(self):
+    def onToggleAutoHur(self) -> None:
         self.context.toggleAutoHur(self.checkVar.get())
         
-    def onToggleAutoHurPz(self):
+    def onToggleAutoHurPz(self) -> None:
         self.context.toggleAutoHurPz(self.checkPzVar.get())
 
-    def onToggleAlert(self):
+    def onToggleAlert(self) -> None:
         self.context.toggleAlert(self.alertCheckVar.get())
         
-    def onToggleAlertCave(self):
+    def onToggleAlertCave(self) -> None:
         self.context.toggleAlertCave(self.alertCaveCheckVar.get())
 
-    def onToggleAlertSayPlayer(self):
+    def onToggleAlertSayPlayer(self) -> None:
         self.context.toggleAlertSayPlayer(self.alertSayPlayerCheckVar.get())
 
-    def onTogglePoison(self):
+    def onTogglePoison(self) -> None:
         self.context.toggleClearStatsPoison(self.checkPoisonVar.get())
 
-    def setHurSpell(self, _):
+    def setHurSpell(self, _: Any) -> None:
         self.context.setAutoHurSpell(self.hurSpellCombobox.get())
 
-    def saveCfg(self):
+    def saveCfg(self) -> None:
         file = filedialog.asksaveasfilename(
             defaultextension=".pilotng",
             filetypes=[("PilotNG Cfg", "*.pilotng"), ("Todos os arquivos", "*.*")]
@@ -313,7 +314,7 @@ class ConfigPage(customtkinter.CTkToplevel):
                 json.dump(cfg, f, indent=4)
             messagebox.showinfo('Sucesso', 'Cfg salva com sucesso!')
 
-    def loadCfg(self):
+    def loadCfg(self) -> None:
         file = filedialog.askopenfilename(
             defaultextension=".pilotng",
             filetypes=[("PilotNG Cfg", "*.pilotng"), ("Todos os arquivos", "*.*")]

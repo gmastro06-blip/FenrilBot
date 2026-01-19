@@ -1,10 +1,10 @@
-from typing import Iterable, List, Tuple
+from typing import List, Optional, Tuple
 
 import pyautogui
 
 from .ino import sendCommandArduino
 
-def getAsciiFromKey(key: str | None) -> int:
+def getAsciiFromKey(key: Optional[str]) -> int:
     if not key:
         return 0
 
@@ -65,10 +65,10 @@ def getAsciiFromKey(key: str | None) -> int:
     else:
         return 0
 
-def _normalize_keys(args: Tuple[object, ...]) -> Tuple[List[object], bool]:
+def _normalize_keys(args: Tuple[object, ...]) -> Tuple[List[str], bool]:
     if len(args) == 1 and isinstance(args[0], (list, tuple)):
-        return list(args[0]), True
-    return list(args), False
+        return [str(key) for key in args[0]], True
+    return [str(key) for key in args], False
 
 def hotkey(*args: object) -> None:
     keys, had_list = _normalize_keys(args)

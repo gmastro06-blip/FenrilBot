@@ -1,5 +1,7 @@
 from time import time
-from ...typings import Context
+from typing import Optional
+
+from src.gameplay.typings import Context
 from .common.base import BaseTask
 
 
@@ -7,7 +9,7 @@ class TasksOrchestrator:
     rootTask = None
 
     # TODO: add unit tests
-    def setRootTask(self, context: Context, task: BaseTask):
+    def setRootTask(self, context: Context, task: BaseTask) -> None:
         currentTask = self.getCurrentTask(context)
         if currentTask is not None:
             self.interruptTasks(context, currentTask)
@@ -16,21 +18,21 @@ class TasksOrchestrator:
         self.rootTask = task
 
     # TODO: add unit tests
-    def interruptTasks(self, context: Context, task) -> Context:
+    def interruptTasks(self, context: Context, task: BaseTask) -> Context:
         context = task.onInterrupt(context)
         if task.parentTask is not None:
             return self.interruptTasks(context, task.parentTask)
         return context
 
     # TODO: add unit tests
-    def reset(self):
+    def reset(self) -> None:
         self.rootTask = None
         # terminate all tasks in the tree
 
-    def getCurrentTask(self, context: Context):
+    def getCurrentTask(self, context: Context) -> Optional[BaseTask]:
         return self.getNestedTask(self.rootTask, context)
 
-    def getCurrentTaskName(self, context: Context):
+    def getCurrentTaskName(self, context: Context) -> str:
         currentTask = self.getNestedTask(self.rootTask, context)
         if currentTask is None:
             return 'unknown'
@@ -38,7 +40,9 @@ class TasksOrchestrator:
             return currentTask.name
         return currentTask.rootTask.name
 
-    def getNestedTask(self, task, context: Context):
+    def getNestedTask(self, task: Optional[BaseTask], context: Context) -> Optional[BaseTask]:
+        if task is None:
+            return None
         if hasattr(task, 'tasks'):
             if task.status == 'notStarted':
                 context = task.onBeforeStart(context)
@@ -55,7 +59,7 @@ class TasksOrchestrator:
         self.checkHooks(currentTask, context)
         return self.handleTasks(context)
 
-    def checkHooks(self, currentTask, context: Context) -> Context:
+    def checkHooks(self, currentTask: Optional[BaseTask], context: Context) -> Context:
         if currentTask is not None and currentTask.manuallyTerminable and currentTask.shouldManuallyComplete(context):
             currentTask.status = 'completed'
             currentTask.statusReason = 'completed'
@@ -88,7 +92,7 @@ class TasksOrchestrator:
                 currentTask.retryCount += 1
                 return currentTask.onBeforeRestart(context)
             return context
-        if currentTask is not None and currentTask.status == 'notStarted' or currentTask.status == 'awaitingDelayBeforeStart':
+        if currentTask is not None and (currentTask.status == 'notStarted' or currentTask.status == 'awaitingDelayBeforeStart'):
             currentTask.isRestarting = False
             if currentTask.startedAt is None:
                 currentTask.startedAt = time()
@@ -129,7 +133,7 @@ class TasksOrchestrator:
         return context
 
     # TODO: add unit tests
-    def markCurrentTaskAsFinished(self, task, context: Context, disableManualTermination=False, shouldTimeoutTreeWhenTimeout=False):
+    def markCurrentTaskAsFinished(self, task: BaseTask, context: Context, disableManualTermination: bool = False, shouldTimeoutTreeWhenTimeout: bool = False) -> Context:
         if task.manuallyTerminable and disableManualTermination == False:
             task.status = 'awaitingManualTermination'
             return context
@@ -156,11 +160,11 @@ class TasksOrchestrator:
                     task.parentTask, context)
         return context
 
-    def didPassedEnoughTimeToExecute(self, task):
+    def didPassedEnoughTimeToExecute(self, task: BaseTask) -> bool:
         return time() - task.startedAt >= task.delayBeforeStart
 
-    def didPassedEnoughDelayAfterTaskComplete(self, task):
+    def didPassedEnoughDelayAfterTaskComplete(self, task: BaseTask) -> bool:
         return time() - task.finishedAt >= task.delayAfterComplete
 
-    def didTaskTimedout(self, task):
+    def didTaskTimedout(self, task: BaseTask) -> bool:
         return task.delayOfTimeout > 0 and time() - task.startedAt >= task.delayOfTimeout

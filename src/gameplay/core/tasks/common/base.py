@@ -1,12 +1,27 @@
+from __future__ import annotations
+
 from time import time
-from ....typings import Context
+from typing import Optional
+
+from src.gameplay.typings import Context
 
 
 class BaseTask:
-    def __init__(self, delayBeforeStart=0, delayAfterComplete=0, delayOfTimeout=0, isRootTask=False, manuallyTerminable=False, name='baseTask', parentTask=None, shouldTimeoutTreeWhenTimeout=False):
+    def __init__(
+        self,
+        delayBeforeStart: float = 0,
+        delayAfterComplete: float = 0,
+        delayOfTimeout: float = 0,
+        isRootTask: bool = False,
+        manuallyTerminable: bool = False,
+        name: str = 'baseTask',
+        parentTask: Optional[BaseTask] = None,
+        shouldTimeoutTreeWhenTimeout: bool = False,
+    ) -> None:
         self.createdAt = time()
-        self.startedAt = None
-        self.finishedAt = None
+        self.startedAt: Optional[float] = None
+        self.finishedAt: Optional[float] = None
+        self.isRestarting: bool = False
         self.terminable = True
         self.delayBeforeStart = delayBeforeStart
         self.delayAfterComplete = delayAfterComplete
@@ -15,18 +30,18 @@ class BaseTask:
         self.isRootTask = isRootTask
         self.manuallyTerminable = manuallyTerminable
         self.name = name
-        self.parentTask = parentTask
+        self.parentTask: Optional[BaseTask] = parentTask
         self.retryCount = 0
-        self.rootTask = None
+        self.rootTask: Optional[BaseTask] = None
         self.shouldTimeoutTreeWhenTimeout = shouldTimeoutTreeWhenTimeout
         self.status = 'notStarted'
-        self.statusReason = None
+        self.statusReason: Optional[str] = None
 
-    def setParentTask(self, parentTask):
+    def setParentTask(self, parentTask: Optional[BaseTask]) -> BaseTask:
         self.parentTask = parentTask
         return self
 
-    def setRootTask(self, rootTask):
+    def setRootTask(self, rootTask: Optional[BaseTask]) -> BaseTask:
         self.rootTask = rootTask
         return self
 

@@ -96,7 +96,7 @@ def hasSkull(content: GrayImage, creatures: CreatureList) -> bool:
             return True
     return False
 
-def checkDust(content: GrayImage, creatures: CreatureList):
+def checkDust(content: GrayImage, creatures: CreatureList) -> CreatureList:
     for creatureIndex, creature in enumerate(creatures):
         if creature['name'] != 'Unknown':
             continue

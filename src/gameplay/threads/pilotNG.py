@@ -36,7 +36,12 @@ class PilotNGThread:
     def mainloop(self):
         while True:
             try:
+                if self.context.context.get('ng_should_stop'):
+                    break
+                if 'ng_debug' not in self.context.context:
+                    self.context.context['ng_debug'] = {'last_tick_reason': None, 'last_exception': None}
                 if self.context.context['ng_pause']:
+                    self.context.context['ng_debug']['last_tick_reason'] = 'paused'
                     sleep(1)
                     continue
                 startTime = time()
@@ -62,6 +67,9 @@ class PilotNGThread:
             except KeyboardInterrupt:
                 sys.exit()
             except Exception as e:
+                if 'ng_debug' not in self.context.context:
+                    self.context.context['ng_debug'] = {'last_tick_reason': None, 'last_exception': None}
+                self.context.context['ng_debug']['last_exception'] = f"{type(e).__name__}: {e}"
                 print(f"An exception occurred: {e}")
                 print(traceback.format_exc())
 
@@ -88,13 +96,23 @@ class PilotNGThread:
     def handleGameplayTasks(self, context):
         # TODO: func to check if coord is none
         if context['ng_radar']['coordinate'] is None:
+            if 'ng_debug' in context:
+                context['ng_debug']['last_tick_reason'] = 'no coord'
             return context
         if any(coord is None for coord in context['ng_radar']['coordinate']):
+            if 'ng_debug' in context:
+                context['ng_debug']['last_tick_reason'] = 'partial coord'
+            return context
+        if not context.get('ng_cave', {}).get('waypoints', {}).get('items'):
+            if 'ng_debug' in context:
+                context['ng_debug']['last_tick_reason'] = 'no waypoints'
             return context
         context['ng_cave']['closestCreature'] = getClosestCreature(
             context['gameWindow']['monsters'], context['ng_radar']['coordinate'])
         currentTask = context['ng_tasksOrchestrator'].getCurrentTask(context)
         if currentTask is not None and currentTask.name == 'selectChatTab':
+            if 'ng_debug' in context:
+                context['ng_debug']['last_tick_reason'] = 'selectChatTab'
             return context
         if len(context['loot']['corpsesToLoot']) > 0 and context['ng_cave']['runToCreatures'] == True and context['ng_cave']['enabled']:
             context['way'] = 'lootCorpses'
@@ -125,15 +143,25 @@ class PilotNGThread:
             elif context['way'] == 'waypoint':
                 if context['ng_tasksOrchestrator'].getCurrentTask(context) is None:
                     currentWaypointIndex = context['ng_cave']['waypoints']['currentIndex']
+                    if currentWaypointIndex is None:
+                        if 'ng_debug' in context:
+                            context['ng_debug']['last_tick_reason'] = 'no currentIndex'
+                        return context
                     currentWaypoint = context['ng_cave']['waypoints']['items'][currentWaypointIndex]
                     context['ng_tasksOrchestrator'].setRootTask(
                         context, resolveTasksByWaypoint(currentWaypoint))
+                    if 'ng_debug' in context:
+                        context['ng_debug']['last_tick_reason'] = f"set task: {currentWaypoint.get('type', '?')}"
         elif context['ng_cave']['enabled'] and context['ng_tasksOrchestrator'].getCurrentTask(context) is None:
                 currentWaypointIndex = context['ng_cave']['waypoints']['currentIndex']
                 if currentWaypointIndex is not None:
                     currentWaypoint = context['ng_cave']['waypoints']['items'][currentWaypointIndex]
                     context['ng_tasksOrchestrator'].setRootTask(
                         context, resolveTasksByWaypoint(currentWaypoint))
+                    if 'ng_debug' in context:
+                        context['ng_debug']['last_tick_reason'] = f"set task: {currentWaypoint.get('type', '?')}"
 
         context['gameWindow']['previousMonsters'] = context['gameWindow']['monsters']
+        if 'ng_debug' in context and context['ng_debug'].get('last_tick_reason') in (None, 'selectChatTab'):
+            context['ng_debug']['last_tick_reason'] = 'running'
         return context

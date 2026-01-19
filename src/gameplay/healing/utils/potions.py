@@ -1,24 +1,35 @@
 # TODO: add typings
 # TODO: add unit tests
-def matchHpHealing(healing, statusBar):
-    if statusBar is None or statusBar.get('hpPercentage') is None:
+from typing import Optional
+
+from src.utils.safety import safe_int
+
+
+def matchHpHealing(healing: dict, statusBar: Optional[dict]) -> bool:
+    if statusBar is None:
         return False
-    if healing['hpPercentageLessThanOrEqual'] is not None:
-        if statusBar['hpPercentage'] > healing['hpPercentageLessThanOrEqual']:
-            return False
-    if healing['manaPercentageGreaterThanOrEqual'] is not None:
-        if statusBar['hpPercentage'] < healing['manaPercentageGreaterThanOrEqual']:
-            return False
+    hp_percentage = safe_int(statusBar.get('hpPercentage'), label="hpPercentage")
+    mana_percentage = safe_int(statusBar.get('manaPercentage'), label="manaPercentage")
+    hp_limit = safe_int(healing.get('hpPercentageLessThanOrEqual'), label="hpLimit")
+    mana_min = safe_int(healing.get('manaPercentageGreaterThanOrEqual'), label="manaMin")
+    if hp_percentage is None:
+        return False
+    if hp_limit is not None and hp_percentage > hp_limit:
+        return False
+    if mana_min is not None and mana_percentage is not None and mana_percentage < mana_min:
+        return False
     return True
 
 
 # TODO: add typings
 # TODO: add unit tests
-def matchManaHealing(healing, statusBar):
-    if statusBar is None or statusBar.get('manaPercentage') is None:
+def matchManaHealing(healing: dict, statusBar: Optional[dict]) -> bool:
+    if statusBar is None:
         return False
-    if healing['manaPercentageLessThanOrEqual'] is None:
+    mana_percentage = safe_int(statusBar.get('manaPercentage'), label="manaPercentage")
+    mana_limit = safe_int(healing.get('manaPercentageLessThanOrEqual'), label="manaLimit")
+    if mana_percentage is None or mana_limit is None:
         return False
-    if statusBar['manaPercentage'] > healing['manaPercentageLessThanOrEqual']:
+    if mana_percentage > mana_limit:
         return False
     return True
