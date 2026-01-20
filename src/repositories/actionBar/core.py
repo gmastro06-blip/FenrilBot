@@ -1,6 +1,7 @@
 import pytesseract
+import math
 import numpy as np
-from typing import Union
+from typing import Any, Union, cast
 import src.repositories.actionBar.extractors as actionBarExtractors
 import src.repositories.actionBar.locators as actionBarLocators
 from src.shared.typings import GrayImage
@@ -23,7 +24,12 @@ def getSlotCount(screenshot: GrayImage, slot: int) -> Union[int, None]:
     
     number_region_image = np.array(digits, dtype=np.uint8)
 
-    stretch = exposure.rescale_intensity(number_region_image, in_range=(50,175), out_range=(0,255)).astype(np.uint8)
+    # skimage stubs sometimes type in_range as str only; cast keeps type-checkers happy.
+    stretch = exposure.rescale_intensity(
+        number_region_image,
+        in_range=cast(Any, (50, 175)),
+        out_range=cast(Any, (0, 255)),
+    ).astype(np.uint8)
 
     equalized = exposure.equalize_hist(stretch)
 

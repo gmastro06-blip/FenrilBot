@@ -3,19 +3,24 @@ from .potionsTab import PotionsTab
 from .spellsTab import SpellsTab
 from .foodTab import FoodTab
 import customtkinter
-from ...utils import genRanStr
+from typing import Any
+
+from src.ui.utils import genRanStr
 
 class HealingPage(customtkinter.CTkToplevel):
-    def __init__(self, context):
+    def __init__(self, context: Any) -> None:
         super().__init__()
         self.context = context
 
         self.title(genRanStr())
         self.resizable(False, False)
 
-        self.tabControl = customtkinter.CTkTabview(self, segmented_button_selected_color='#C20034',
-                                                segmented_button_selected_hover_color='#870125',
-                                                segmented_button_unselected_hover_color='#870125')
+        self.tabControl = customtkinter.CTkTabview(
+            self,
+            segmented_button_selected_color='#C20034',
+            segmented_button_selected_hover_color='#870125',
+            segmented_button_unselected_hover_color='#870125',
+        )
 
         self.tabControl.add('High Priority')
         self.tabControl.add('Potions')

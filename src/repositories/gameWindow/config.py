@@ -1,4 +1,5 @@
 import pathlib
+from typing import Any, Dict
 from src.utils.core import hashit
 from src.utils.image import loadFromRGBToGray
 
@@ -39,7 +40,8 @@ gameWindowSizes = {
     720: (480, 352),
     1080: (960, 704)
 }
-gameWindowCache = {
+# Cache is mutated at runtime; keep it loosely typed for type-checkers.
+gameWindowCache: Dict[str, Dict[str, Any]] = {
     'left': {'arrow': None, 'position': None},
     'right': {'arrow': None, 'position': None},
 }

@@ -3,7 +3,7 @@ import sys
 import os
 import time
 import argparse
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple, cast
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -13,6 +13,11 @@ import cv2
 import numpy as np
 import pygetwindow as gw
 from typing import Callable
+
+try:
+    from cv2.typing import MatLike
+except Exception:  # pragma: no cover
+    MatLike = Any  # type: ignore[misc,assignment]
 
 import importlib
 
@@ -47,6 +52,11 @@ except Exception:  # pragma: no cover
 
 
 Rect = Tuple[int, int, int, int]  # (left, top, width, height)
+
+
+def _imwrite(path: pathlib.Path, img: np.ndarray) -> None:
+    # OpenCV stubs can be picky; cast keeps type-checkers happy.
+    cv2.imwrite(str(path), cast(MatLike, img))
 
 
 def _client_rect(w: gw.Win32Window) -> Rect:
@@ -313,7 +323,7 @@ def main(argv: Optional[list[str]] = None) -> None:
         if i == 0 or args.save or is_black or tools_pos is None:
             ts = int(time.time())
             path = out_dir / f"debug_dual_capture_{ts}_gray_{i}.png"
-            cv2.imwrite(str(path), frame)
+            _imwrite(path, cast(np.ndarray, frame))
             print(f"Saved: {path}")
 
         print(

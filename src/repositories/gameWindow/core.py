@@ -9,10 +9,16 @@ from .config import arrowsImagesHashes, gameWindowCache, images
 def getLeftArrowPosition(screenshot: GrayImage) -> Union[BBox, None]:
     global gameWindowCache
     if gameWindowCache['left']['position'] is not None:
-        leftArrowImage = images['arrows'][gameWindowCache['left']['arrow']]
-        leftArrowImageHash = hashit(leftArrowImage)
-        if arrowsImagesHashes.get(leftArrowImageHash, None) is not None:
-            return gameWindowCache['left']['position']
+        arrow_key = gameWindowCache['left'].get('arrow')
+        if not isinstance(arrow_key, str):
+            gameWindowCache['left']['position'] = None
+        elif arrow_key in images['arrows']:
+            leftArrowImage = images['arrows'][arrow_key]
+            leftArrowImageHash = hashit(leftArrowImage)
+            if arrowsImagesHashes.get(leftArrowImageHash, None) is not None:
+                return gameWindowCache['left']['position']
+        else:
+            gameWindowCache['left']['position'] = None
     leftGameWindow01Position = locate(
         screenshot, images['arrows']['leftGameWindow01'], confidence=0.95)
     if leftGameWindow01Position is not None:
@@ -38,16 +44,24 @@ def getLeftArrowPosition(screenshot: GrayImage) -> Union[BBox, None]:
         gameWindowCache['left']['position'] = leftGameWindow00Position
         return leftGameWindow00Position
 
+    return None
+
 
 # TODO: add unit tests
 # TODO: add perf
 def getRightArrowPosition(screenshot: GrayImage) -> Union[BBox, None]:
     global gameWindowCache
     if gameWindowCache['right']['position'] is not None:
-        rightArrowImage = images['arrows'][gameWindowCache['right']['arrow']]
-        rightArrowImageHash = hashit(rightArrowImage)
-        if arrowsImagesHashes.get(rightArrowImageHash, None) is not None:
-            return gameWindowCache['right']['position']
+        arrow_key = gameWindowCache['right'].get('arrow')
+        if not isinstance(arrow_key, str):
+            gameWindowCache['right']['position'] = None
+        elif arrow_key in images['arrows']:
+            rightArrowImage = images['arrows'][arrow_key]
+            rightArrowImageHash = hashit(rightArrowImage)
+            if arrowsImagesHashes.get(rightArrowImageHash, None) is not None:
+                return gameWindowCache['right']['position']
+        else:
+            gameWindowCache['right']['position'] = None
     rightGameWindow01Position = locate(
         screenshot, images['arrows']['rightGameWindow01'], confidence=0.95)
     if rightGameWindow01Position is not None:
@@ -73,10 +87,12 @@ def getRightArrowPosition(screenshot: GrayImage) -> Union[BBox, None]:
         gameWindowCache['right']['position'] = rightGameWindow00Position
         return rightGameWindow00Position
 
+    return None
+
 
 # TODO: add unit tests
 # TODO: add perf
-def getCoordinate(screenshot: GrayImage, gameWindowSize) -> Union[BBox, None]:
+def getCoordinate(screenshot: GrayImage, gameWindowSize: Tuple[int, int]) -> Union[BBox, None]:
     global gameWindowCache
     leftArrowPosition = getLeftArrowPosition(screenshot)
     if leftArrowPosition is None:
@@ -91,7 +107,7 @@ def getCoordinate(screenshot: GrayImage, gameWindowSize) -> Union[BBox, None]:
 
 # TODO: add unit tests
 # TODO: add perf
-def getImageByCoordinate(screenshot: GrayImage, coordinate, gameWindowSize) -> GrayImage:
+def getImageByCoordinate(screenshot: GrayImage, coordinate: BBox, gameWindowSize: Tuple[int, int]) -> GrayImage:
     return screenshot[coordinate[1]:coordinate[1] +
                     gameWindowSize[1], coordinate[0]:coordinate[0] + gameWindowSize[0]]
 
@@ -122,5 +138,7 @@ def isHoleOpen(gameWindowImage: GrayImage, holeOpenImage: GrayImage, coordinate:
     # TODO: export from config
     slotWidth = len(gameWindowImage[1]) // 15
     slot = getSlotFromCoordinate(coordinate, targetCoordinate)
+    if slot is None:
+        return False
     slotImage = getSlotImage(gameWindowImage, slot, slotWidth)
     return locate(slotImage, holeOpenImage) is not None

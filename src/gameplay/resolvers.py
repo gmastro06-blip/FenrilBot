@@ -20,6 +20,7 @@ from .core.tasks.walkToWaypoint import WalkToWaypointTask
 from .core.tasks.travel import TravelTask
 from .core.tasks.singleMove import SingleMoveTask
 from .core.tasks.rightClickDirectionWaypoint import RightClickDirectionWaypointTask
+from .core.tasks.setNextWaypoint import SetNextWaypointTask
 
 # TODO: add unit tests
 def resolveTasksByWaypoint(waypoint: Waypoint) -> Union[BaseTask, VectorTask]:
@@ -61,3 +62,6 @@ def resolveTasksByWaypoint(waypoint: Waypoint) -> Union[BaseTask, VectorTask]:
         return UseLadderWaypointTask(waypoint)
     elif waypoint['type'] == 'walk':
         return WalkToWaypointTask(waypoint['coordinate'], waypoint['ignore'], waypoint['passinho'])
+
+    # Fallback: unknown waypoint type.
+    return SetNextWaypointTask()

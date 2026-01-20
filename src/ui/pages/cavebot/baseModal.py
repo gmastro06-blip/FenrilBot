@@ -1,9 +1,20 @@
 import customtkinter
-from ...utils import genRanStr
+from typing import Any, Callable, Mapping, Optional
+
+from src.ui.utils import genRanStr
+
+
+def _noop_on_confirm(_label: str, _payload: dict) -> None:
+    return None
 
 class BaseModal(customtkinter.CTkToplevel):
-    def __init__(self, parent, waypoint=None, onConfirm=lambda: {}):
-        super().__init__(parent)        
+    def __init__(
+        self,
+        parent: Any,
+        waypoint: Optional[Mapping[str, Any]] = None,
+        onConfirm: Callable[[str, dict], Any] = _noop_on_confirm,
+    ) -> None:
+        super().__init__(parent)
         self.onConfirm = onConfirm
 
         self.title(genRanStr())
@@ -24,8 +35,10 @@ class BaseModal(customtkinter.CTkToplevel):
         self.labelEntry = customtkinter.CTkEntry(self.frame)
         self.labelEntry.grid(
             row=1, column=0, sticky='nsew', padx=10, pady=10)
-        if waypoint is not None and waypoint['label']:
-            self.labelEntry.insert(0, waypoint['label'])
+        if waypoint is not None:
+            label = waypoint.get('label')
+            if label:
+                self.labelEntry.insert(0, str(label))
 
         self.confirmButton = customtkinter.CTkButton(
             self, text='Confirm', command=self.confirm,
@@ -41,6 +54,6 @@ class BaseModal(customtkinter.CTkToplevel):
         self.cancelButton.grid(
             row=6, column=1, padx=(5, 10), pady=(5, 10), sticky='nsew')
 
-    def confirm(self):
+    def confirm(self) -> None:
         self.onConfirm(self.labelEntry.get(), {})
         self.destroy()

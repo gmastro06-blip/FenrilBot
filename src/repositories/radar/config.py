@@ -1,11 +1,13 @@
 import numpy as np
+import numpy.typing as npt
 import pathlib
+from typing import Any, Dict
 from src.utils.core import hashit
 from src.utils.image import loadFromRGBToGray
 
 
 currentPath = pathlib.Path(__file__).parent.resolve()
-coordinates = {}
+coordinates: Dict[str, Any] = {}
 dimensions = {
     'width': 106,
     'height': 109,
@@ -149,7 +151,7 @@ nonWalkablePixelsColors = [
     pixelsColorsValues['water'],
     pixelsColorsValues['vacuumOrUndiscoveredArea'],
 ]
-walkableFloorsSqms = np.ndarray(shape=(16, 2048, 2560), dtype=np.uint8)
+walkableFloorsSqms: npt.NDArray[np.uint8] = np.ndarray(shape=(16, 2048, 2560), dtype=np.uint8)
 availableTilesFrictions = np.array(
     [70, 90, 95, 100, 110, 125, 140, 150, 160, 200, 250])
 breakpointTileMovementSpeed = {

@@ -1,10 +1,30 @@
 from tkinter import messagebox, BooleanVar
 import customtkinter
-from ...utils import genRanStr
+from typing import Any, Callable, Mapping, Optional, Sequence
+
+from src.ui.utils import genRanStr
+
+
+def _noop_on_confirm(_label: Optional[str], _payload: dict) -> None:
+    return None
+
+
+def _safe_positive_int(value: str) -> int:
+    value = value.strip()
+    if not value.isdigit():
+        return 0
+    parsed = int(value)
+    return parsed if parsed > 0 else 0
 
 class RefillCheckerModal(customtkinter.CTkToplevel):
-    def __init__(self, parent, onConfirm=lambda: {}, waypoint=None, waypointsLabels=[]):
-        super().__init__(parent)        
+    def __init__(
+        self,
+        parent: Any,
+        onConfirm: Callable[[Optional[str], dict], Any] = _noop_on_confirm,
+        waypoint: Optional[Mapping[str, Any]] = None,
+        waypointsLabels: Optional[Sequence[str]] = None,
+    ) -> None:
+        super().__init__(parent)
         self.onConfirm = onConfirm
 
         self.title(genRanStr())
@@ -20,7 +40,8 @@ class RefillCheckerModal(customtkinter.CTkToplevel):
 
         self.healthEnabledVar = BooleanVar()
         if waypoint is not None:
-            healthEnabled = waypoint['options'].get('healthEnabled')
+            options = waypoint.get('options')
+            healthEnabled = (options or {}).get('healthEnabled')
             if healthEnabled is not None:
                 self.healthEnabledVar.set(healthEnabled)
         self.healthEnabledButton = customtkinter.CTkCheckBox(
@@ -39,7 +60,7 @@ class RefillCheckerModal(customtkinter.CTkToplevel):
             row=2, column=0, sticky='nsew', padx=10, pady=10)
         if waypoint is not None:
             self.minimumAmountOfHealthPotionsEntry.insert(
-                0, str(waypoint['options'].get('minimumAmountOfHealthPotions')))
+                0, str((options or {}).get('minimumAmountOfHealthPotions')))
 
         self.minimumOfManaPotionLabel = customtkinter.CTkLabel(
             self.frame, text='Mana Potion:', anchor='w')
@@ -52,7 +73,7 @@ class RefillCheckerModal(customtkinter.CTkToplevel):
             row=4, column=0, sticky='nsew', padx=10, pady=10)
         if waypoint is not None:
             self.minimumAmountOfManaPotionsEntry.insert(
-                0, str(waypoint['options'].get('minimumAmountOfManaPotions')))
+                0, str((options or {}).get('minimumAmountOfManaPotions')))
 
         self.minimumOfCapLabel = customtkinter.CTkLabel(
             self.frame, text='Cap:', anchor='w')
@@ -65,20 +86,22 @@ class RefillCheckerModal(customtkinter.CTkToplevel):
             row=6, column=0, sticky='nsew', padx=10, pady=10)
         if waypoint is not None:
             self.minimumAmountOfCapEntry.insert(
-                0, str(waypoint['options'].get('minimumAmountOfCap')))
+                0, str((options or {}).get('minimumAmountOfCap')))
 
         self.waypointLabelToRedirectLabel = customtkinter.CTkLabel(
             self.frame, text='Go to label:', anchor='w')
         self.waypointLabelToRedirectLabel.grid(
             row=7, column=0, sticky='nsew', padx=10, pady=(10, 0))
 
+        labels = list(waypointsLabels) if waypointsLabels is not None else []
         self.waypointLabelToRedirectCombobox = customtkinter.CTkComboBox(
-            self.frame, values=waypointsLabels, state='readonly')
+            self.frame, values=labels, state='readonly')
         self.waypointLabelToRedirectCombobox.grid(
             row=8, column=0, sticky='nsew', padx=10, pady=10)
-        if waypoint is not None and waypoint['options']['waypointLabelToRedirect'] != '':
-            self.waypointLabelToRedirectCombobox.set(
-                waypoint['options']['waypointLabelToRedirect'])
+        if waypoint is not None:
+            label_to_redirect = (options or {}).get('waypointLabelToRedirect')
+            if label_to_redirect:
+                self.waypointLabelToRedirectCombobox.set(str(label_to_redirect))
 
         self.confirmButton = customtkinter.CTkButton(
             self, text='Confirm', command=self.confirm,
@@ -94,18 +117,20 @@ class RefillCheckerModal(customtkinter.CTkToplevel):
         self.cancelButton.grid(
             row=7, column=1, padx=(5, 10), pady=(5, 10), sticky='nsew')
 
-    def validateNumber(self, value: int) -> bool:
+    def validateNumber(self, value: str) -> bool:
+        if value == '':
+            return True
         if value.isdigit() and int(value) > 0:
             return True
         messagebox.showerror(
             'Error', "Digite um número válido maior que zero.")
         return False
 
-    def confirm(self):
+    def confirm(self) -> None:
         self.onConfirm(None, {
-            'minimumAmountOfHealthPotions': int(self.minimumAmountOfHealthPotionsEntry.get()),
-            'minimumAmountOfManaPotions': int(self.minimumAmountOfManaPotionsEntry.get()),
-            'minimumAmountOfCap': int(self.minimumAmountOfCapEntry.get()),
+            'minimumAmountOfHealthPotions': _safe_positive_int(self.minimumAmountOfHealthPotionsEntry.get()),
+            'minimumAmountOfManaPotions': _safe_positive_int(self.minimumAmountOfManaPotionsEntry.get()),
+            'minimumAmountOfCap': _safe_positive_int(self.minimumAmountOfCapEntry.get()),
             'waypointLabelToRedirect': self.waypointLabelToRedirectCombobox.get(),
             'healthEnabled': self.healthEnabledVar.get(),
         })

@@ -1,9 +1,10 @@
 import tkinter as tk
 import customtkinter
 import re
+from typing import Any
 
 class FoodTab(customtkinter.CTkFrame):
-    def __init__(self, parent, context):
+    def __init__(self, parent: Any, context: Any) -> None:
         super().__init__(parent)
         self.context = context
         self.columnconfigure(0, weight=1)
@@ -36,10 +37,10 @@ class FoodTab(customtkinter.CTkFrame):
         self.hotkeyEntry.grid(column=1, row=1, padx=10,
                             pady=10, sticky='nsew')
 
-    def onToggleCheckButton(self):
+    def onToggleCheckButton(self) -> None:
         self.context.toggleFoodByKey(self.checkVar.get())
 
-    def onChangeHotkey(self, event):
+    def onChangeHotkey(self, event: Any) -> None:
         key = event.char
         key_pressed = event.keysym
         if key == '\b':

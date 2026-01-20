@@ -1,7 +1,16 @@
+from typing import Optional, TypedDict
+
 from src.shared.typings import GrayImage
 from .locators import getStopIconPosition, getStatsPz, getStatsHur, getStatsPoison
 
-def getStats(screenshot: GrayImage):
+
+class StatsBarStats(TypedDict):
+  pz: bool
+  hur: bool
+  poison: bool
+
+
+def getStats(screenshot: GrayImage) -> Optional[StatsBarStats]:
   stopIcon = getStopIconPosition(screenshot)
 
   if stopIcon is not None:
@@ -23,3 +32,5 @@ def getStats(screenshot: GrayImage):
       'hur': statsHur,
       'poison': statsPoison
     }
+
+  return None

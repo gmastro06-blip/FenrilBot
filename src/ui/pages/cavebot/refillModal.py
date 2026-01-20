@@ -1,10 +1,29 @@
 import customtkinter
 from tkinter import messagebox, BooleanVar
-from ...utils import genRanStr
+from typing import Any, Callable, Mapping, Optional
+
+from src.ui.utils import genRanStr
+
+
+def _noop_on_confirm(_label: Optional[str], _payload: dict) -> None:
+    return None
+
+
+def _safe_positive_int(value: str) -> int:
+    value = value.strip()
+    if not value.isdigit():
+        return 0
+    parsed = int(value)
+    return parsed if parsed > 0 else 0
 
 class RefillModal(customtkinter.CTkToplevel):
-    def __init__(self, parent, onConfirm=lambda: {}, waypoint=None):
-        super().__init__(parent)        
+    def __init__(
+        self,
+        parent: Any,
+        onConfirm: Callable[[Optional[str], dict], Any] = _noop_on_confirm,
+        waypoint: Optional[Mapping[str, Any]] = None,
+    ) -> None:
+        super().__init__(parent)
         self.onConfirm = onConfirm
 
         self.title(genRanStr())
@@ -20,7 +39,8 @@ class RefillModal(customtkinter.CTkToplevel):
 
         self.healthPotionEnabledVar = BooleanVar()
         if waypoint is not None:
-            healthPotionEnabled = waypoint['options'].get('healthPotionEnabled')
+            options = waypoint.get('options')
+            healthPotionEnabled = (options or {}).get('healthPotionEnabled')
             if healthPotionEnabled is not None:
                 self.healthPotionEnabledVar.set(healthPotionEnabled)
         self.healthPotionEnabledButton = customtkinter.CTkCheckBox(
@@ -33,17 +53,18 @@ class RefillModal(customtkinter.CTkToplevel):
         self.healthPotionCombobox.grid(
             row=0, column=0, sticky='nsew', padx=10, pady=10)
         if waypoint is not None:
-            healthPotionItem = waypoint['options'].get(
-                'healthPotion').get('item')
-            self.healthPotionCombobox.set(healthPotionItem)
+            health_potion = (options or {}).get('healthPotion') or {}
+            healthPotionItem = health_potion.get('item')
+            if healthPotionItem is not None:
+                self.healthPotionCombobox.set(str(healthPotionItem))
 
         self.healthPotionEntry = customtkinter.CTkEntry(self.healthPotionFrame, validate='key',
                                         validatecommand=(self.register(self.validateNumber), "%P"))
         self.healthPotionEntry.grid(
             row=1, column=0, sticky='nsew', padx=10, pady=10)
         if waypoint is not None:
-            healthPotionQuantity = str(
-                waypoint['options'].get('healthPotion').get('quantity'))
+            health_potion = (options or {}).get('healthPotion') or {}
+            healthPotionQuantity = str(health_potion.get('quantity', ''))
             self.healthPotionEntry.insert(0, healthPotionQuantity)
 
         self.manaPotionFrame = customtkinter.CTkFrame(self)
@@ -54,7 +75,7 @@ class RefillModal(customtkinter.CTkToplevel):
 
         self.houseNpcEnabledVar = BooleanVar()
         if waypoint is not None:
-            houseNpcEnabled = waypoint['options'].get('houseNpcEnabled')
+            houseNpcEnabled = (options or {}).get('houseNpcEnabled')
             if houseNpcEnabled is not None:
                 self.houseNpcEnabledVar.set(houseNpcEnabled)
         self.houseNpcEnabledButton = customtkinter.CTkCheckBox(
@@ -67,16 +88,18 @@ class RefillModal(customtkinter.CTkToplevel):
         self.manaPotionCombobox.grid(
             row=0, column=0, sticky='nsew', padx=10, pady=10)
         if waypoint is not None:
-            manaPotionItem = waypoint['options'].get('manaPotion').get('item')
-            self.manaPotionCombobox.set(manaPotionItem)
+            mana_potion = (options or {}).get('manaPotion') or {}
+            manaPotionItem = mana_potion.get('item')
+            if manaPotionItem is not None:
+                self.manaPotionCombobox.set(str(manaPotionItem))
 
         self.manaPotionEntry = customtkinter.CTkEntry(self.manaPotionFrame, validate='key',
                                         validatecommand=(self.register(self.validateNumber), "%P"))
         self.manaPotionEntry.grid(
             row=1, column=0, sticky='nsew', padx=10, pady=10)
         if waypoint is not None:
-            manaPotionQuantity = str(waypoint['options'].get(
-                'manaPotion').get('quantity'))
+            mana_potion = (options or {}).get('manaPotion') or {}
+            manaPotionQuantity = str(mana_potion.get('quantity', ''))
             self.manaPotionEntry.insert(0, manaPotionQuantity)
 
         self.confirmButton = customtkinter.CTkButton(
@@ -93,24 +116,26 @@ class RefillModal(customtkinter.CTkToplevel):
         self.cancelButton.grid(
             row=2, column=1, padx=10, pady=10, sticky='nsew')
 
-    def validateNumber(self, value: int) -> bool:
+    def validateNumber(self, value: str) -> bool:
+        if value == '':
+            return True
         if value.isdigit() and int(value) > 0:
             return True
         messagebox.showerror(
             'Error', "Digite um número válido maior que zero.")
         return False
 
-    def confirm(self):
+    def confirm(self) -> None:
         self.onConfirm(None, {
             'healthPotionEnabled': self.healthPotionEnabledVar.get(),
             'houseNpcEnabled': self.houseNpcEnabledVar.get(),
             'healthPotion': {
                 'item': self.healthPotionCombobox.get(),
-                'quantity': int(self.healthPotionEntry.get())
+                'quantity': _safe_positive_int(self.healthPotionEntry.get())
             },
             'manaPotion': {
                 'item': self.manaPotionCombobox.get(),
-                'quantity': int(self.manaPotionEntry.get())
+                'quantity': _safe_positive_int(self.manaPotionEntry.get())
             },
         })
         self.destroy()

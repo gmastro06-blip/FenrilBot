@@ -1,10 +1,12 @@
 import customtkinter
 from .ignoreCreaturesModal import IgnoreCreaturesModal
 from tkinter import ttk
-from ...utils import genRanStr
+from typing import Any, Optional
+
+from src.ui.utils import genRanStr
 
 class IgnoreCreaturesPage(customtkinter.CTkToplevel):
-    def __init__(self, context):
+    def __init__(self, context: Any) -> None:
         super().__init__()
         self.context = context
         self.title(genRanStr())
@@ -24,7 +26,7 @@ class IgnoreCreaturesPage(customtkinter.CTkToplevel):
         treestyle.map('Treeview', background=[('selected', '#C20034')], foreground=[('selected', '#FFF')])
         self.bind("<<TreeviewSelect>>", lambda event: self.focus_set())
 
-        self.ignoreMontersModal = None
+        self.ignoreMontersModal: Optional[IgnoreCreaturesModal] = None
 
         self.columnconfigure(0, weight=8)
         self.columnconfigure(1, weight=2)
@@ -45,7 +47,7 @@ class IgnoreCreaturesPage(customtkinter.CTkToplevel):
         self.table.bind('<Double-1>', self.onComboDoubleClick)
 
         for creature in context.context['ignorable_creatures']:
-            self.table.insert('', 'end', values=(creature))
+            self.table.insert('', 'end', values=(creature,))
             
         self.actionsFrame = customtkinter.CTkFrame(self)
         self.actionsFrame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
@@ -65,18 +67,18 @@ class IgnoreCreaturesPage(customtkinter.CTkToplevel):
             border_width=2, hover_color="#C20034")
         self.deleteButton.grid(row=1, column=0, padx=5, pady=5, sticky='nsew')
 
-    def addCreature(self):
+    def addCreature(self) -> None:
         self.context.addIgnorableCreature("Creature")
-        self.table.insert('', 'end', values=("Creature"))
+        self.table.insert('', 'end', values=("Creature",))
 
-    def deleteSelectedCreatures(self):
+    def deleteSelectedCreatures(self) -> None:
         selectedCreatures = self.table.selection()
         for creature in selectedCreatures:
             indextable = self.table.index(creature)
             self.table.delete(creature)
             self.context.removeIgnorableCreatureByIndex(indextable)
 
-    def onComboDoubleClick(self, event):
+    def onComboDoubleClick(self, event: Any) -> None:
         item = self.table.identify_row(event.y)
         if item:
             index = self.table.index(item)
@@ -84,12 +86,16 @@ class IgnoreCreaturesPage(customtkinter.CTkToplevel):
             if self.ignoreMontersModal is None or not self.ignoreMontersModal.winfo_exists():
                 self.ignoreMontersModal = IgnoreCreaturesModal(self, name=name, onConfirm=lambda creatureName: self.updateIgnorableCreatureByIndex(index, name=creatureName))
 
-    def updateIgnorableCreatureByIndex(self, index, name=None):
+    def updateIgnorableCreatureByIndex(self, index: int, name: Optional[str] = None) -> None:
         self.context.updateIgnorableCreatureByIndex(index, name=name)
         selecionado = self.table.focus()
         if selecionado:
-            currentValues = self.table.item(selecionado)['values']
+            raw_values = self.table.item(selecionado).get('values', ())
+            current_values = list(raw_values) if isinstance(raw_values, (list, tuple)) else [raw_values]
             if name is not None:
-                currentValues[0] = name
-            self.table.item(selecionado, values=currentValues)
+                if current_values:
+                    current_values[0] = name
+                else:
+                    current_values = [name]
+            self.table.item(selecionado, values=tuple(current_values))
             self.table.update()

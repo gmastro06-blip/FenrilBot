@@ -4,7 +4,7 @@ import numpy as np
 import pathlib
 from scipy.spatial import distance
 import tcod
-from typing import List, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union, cast
 from src.repositories.radar.config import walkableFloorsSqms
 from src.repositories.radar.core import isCoordinateWalkable
 from src.shared.typings import Coordinate, GrayImage, Slot, SlotWidth, XYCoordinate
@@ -108,7 +108,15 @@ def getCreaturesBars(gameWindowImage: GrayImage) -> List[tuple[int, int]]:
 # TODO: maximum creatures allowed should be equal battle list size
 # TODO: Find a way to avoid 3 calculation times when comparing names since some words have a wrong location
 # TODO: Whenever the last species is left, avoid loops and resolve species immediately for remaining creatures bars
-def getCreatures(battleListCreatures, direction, gameWindowCoordinate: XYCoordinate, gameWindowImage: GrayImage, coordinate: Coordinate, beingAttackedCreatureCategory: str = None, walkedPixelsInSqm: int = 0):
+def getCreatures(
+    battleListCreatures,
+    direction,
+    gameWindowCoordinate: XYCoordinate,
+    gameWindowImage: GrayImage,
+    coordinate: Coordinate,
+    beingAttackedCreatureCategory: Optional[str] = None,
+    walkedPixelsInSqm: int = 0,
+):
     if len(battleListCreatures) == 0:
         return []
     creaturesBars = getCreaturesBars(gameWindowImage)
@@ -144,6 +152,10 @@ def getCreatures(battleListCreatures, direction, gameWindowCoordinate: XYCoordin
             if nonCreaturesForCurrentBar.get(creatureName, None) is not None:
                 continue
             creatureNameImg = creaturesNamesHashes.get(creatureName)
+            if creatureNameImg is None:
+                nonCreaturesForCurrentBar[creatureName] = True
+                continue
+            creatureNameImg = cast(GrayImage, creatureNameImg)
             (creatureBarX,
              creatureBarY) = creaturesBars[creatureBarSortedIndex]
             creatureBarY0 = creatureBarY - 13
@@ -176,6 +188,10 @@ def getCreatures(battleListCreatures, direction, gameWindowCoordinate: XYCoordin
                 creatures.append(creature)
                 continue
             creatureNameImg2 = creaturesNamesHashes.get(creatureName)
+            if creatureNameImg2 is None:
+                nonCreaturesForCurrentBar[creatureName] = True
+                continue
+            creatureNameImg2 = cast(GrayImage, creatureNameImg2)
             creatureWithDirtNameImg2 = gameWindowImage[creatureBarY0:creatureBarY1,
                                                        startingX + 1:endingX + 1]
             if creatureNameImg2.shape[1] != creatureWithDirtNameImg2.shape[1]:
@@ -191,6 +207,10 @@ def getCreatures(battleListCreatures, direction, gameWindowCoordinate: XYCoordin
             creatureWithDirtNameImg3 = gameWindowImage[creatureBarY0:creatureBarY1,
                                                        startingX:endingX - 1]
             creatureNameImg3 = creaturesNamesHashes.get(creatureName)
+            if creatureNameImg3 is None:
+                nonCreaturesForCurrentBar[creatureName] = True
+                continue
+            creatureNameImg3 = cast(GrayImage, creatureNameImg3)
             creatureNameImg3 = creatureNameImg3[:, 1:creatureNameImg3.shape[1]]
             if creatureWithDirtNameImg3.shape[1] != creatureNameImg3.shape[1]:
                 creatureNameImg3 = creatureNameImg3[:,
@@ -297,7 +317,7 @@ def hasTargetToCreatureBySlot(gameWindowCreatures: CreatureList, slot: Slot, coo
 
 # TODO: add unit tests
 # TODO: add perf
-def hasTargetToCreature(gameWindowCreatures: CreatureList, gameWindowCreature: Creature, coordinate: Coordinate) -> bool:
+def hasTargetToCreature(gameWindowCreatures: CreatureList, gameWindowCreature: Any, coordinate: Coordinate) -> bool:
     return hasTargetToCreatureBySlot(
         gameWindowCreatures, gameWindowCreature['slot'], coordinate)
 
@@ -387,12 +407,25 @@ def isTrappedByCreatures(gameWindowCreatures: CreatureList, radarCoordinate: Coo
 # TODO: windowCoordinate should be improved for gameWindow edges
 # TODO: detect being attacked creature by category
 # TODO: since there is only one creature in gameWindow and one in battleList being attacked, avoid computing if creature is being attacked on gameWindow
-def makeCreature(creatureName: str, creatureType: str, creatureBar: Tuple[int, int], direction: str, gameWindowCoordinate: XYCoordinate, gameWindowImage: GrayImage, coordinate: Coordinate, slotWidth: SlotWidth, discoverTarget: bool = True, beingAttackedCreatureCategory: Union[str, None] = None, walkedPixelsInSqm: int = 0):
+def makeCreature(
+    creatureName: str,
+    creatureType: str,
+    creatureBar: Tuple[int, int],
+    direction: str,
+    gameWindowCoordinate: XYCoordinate,
+    gameWindowImage: GrayImage,
+    coordinate: Coordinate,
+    slotWidth: int,
+    discoverTarget: bool = True,
+    beingAttackedCreatureCategory: Optional[str] = None,
+    walkedPixelsInSqm: int = 0,
+):
     isBigGameWindow = slotWidth == 64
     gameWindowMisalignment = {'x': 0, 'y': 0}
     if creatureType == 'monster':
-        gameWindowMisalignment = wikiCreatures.get(creatureName).get(
-            'gameWindowMisalignment', {'x': 0, 'y': 0})
+        creature_info = wikiCreatures.get(creatureName)
+        if isinstance(creature_info, dict):
+            gameWindowMisalignment = creature_info.get('gameWindowMisalignment', {'x': 0, 'y': 0})
     gameWindowMisalignmentX = gameWindowMisalignment[
         'x'] if isBigGameWindow else gameWindowMisalignment['x'] / 2
     gameWindowMisalignmentY = gameWindowMisalignment[
@@ -411,11 +444,10 @@ def makeCreature(creatureName: str, creatureType: str, creatureBar: Tuple[int, i
         isBeingAttacked = isCreatureBeingAttacked(
             gameWindowImage, borderX, creatureBar[1], slotWidth)
     slot = (xSlot, ySlot)
-    coordinate = [coordinate[0] - 7 + xSlot,
-                  coordinate[1] - 5 + ySlot, coordinate[2]]
+    coordinate = (coordinate[0] - 7 + xSlot, coordinate[1] - 5 + ySlot, coordinate[2])
     if not isCoordinateWalkable(coordinate):
         if direction == 'left' or direction == 'right':
-            leftCoordinate = [coordinate[0] - 1, coordinate[1], coordinate[2]]
+            leftCoordinate = (coordinate[0] - 1, coordinate[1], coordinate[2])
             if isCoordinateWalkable(leftCoordinate):
                 coordinate = leftCoordinate
                 xSlot = slot[0] - 1
@@ -423,8 +455,7 @@ def makeCreature(creatureName: str, creatureType: str, creatureBar: Tuple[int, i
                 xSlot = max(xSlot, 0)
                 slot = (xSlot, slot[1])
             else:
-                rightCoordinate = [coordinate[0] +
-                                   1, coordinate[1], coordinate[2]]
+                rightCoordinate = (coordinate[0] + 1, coordinate[1], coordinate[2])
                 if isCoordinateWalkable(rightCoordinate):
                     coordinate = rightCoordinate
                     xSlot = slot[0] + 1
@@ -432,7 +463,7 @@ def makeCreature(creatureName: str, creatureType: str, creatureBar: Tuple[int, i
                     xSlot = max(xSlot, 0)
                     slot = (xSlot, slot[1])
         if direction == 'top' or direction == 'bottom':
-            topCoordinate = [coordinate[0], coordinate[1] - 1, coordinate[2]]
+            topCoordinate = (coordinate[0], coordinate[1] - 1, coordinate[2])
             if isCoordinateWalkable(topCoordinate):
                 coordinate = topCoordinate
                 ySlot = slot[1] - 1
@@ -440,23 +471,26 @@ def makeCreature(creatureName: str, creatureType: str, creatureBar: Tuple[int, i
                 ySlot = max(ySlot, 0)
                 slot = (slot[0], ySlot)
             else:
-                bottomCoordinate = [coordinate[0],
-                                    coordinate[1] + 1, coordinate[2]]
+                bottomCoordinate = (coordinate[0], coordinate[1] + 1, coordinate[2])
                 if isCoordinateWalkable(bottomCoordinate):
                     coordinate = bottomCoordinate
                     ySlot = slot[1] + 1
                     ySlot = min(ySlot, 10)
                     ySlot = max(ySlot, 0)
                     slot = (slot[0], ySlot)
-    halfOfSlot = (slotWidth / 2)
+    halfOfSlot = slotWidth // 2
     xCoordinate = min(max(xCoordinate + halfOfSlot, halfOfSlot),
                       gameWindowImage.shape[1] - halfOfSlot)
     yCoordinate = min(max(yCoordinate + halfOfSlot, halfOfSlot),
                       gameWindowImage.shape[0] - halfOfSlot)
-    windowCoordinate = (
-        gameWindowCoordinate[0] + xCoordinate, gameWindowCoordinate[1] + yCoordinate)
+    windowCoordinate: XYCoordinate = (
+        int(gameWindowCoordinate[0] + xCoordinate),
+        int(gameWindowCoordinate[1] + yCoordinate),
+    )
     gameWindowCoordinate = (
-        xCoordinate + gameWindowMisalignmentX, yCoordinate + gameWindowMisalignmentY)
+        int(xCoordinate + gameWindowMisalignmentX),
+        int(yCoordinate + gameWindowMisalignmentY),
+    )
     isUnderRoof = gameWindowImage[creatureBar[1] +
                                   1, creatureBar[0] + 1] == 192
     return {

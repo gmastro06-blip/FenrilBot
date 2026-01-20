@@ -1,9 +1,11 @@
+from typing import Tuple
+
 from src.shared.typings import BBox, Slot
 from src.utils.mouse import leftClick, moveTo, rightClick
 
 # TODO: add unit tests
 # TODO: add perf
-def getSlotPosition(slot: Slot, gameWindowPosition: BBox) -> Slot:
+def getSlotPosition(slot: Slot, gameWindowPosition: BBox) -> Tuple[int, int]:
     (gameWindowPositionX, gameWindowPositionY, gameWindowWidth, gameWindowHeight) = gameWindowPosition
     (slotX, slotY) = slot
     slotHeight = gameWindowHeight // 11
@@ -14,25 +16,25 @@ def getSlotPosition(slot: Slot, gameWindowPosition: BBox) -> Slot:
 
 # TODO: add unit tests
 # TODO: add perf
-def moveToSlot(slot: Slot, gameWindowPosition: BBox):
+def moveToSlot(slot: Slot, gameWindowPosition: BBox) -> None:
     slotPosition = getSlotPosition(slot, gameWindowPosition)
     moveTo(slotPosition)
 
 # TODO: add unit tests
 # TODO: add perf
-def clickSlot(slot: Slot, gameWindowPosition: BBox):
+def clickSlot(slot: Slot, gameWindowPosition: BBox) -> None:
     moveToSlot(slot, gameWindowPosition)
     leftClick()
 
 # TODO: add unit tests
 # TODO: add perf
-def rightClickSlot(slot: Slot, gameWindowPosition: BBox):
+def rightClickSlot(slot: Slot, gameWindowPosition: BBox) -> None:
     moveToSlot(slot, gameWindowPosition)
     # TODO: remove this
     # sleep(1)
     rightClick()
 
-def clickUseBySlot(slot: Slot, gameWindowPosition: BBox):
+def clickUseBySlot(slot: Slot, gameWindowPosition: BBox) -> None:
     xPos, yPos = getSlotPosition(slot, gameWindowPosition)
     moveTo((xPos + 15, yPos + 25))
     leftClick()

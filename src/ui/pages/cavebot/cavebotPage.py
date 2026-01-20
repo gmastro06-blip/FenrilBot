@@ -409,11 +409,14 @@ class CavebotPage(customtkinter.CTkToplevel):
         self.context.updateWaypointByIndex(index, label=label, options=options)
         selecionado = self.table.focus()
         if selecionado:
-            currentValues = list(self.table.item(selecionado).get('values', []))
+            raw_values = self.table.item(selecionado).get('values', ())
+            currentValues: list[Any] = list(raw_values) if isinstance(raw_values, (list, tuple)) else [raw_values]
+            while len(currentValues) < 4:
+                currentValues.append('')
             if label is not None:
                 currentValues[0] = label
             currentValues[3] = options
-            self.table.item(selecionado, values=currentValues)
+            self.table.item(selecionado, values=tuple(currentValues))
             self.table.update()
 
     def onToggleEnabledButton(self) -> None:

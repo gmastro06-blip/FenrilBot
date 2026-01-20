@@ -1,9 +1,20 @@
 import customtkinter
-from ...utils import genRanStr
+from typing import Any, Callable, Mapping, Optional
+
+from src.ui.utils import genRanStr
+
+
+def _noop_on_confirm(_label: Optional[str], _payload: dict) -> None:
+    return None
 
 class DepositItemsModal(customtkinter.CTkToplevel):
-    def __init__(self, parent, waypoint=None, onConfirm=lambda: {}):
-        super().__init__(parent)        
+    def __init__(
+        self,
+        parent: Any,
+        waypoint: Optional[Mapping[str, Any]] = None,
+        onConfirm: Callable[[Optional[str], dict], Any] = _noop_on_confirm,
+    ) -> None:
+        super().__init__(parent)
         self.onConfirm = onConfirm
 
         self.title(genRanStr())
@@ -26,7 +37,8 @@ class DepositItemsModal(customtkinter.CTkToplevel):
         self.cityCombobox.grid(
             row=1, column=0, sticky='nsew', padx=10, pady=10)
         if waypoint is not None:
-            city = waypoint['options'].get('city')
+            options = waypoint.get('options')
+            city = (options or {}).get('city')
             if city is not None:
                 self.cityCombobox.set(city)
 
@@ -44,7 +56,7 @@ class DepositItemsModal(customtkinter.CTkToplevel):
         self.cancelButton.grid(
             row=6, column=1, padx=(5, 10), pady=(5, 10), sticky='nsew')
 
-    def confirm(self):
+    def confirm(self) -> None:
         self.onConfirm(None, {
             'city': self.cityCombobox.get(),
         })

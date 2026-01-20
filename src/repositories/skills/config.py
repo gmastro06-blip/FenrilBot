@@ -1,5 +1,7 @@
 import numpy as np
+import numpy.typing as npt
 import pathlib
+from typing import Dict, TypedDict
 from src.utils.core import hashit
 from src.utils.image import loadFromRGBToGray
 
@@ -8,7 +10,14 @@ currentPath = pathlib.Path(__file__).parent.resolve()
 imagesPath = f'{currentPath}/images'
 iconsImagesPath = f'{imagesPath}/icons'
 digitsImagesPath = f'{imagesPath}/digits'
-images = {
+
+
+class _Images(TypedDict):
+    digits: Dict[int, npt.NDArray[np.uint8]]
+    icons: Dict[str, npt.NDArray[np.uint8]]
+
+
+images: _Images = {
     'digits': {
         0: loadFromRGBToGray(f'{digitsImagesPath}/0.png'),
         1: loadFromRGBToGray(f'{digitsImagesPath}/1.png'),
@@ -25,8 +34,8 @@ images = {
         'skills': loadFromRGBToGray(f'{iconsImagesPath}/skills.png')
     },
 }
-minutesOrHoursHashes = {}
-numbersHashes = {}
+minutesOrHoursHashes: Dict[int, int] = {}
+numbersHashes: Dict[int, int] = {}
 
 # TODO: make loader function
 for number in range(1000):

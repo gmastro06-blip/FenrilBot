@@ -1,10 +1,21 @@
 import customtkinter
 from tkinter import messagebox
-from ...utils import genRanStr
+from typing import Any, Callable, Mapping, Optional
+
+from src.ui.utils import genRanStr
+
+
+def _noop_on_confirm(_label: Optional[str], _payload: dict) -> None:
+    return None
 
 class BuyBackpackModal(customtkinter.CTkToplevel):
-    def __init__(self, parent, onConfirm=lambda: {}, waypoint=None):
-        super().__init__(parent)        
+    def __init__(
+        self,
+        parent: Any,
+        onConfirm: Callable[[Optional[str], dict], Any] = _noop_on_confirm,
+        waypoint: Optional[Mapping[str, Any]] = None,
+    ) -> None:
+        super().__init__(parent)
         self.onConfirm = onConfirm
 
         self.title(genRanStr())
@@ -23,17 +34,21 @@ class BuyBackpackModal(customtkinter.CTkToplevel):
         self.backpackCombobox.grid(
             row=0, column=0, sticky='nsew', padx=10, pady=10)
         if waypoint is not None:
-            backpackItem = waypoint['options'].get(
+            options = waypoint.get('options') if hasattr(waypoint, 'get') else None
+            backpackItem = (options or {}).get(
                 'name', 'Orange Backpack')
             self.backpackCombobox.set(backpackItem)
 
-        self.backpackAmountEntry = customtkinter.CTkEntry(self.buyBackpackFrame, validate='key',
-                                        validatecommand=(self.register(self.validateNumber), "%P"))
+        self.backpackAmountEntry = customtkinter.CTkEntry(
+            self.buyBackpackFrame,
+            validate='key',
+            validatecommand=(self.register(self.validateNumber), "%P"),
+        )
         self.backpackAmountEntry.grid(
             row=1, column=0, sticky='nsew', padx=10, pady=10)
         if waypoint is not None:
             backpackAmount = str(
-                waypoint['options'].get('amount', 12))
+                ((options or {}).get('amount', 12)))
             self.backpackAmountEntry.insert(0, backpackAmount)
 
         self.confirmButton = customtkinter.CTkButton(
@@ -50,14 +65,16 @@ class BuyBackpackModal(customtkinter.CTkToplevel):
         self.cancelButton.grid(
             row=2, column=1, padx=10, pady=10, sticky='nsew')
 
-    def validateNumber(self, value: int) -> bool:
+    def validateNumber(self, value: str) -> bool:
+        if value == '':
+            return True
         if value.isdigit() and int(value) > 0:
             return True
         messagebox.showerror(
             'Error', "Digite um número válido maior que zero.")
         return False
 
-    def confirm(self):
+    def confirm(self) -> None:
         self.onConfirm(None, {
             'name': self.backpackCombobox.get(),
             'amount': int(self.backpackAmountEntry.get())

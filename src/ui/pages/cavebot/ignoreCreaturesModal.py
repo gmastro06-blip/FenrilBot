@@ -1,9 +1,20 @@
 import customtkinter
-from ...utils import genRanStr
+from typing import Any, Callable, Optional
+
+from src.ui.utils import genRanStr
+
+
+def _noop_on_confirm(_name: str) -> None:
+    return None
 
 class IgnoreCreaturesModal(customtkinter.CTkToplevel):
-    def __init__(self, parent, name=None, onConfirm=lambda: {}):
-        super().__init__(parent)        
+    def __init__(
+        self,
+        parent: Any,
+        name: Optional[str] = None,
+        onConfirm: Callable[[str], Any] = _noop_on_confirm,
+    ) -> None:
+        super().__init__(parent)
         self.onConfirm = onConfirm
 
         self.title(genRanStr())
@@ -41,6 +52,6 @@ class IgnoreCreaturesModal(customtkinter.CTkToplevel):
         self.cancelButton.grid(
             row=6, column=1, padx=(5, 10), pady=(5, 10), sticky='nsew')
 
-    def confirm(self):
+    def confirm(self) -> None:
         self.onConfirm(self.nameEntry.get())
         self.destroy()
