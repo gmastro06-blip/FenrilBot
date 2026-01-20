@@ -11,7 +11,7 @@ from src.utils.core import getScreenshot, getScreenshotDebugInfo, setScreenshotO
 from src.gameplay.core.waypoint import resolveGoalCoordinate
 
 class OpenDoorWaypointTask(VectorTask):
-    def __init__(self, waypoint: Waypoint):
+    def __init__(self: "OpenDoorWaypointTask", waypoint: Waypoint) -> None:
         super().__init__()
         self.name = 'openDoorWaypoint'
         self.isRootTask = True
@@ -47,7 +47,7 @@ class OpenDoorWaypointTask(VectorTask):
             ]
         else:
             self.tasks = [
-                SetNextWaypointTask().setParentTask(self).setRootTask(self),  # type: ignore[no-untyped-call]
+                SetNextWaypointTask().setParentTask(self).setRootTask(self),  # type: ignore
             ]
         return context
     

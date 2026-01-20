@@ -1,21 +1,21 @@
 from nptyping import NDArray
-from typing import Any, List, Literal, Tuple, Union
+from typing import Any, List, Literal, Tuple, TypeAlias, Union
 
 
-BBox = Tuple[int, int, int, int]
-Coordinate = Tuple[int, int, int]
-CoordinateList = List[Coordinate]
+BBox: TypeAlias = Tuple[int, int, int, int]
+Coordinate: TypeAlias = Tuple[int, int, int]
+CoordinateList: TypeAlias = List[Coordinate]
 CreatureCategory = str
 CreatureCategoryOrUnknown = Union[CreatureCategory, Literal['unknown']]
 Direction = Literal['up', 'down', 'left', 'right']
 # TODO: fix it
-GrayImage = NDArray[Any, Any]
-GrayPixel = int
+GrayImage: TypeAlias = NDArray[Any, Any]
+GrayPixel: TypeAlias = int
 # TODO: fix it
-GrayVector = NDArray[Any, Any]
-Slot = Tuple[int, int]
-SlotWidth = 32 | 64
+GrayVector: TypeAlias = NDArray[Any, Any]
+Slot: TypeAlias = Tuple[int, int]
+SlotWidth: TypeAlias = Literal[32, 64]
 Waypoint = Any
-WaypointList = List[Waypoint]
-XYCoordinate = Tuple[int, int]
-XYCoordinateList = List[XYCoordinate]
+WaypointList: TypeAlias = List[Waypoint]
+XYCoordinate: TypeAlias = Tuple[int, int]
+XYCoordinateList: TypeAlias = List[XYCoordinate]

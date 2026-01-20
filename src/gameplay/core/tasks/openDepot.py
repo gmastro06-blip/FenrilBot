@@ -1,6 +1,7 @@
 from src.repositories.inventory.core import images
 import src.utils.core as coreUtils
 import src.utils.mouse as mouse
+from typing import Any, Optional, Tuple, cast
 from ...typings import Context
 from .common.base import BaseTask
 
@@ -15,9 +16,18 @@ class OpenDepotTask(BaseTask):
         self.delayAfterComplete = 1
 
     def do(self, context: Context) -> Context:
-        depotPosition = coreUtils.locate(context['ng_screenshot'], images['slots']['depot'])
+        ctx = cast(dict[str, Any], context)
+        screenshot = ctx.get('ng_screenshot')
+        if screenshot is None:
+            return context
+
+        depotPosition: Optional[Tuple[int, int, int, int]] = coreUtils.locate(
+            screenshot,
+            images['slots']['depot'],
+        )
         if depotPosition is None:
             return context
+        x, y, _, _ = depotPosition
         # TODO: click inside BBox
-        mouse.rightClick((depotPosition[0] + 5, depotPosition[1] + 5))
+        mouse.rightClick((x + 5, y + 5))
         return context

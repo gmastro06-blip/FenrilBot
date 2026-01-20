@@ -1,11 +1,12 @@
 import numpy as np
+from typing import TypeAlias
 
 
 Coordinate = np.dtype([('x', np.uint16), ('y', np.uint16), ('z', np.uint16)])
 CoordinateHash = np.dtype([('hash', str, 16), ('coordinate', np.uint16, (3,))])
 # TODO: fix
-FloorLevel = int
-TileFriction = int
+FloorLevel: TypeAlias = int
+TileFriction: TypeAlias = int
 WaypointDistance = np.dtype([('index', np.uint16), ('distance', np.float32)])
 Waypoint = np.dtype([
     ('label', np.str_, 64),

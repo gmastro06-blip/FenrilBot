@@ -47,7 +47,8 @@ def comboSpells(context: Context) -> None:
             # TODO: JUST COMBO WHEN CAITING WITH PALADIN (NOT FOR NOW)
             if context['ng_cave']['isAttackingSomeCreature'] == False:
                 return
-            mana_needed = safe_int(spells.get(spell['name'], {}).get('manaNeeded'), label="comboManaNeeded")
+            spell_info = spells.get(spell['name'])
+            mana_needed = safe_int((spell_info.get('manaNeeded') if spell_info else None), label="comboManaNeeded")
             if mana_needed is None or mana < mana_needed:
                 return
             # TODO: ADD SPELL CATEGORY IN WIKI

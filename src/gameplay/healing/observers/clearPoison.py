@@ -23,7 +23,8 @@ def clearPoison(context: Context) -> None:
     if hasCooldownByName(context['ng_screenshot'], 'exana pox'):
         return
     mana = safe_int((context.get('ng_statusBar') or {}).get('mana'), label="mana")
-    mana_needed = safe_int(spells.get('exana pox', {}).get('manaNeeded'), label="exanaPoxManaNeeded")
+    exana_pox_info = spells.get('exana pox')
+    mana_needed = safe_int((exana_pox_info.get('manaNeeded') if exana_pox_info else None), label="exanaPoxManaNeeded")
     if mana is None or mana_needed is None or mana < mana_needed:
         return
     tasksOrchestrator.setRootTask(

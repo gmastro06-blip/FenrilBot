@@ -48,7 +48,8 @@ def healingBySpells(context: Context) -> None:
     if critical_cfg.get('enabled'):
         critical_limit = safe_int(critical_cfg.get('hpPercentageLessThanOrEqual'), label="criticalHpLimit")
         critical_spell = critical_cfg.get('spell')
-        mana_needed = safe_int(spells.get(critical_spell or "", {}).get('manaNeeded'), label="criticalManaNeeded")
+        critical_info = spells.get(critical_spell or "")
+        mana_needed = safe_int((critical_info.get('manaNeeded') if critical_info else None), label="criticalManaNeeded")
         if (
             critical_limit is not None
             and hp_percentage <= critical_limit
@@ -65,7 +66,8 @@ def healingBySpells(context: Context) -> None:
     if light_cfg.get('enabled'):
         light_limit = safe_int(light_cfg.get('hpPercentageLessThanOrEqual'), label="lightHpLimit")
         light_spell = light_cfg.get('spell')
-        mana_needed = safe_int(spells.get(light_spell or "", {}).get('manaNeeded'), label="lightManaNeeded")
+        light_info = spells.get(light_spell or "")
+        mana_needed = safe_int((light_info.get('manaNeeded') if light_info else None), label="lightManaNeeded")
         if (
             light_limit is not None
             and hp_percentage <= light_limit
@@ -80,7 +82,8 @@ def healingBySpells(context: Context) -> None:
             return
     utura_cfg = spells_cfg.get('utura', {})
     if utura_cfg.get('enabled'):
-        mana_needed = safe_int(spells.get('utura', {}).get('manaNeeded'), label="uturaManaNeeded")
+        utura_info = spells.get('utura')
+        mana_needed = safe_int((utura_info.get('manaNeeded') if utura_info else None), label="uturaManaNeeded")
         if mana_needed is not None and mana >= mana_needed and not hasCooldownByName(context['ng_screenshot'], 'utura'):
             hotkey = utura_cfg.get('hotkey')
             if hotkey:
@@ -88,7 +91,8 @@ def healingBySpells(context: Context) -> None:
             return
     utura_gran_cfg = spells_cfg.get('uturaGran', {})
     if utura_gran_cfg.get('enabled'):
-        mana_needed = safe_int(spells.get('utura gran', {}).get('manaNeeded'), label="uturaGranManaNeeded")
+        utura_gran_info = spells.get('utura gran')
+        mana_needed = safe_int((utura_gran_info.get('manaNeeded') if utura_gran_info else None), label="uturaGranManaNeeded")
         if mana_needed is not None and mana >= mana_needed and not hasCooldownByName(context['ng_screenshot'], 'utura gran'):
             hotkey = utura_gran_cfg.get('hotkey')
             if hotkey:

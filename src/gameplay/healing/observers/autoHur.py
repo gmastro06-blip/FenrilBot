@@ -51,7 +51,8 @@ def autoHur(context: Context) -> None:
     if hasCooldownByName(context['ng_screenshot'], spell_name):
         return
     mana = safe_int(status_bar.get('mana'), label="mana")
-    mana_needed = safe_int(spells.get(spell_name, {}).get('manaNeeded'), label="autoHurManaNeeded")
+    spell_info = spells.get(spell_name)
+    mana_needed = safe_int((spell_info.get('manaNeeded') if spell_info else None), label="autoHurManaNeeded")
     if mana is None or mana_needed is None or mana < mana_needed:
         return
     hotkey = context.get('auto_hur', {}).get('hotkey')

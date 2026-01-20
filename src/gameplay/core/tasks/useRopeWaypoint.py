@@ -17,7 +17,7 @@ class UseRopeWaypointTask(VectorTask):
     def onBeforeStart(self, context: Context) -> Context:
         self.tasks = [
             UseRopeTask(self.waypoint).setParentTask(self).setRootTask(self),
-            SetNextWaypointTask().setParentTask(self).setRootTask(self),  # type: ignore[no-untyped-call]
+            SetNextWaypointTask().setParentTask(self).setRootTask(self),  # type: ignore
         ]
         return context
     

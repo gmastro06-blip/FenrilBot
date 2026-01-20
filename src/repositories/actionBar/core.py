@@ -28,13 +28,13 @@ def getSlotCount(screenshot: GrayImage, slot: int) -> Union[int, None]:
     
     number_region_image = np.array(digits, dtype=np.uint8)
 
-    stretch = exposure.rescale_intensity(  # type: ignore[no-untyped-call]
+    stretch = exposure.rescale_intensity(  # pyright: ignore[reportUntypedFunctionCall]
         number_region_image,
         in_range=cast(Any, (50, 175)),
         out_range=cast(Any, (0, 255)),
     ).astype(np.uint8)
 
-    equalized = exposure.equalize_hist(stretch)  # type: ignore[no-untyped-call]
+    equalized = exposure.equalize_hist(stretch)  # pyright: ignore[reportUntypedFunctionCall]
 
     equalized_image = (equalized * 255).astype(np.uint8)
 
@@ -73,7 +73,9 @@ def hasCooldownByImage(screenshot: GrayImage, cooldownImage: GrayImage) -> Union
         listOfCooldownsImage, cooldownImage)
     if cooldownImagePosition is None:
         return False
-    return listOfCooldownsImage[20:21, cooldownImagePosition[0]:cooldownImagePosition[0] + cooldownImagePosition[2]][0][0] == 255
+    x = int(cooldownImagePosition[0])
+    w = int(cooldownImagePosition[2])
+    return listOfCooldownsImage[20:21, x:x + w][0][0] == 255
 
 
 # TODO: add unit tests

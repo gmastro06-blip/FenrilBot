@@ -2,6 +2,8 @@ from ...typings import Context
 from .common.base import BaseTask
 from src.repositories.actionBar.core import hasCooldownByName
 from src.utils.array import getNextArrayIndex
+from src.shared.typings import GrayImage
+from typing import cast
 from time import time
 from src.utils.core import getScreenshot, getScreenshotDebugInfo, setScreenshotOutputIdx
 
@@ -27,7 +29,8 @@ class SetNextSpellTask(BaseTask):
         context['ng_screenshot'] = curScreen
         if curScreen is None:
             return context
-        hasCooldown = hasCooldownByName(curScreen, self.spell)
+        screen = cast(GrayImage, curScreen)
+        hasCooldown = hasCooldownByName(screen, self.spell)
         if hasCooldown:
             comboSpell = context['ng_comboSpells']['items'][0]
             if comboSpell['enabled'] == False:
