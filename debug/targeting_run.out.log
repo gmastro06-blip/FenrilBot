@@ -1,0 +1,22 @@
+[17:22:44][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32648, 31692, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:22:44][fenril][info] Tick reason changed: set task: walk
+[17:22:45][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32648, 31692, 7) task=walkToWaypoint root=None reason=set task: walk
+[17:22:46][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32648, 31693, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:22:46][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32646, 31693, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:22:47][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31693, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:22:47][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31695, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:22:48][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31696, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:22:48][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31697, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:22:49][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31698, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:22:49][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31699, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:22:50][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31700, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:22:50][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31701, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:22:51][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31702, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:22:51][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31703, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:22:52][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31704, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:22:52][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31705, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:22:53][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31706, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:22:53][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32644, 31706, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:22:54][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32643, 31706, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:22:54][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32642, 31706, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:22:55][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32642, 31707, 7) task=walk root=walkToWaypoint reason=set task: walk

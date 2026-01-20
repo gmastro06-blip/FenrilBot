@@ -1,4 +1,10 @@
+import os
+
 from src.gameplay.core.tasks.orchestrator import TasksOrchestrator
+
+
+def _env_flag(name: str, default: str = '0') -> bool:
+    return os.getenv(name, default) in {'1', 'true', 'True', 'yes', 'YES'}
 
 
 context = {
@@ -137,7 +143,7 @@ context = {
         'corpsesToLoot': [],
     },
     'ng_lastPressedKey': None,
-    'ng_pause': True,
+    'ng_pause': _env_flag('FENRIL_START_PAUSED', '1'),
     'ng_should_stop': False,
     'ng_debug': {
         'last_tick_reason': None,

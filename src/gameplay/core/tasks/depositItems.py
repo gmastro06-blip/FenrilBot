@@ -11,6 +11,8 @@ from .openDepot import OpenDepotTask
 from .openLocker import OpenLockerTask
 from .scrollToItem import ScrollToItemTask
 from .setNextWaypoint import SetNextWaypointTask
+from src.utils.array import getNextArrayIndex
+from src.gameplay.core.waypoint import resolveGoalCoordinate
 
 class DepositItemsTask(VectorTask):
     def __init__(self, waypoint: Waypoint):
@@ -34,4 +36,22 @@ class DepositItemsTask(VectorTask):
             CloseContainerTask(images['containersBars'][context['ng_backpacks']['loot']]).setParentTask(self).setRootTask(self),
             SetNextWaypointTask().setParentTask(self).setRootTask(self),
         ]
+        return context
+
+    def onTimeout(self, context: Context) -> Context:
+        try:
+            items = context.get('ng_cave', {}).get('waypoints', {}).get('items')
+            current_idx = context.get('ng_cave', {}).get('waypoints', {}).get('currentIndex')
+            coord = context.get('ng_radar', {}).get('coordinate')
+            if not items or current_idx is None:
+                return context
+            next_idx = getNextArrayIndex(items, current_idx)
+            context['ng_cave']['waypoints']['currentIndex'] = next_idx
+            if coord is not None:
+                current_wp = items[next_idx]
+                context['ng_cave']['waypoints']['state'] = resolveGoalCoordinate(coord, current_wp)
+            if isinstance(context.get('ng_debug'), dict):
+                context['ng_debug']['last_tick_reason'] = 'depositItems timeout (skipping)'
+        except Exception:
+            return context
         return context

@@ -38,7 +38,7 @@ for creature in wikiCreatures:
 # TODO: add unit tests
 # TODO: add perf
 # TODO: add typings
-def getClosestCreature(gameWindowCreatures, coordinate: Coordinate):
+def getClosestCreature(gameWindowCreatures: CreatureList, coordinate: Coordinate) -> Optional[Any]:
     if len(gameWindowCreatures) == 0:
         return None
     if len(gameWindowCreatures) == 1:
@@ -290,12 +290,13 @@ def getNearestCreaturesCount(creatures) -> int:
 # TODO: add unit tests
 # TODO: add perf
 # TODO: add types
-def getTargetCreature(gameWindowCreatures):
+def getTargetCreature(gameWindowCreatures: CreatureList) -> Optional[Any]:
     if len(gameWindowCreatures) == 0:
         return None
     for gameWindowCreature in gameWindowCreatures:
         if gameWindowCreature['isBeingAttacked']:
             return gameWindowCreature
+    return None
 
 
 # TODO: add unit tests

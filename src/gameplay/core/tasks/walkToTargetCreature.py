@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.spatial import distance
-from src.gameplay.typings import Context
 import src.gameplay.utils as gameplayUtils
 from ...typings import Context
 from ...utils import releaseKeys
@@ -10,7 +9,7 @@ from .walk import WalkTask
 import src.utils.keyboard as keyboard
 
 class WalkToTargetCreatureTask(VectorTask):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.name = 'walkToTargetCreature'
         self.manuallyTerminable = True
@@ -43,14 +42,19 @@ class WalkToTargetCreatureTask(VectorTask):
         if context['ng_cave']['targetCreature'] is None:
             keyboard.press('esc')
             return False
-        return not gameplayUtils.coordinatesAreEqual(context['ng_cave']['targetCreature']['coordinate'], self.targetCreatureCoordinateSinceLastRestart)
+        if self.targetCreatureCoordinateSinceLastRestart is None:
+            return True
+        return not gameplayUtils.coordinatesAreEqual(
+            context['ng_cave']['targetCreature']['coordinate'],
+            self.targetCreatureCoordinateSinceLastRestart,
+        )
 
     def shouldManuallyComplete(self, context: Context) -> bool:
         if context['ng_cave']['isAttackingSomeCreature'] == False:
             return True
         return False
 
-    def calculatePathToTargetCreature(self, context: Context):
+    def calculatePathToTargetCreature(self, context: Context) -> None:
         self.tasks = []
         if context['ng_cave']['targetCreature'] is None:
             return

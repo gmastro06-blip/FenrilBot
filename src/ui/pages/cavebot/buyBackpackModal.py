@@ -3,6 +3,7 @@ from tkinter import messagebox
 from typing import Any, Callable, Mapping, Optional
 
 from src.ui.utils import genRanStr
+from src.data.backpacks import get_backpack_names
 
 
 def _noop_on_confirm(_label: Optional[str], _payload: dict) -> None:
@@ -30,7 +31,7 @@ class BuyBackpackModal(customtkinter.CTkToplevel):
         self.buyBackpackFrame.rowconfigure(1, weight=1)
 
         self.backpackCombobox = customtkinter.CTkComboBox(
-            self.buyBackpackFrame, values=['Orange Backpack', 'Red Backpack', 'Parcel'], state='readonly')
+            self.buyBackpackFrame, values=get_backpack_names(), state='readonly')
         self.backpackCombobox.grid(
             row=0, column=0, sticky='nsew', padx=10, pady=10)
         if waypoint is not None:

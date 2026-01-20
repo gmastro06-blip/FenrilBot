@@ -6,7 +6,7 @@ from src.repositories.gameWindow.creatures import getNearestCreaturesCount
 import src.utils.keyboard as keyboard
 
 class AttackClosestCreatureTask(VectorTask):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.name = 'attackClosestCreature'
         self.isRootTask = True

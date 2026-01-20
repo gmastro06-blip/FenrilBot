@@ -2,35 +2,10 @@ from tkinter import messagebox
 import customtkinter
 from ..utils import genRanStr
 from typing import Any
+from src.data.backpacks import get_backpack_names
 
 class InventoryPage(customtkinter.CTkToplevel):
-    backpacks = [
-        '25 Years Backpack',
-        'Anniversary Backpack',
-        'Beach Backpack',
-        'Birthday Backpack',
-        'Brocade Backpack',
-        'Buggy Backpack',
-        'Cake Backpack',
-        'Camouflage Backpack',
-        'Crown Backpack',
-        'Crystal Backpack',
-        'Deepling Backpack',
-        'Demon Backpack',
-        'Dragon Backpack',
-        'Expedition Backpack',
-        'Fur Backpack',
-        'Glooth Backpack',
-        'Heart Backpack',
-        'Minotaur Backpack',
-        'Moon Backpack',
-        'Mushroom Backpack',
-        'Pannier Backpack',
-        'Pirate Backpack',
-        'Raccoon Backpack',
-        'Santa Backpack',
-        'Wolf Backpack',
-    ]
+    backpacks = get_backpack_names()
 
     def __init__(self, context: Any) -> None:
         super().__init__()

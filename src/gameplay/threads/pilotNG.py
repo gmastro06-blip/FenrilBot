@@ -3,6 +3,9 @@ from time import sleep, time
 import traceback
 import sys
 import os
+from typing import TYPE_CHECKING
+
+from src.gameplay.typings import Context as GameplayContext
 from src.gameplay.cavebot import resolveCavebotTasks, shouldAskForCavebotTasks
 from src.gameplay.combo import comboSpells
 from src.gameplay.core.middlewares.battleList import setBattleListMiddleware
@@ -29,16 +32,19 @@ from src.repositories.gameWindow.creatures import getClosestCreature, getTargetC
 
 from src.utils.console_log import log, log_throttled
 
+if TYPE_CHECKING:
+    from src.ui.context import Context as UIContext
+
 pyautogui.FAILSAFE = False
 pyautogui.PAUSE = 0
 
 class PilotNGThread:
     # TODO: add typings
-    def __init__(self, context):
+    def __init__(self, context: "UIContext") -> None:
         self.context = context
         self._last_reason = None
 
-    def mainloop(self):
+    def mainloop(self) -> None:
         while True:
             try:
                 if self.context.context.get('ng_should_stop'):
@@ -112,7 +118,7 @@ class PilotNGThread:
                 log('error', f"Exception: {type(e).__name__}: {e}")
                 log('error', traceback.format_exc())
 
-    def handleGameData(self, context):
+    def handleGameData(self, context: GameplayContext) -> GameplayContext:
         if context['ng_pause']:
             return context
         # Resolve action/capture windows (dual-window support) before grabbing screenshots.
@@ -134,7 +140,7 @@ class PilotNGThread:
         context = setCleanUpTasksMiddleware(context)
         return context
 
-    def handleGameplayTasks(self, context):
+    def handleGameplayTasks(self, context: GameplayContext) -> GameplayContext:
         # TODO: func to check if coord is none
         if context['ng_radar']['coordinate'] is None:
             if 'ng_debug' in context and isinstance(context['ng_debug'], dict):
@@ -173,6 +179,29 @@ class PilotNGThread:
             return context
         if context['ng_cave']['runToCreatures'] == True and context['ng_cave']['enabled']:
             hasCreaturesToAttackAfterCheck = hasCreaturesToAttack(context)
+
+            # Optional diagnostics to understand "not attacking" reports.
+            if os.getenv('FENRIL_TARGETING_DIAG', '0') in {'1', 'true', 'True'}:
+                monsters = context.get('gameWindow', {}).get('monsters') or []
+                bl_creatures = context.get('ng_battleList', {}).get('creatures')
+                bl_count = len(bl_creatures) if bl_creatures is not None else 0
+                closest = context.get('ng_cave', {}).get('closestCreature')
+                target = context.get('ng_cave', {}).get('targetCreature')
+                can_ignore = context.get('ng_targeting', {}).get('canIgnoreCreatures')
+                has_ignorable = context.get('ng_targeting', {}).get('hasIgnorableCreatures')
+                log_throttled(
+                    'pilot.targeting.diag',
+                    'info',
+                    (
+                        f"targeting: monsters={len(monsters)} bl={bl_count} "
+                        f"hasCreaturesToAttack={hasCreaturesToAttackAfterCheck} "
+                        f"canIgnore={can_ignore} hasIgnorable={has_ignorable} "
+                        f"closest={getattr(closest, 'get', lambda _k, _d=None: None)('name', None) if closest else None} "
+                        f"target={getattr(target, 'get', lambda _k, _d=None: None)('name', None) if target else None}"
+                    ),
+                    2.0,
+                )
+
             if hasCreaturesToAttackAfterCheck:
                 if context['ng_cave']['closestCreature'] is not None:
                     context['way'] = 'ng_cave'
