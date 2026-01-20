@@ -1,6 +1,7 @@
 from src.repositories.radar.core import getClosestWaypointIndexFromCoordinate, getCoordinate, getFloorLevel
 from src.repositories.radar.locators import getRadarToolsPosition
 from src.repositories.gameWindow.core import getLeftArrowPosition, getRightArrowPosition
+from src.repositories.gameWindow.config import gameWindowCache
 from src.gameplay.typings import Context
 
 import cv2
@@ -28,6 +29,22 @@ def setRadarMiddleware(context: Context) -> Context:
     debug = context.get('ng_debug') if isinstance(context.get('ng_debug'), dict) else None
     coordinate = getCoordinate(
         context['ng_screenshot'], context['ng_radar']['previousCoordinate'], debug)
+
+    # When template matching is flaky (OBS scaling / transient frame glitches),
+    # allow a short-lived fallback to the last good coordinate to avoid hard stalls.
+    if coordinate is None:
+        diag['consecutive_radar_coord_missing'] = int(diag.get('consecutive_radar_coord_missing', 0)) + 1
+        use_prev = os.getenv('FENRIL_RADAR_USE_PREVIOUS_ON_MISS', '1') != '0'
+        max_prev_ticks = int(os.getenv('FENRIL_RADAR_USE_PREVIOUS_MAX_TICKS', '3'))
+        prev_coord = context.get('ng_radar', {}).get('previousCoordinate')
+        if use_prev and prev_coord is not None and int(diag.get('consecutive_radar_coord_missing', 0)) <= max_prev_ticks:
+            coordinate = prev_coord
+            diag['radar_used_previous_on_miss'] = int(diag.get('radar_used_previous_on_miss', 0)) + 1
+            if debug is not None and debug.get('last_tick_reason') in (None, 'running', 'no coord'):
+                debug['last_tick_reason'] = 'radar miss (using previous)'
+    else:
+        diag['consecutive_radar_coord_missing'] = 0
+
     context['ng_radar']['coordinate'] = coordinate
 
     if coordinate is not None:
@@ -37,6 +54,13 @@ def setRadarMiddleware(context: Context) -> Context:
         if context.get('ng_debug') is not None:
             context['ng_debug']['radar_tools'] = True
             context['ng_debug']['floor_level'] = coordinate[2]
+            # Clear stale failure reasons so the pilot loop can report "running".
+            if context['ng_debug'].get('last_tick_reason') in (
+                'radar tools not found',
+                'floor level not found',
+                'radar match not found',
+            ):
+                context['ng_debug']['last_tick_reason'] = None
         return context
 
     # Diagnostics: why did getCoordinate return None?
@@ -56,6 +80,16 @@ def setRadarMiddleware(context: Context) -> Context:
         if debug is not None:
             debug['last_tick_reason'] = 'radar tools not found'
             debug['floor_level'] = None
+
+        # Recovery: reset locator caches after repeated misses.
+        reset_thr = int(os.getenv('FENRIL_RESET_LOCATOR_CACHE_THRESHOLD', '10'))
+        if int(diag.get('consecutive_radar_tools_missing', 0)) >= reset_thr:
+            try:
+                reset_fn = getattr(getRadarToolsPosition, 'reset_cache', None)
+                if callable(reset_fn):
+                    reset_fn()
+            except Exception:
+                pass
     else:
         diag['consecutive_radar_tools_missing'] = 0
         floor_level = getFloorLevel(screenshot)
@@ -71,6 +105,17 @@ def setRadarMiddleware(context: Context) -> Context:
         diag['consecutive_game_window_arrows_missing'] = int(diag.get('consecutive_game_window_arrows_missing', 0)) + 1
     else:
         diag['consecutive_game_window_arrows_missing'] = 0
+
+    # Recovery: clear the game-window arrow cache after repeated misses.
+    reset_thr = int(os.getenv('FENRIL_RESET_LOCATOR_CACHE_THRESHOLD', '10'))
+    if int(diag.get('consecutive_game_window_arrows_missing', 0)) >= reset_thr:
+        try:
+            gameWindowCache['left']['position'] = None
+            gameWindowCache['left']['arrow'] = None
+            gameWindowCache['right']['position'] = None
+            gameWindowCache['right']['arrow'] = None
+        except Exception:
+            pass
 
     # Dump frames when we keep failing to see radar/arrows to avoid silent stalls.
     radar_thr = int(os.getenv('FENRIL_DIAG_RADAR_MISSING_THRESHOLD', '30'))

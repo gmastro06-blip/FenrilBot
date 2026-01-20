@@ -1,5 +1,5 @@
 from numba import njit
-from typing import Any, Union
+from typing import Union
 
 import numpy as np
 from src.shared.typings import GrayImage
@@ -12,14 +12,23 @@ from .locators import getHpIconPosition, getManaIconPosition
 # TODO: add unit tests
 # TODO: add perf
 @njit(cache=True, fastmath=True)
-def getFilledBarPercentage(bar: np.ndarray, allowedPixelsColors: list[Any] | None = None) -> int:
-    if allowedPixelsColors is None:
-        allowedPixelsColors = []
-    barPercent = len(bar)
-    for i in range(len(bar)):
-        if bar[i] not in allowedPixelsColors:
-            barPercent -= 1
-    return (barPercent * 100 // 94)
+def getFilledBarPercentage(bar: np.ndarray, allowedPixelsColors: np.ndarray) -> int:
+    total = len(bar)
+    if total <= 0:
+        return 0
+
+    filled = 0
+    for i in range(total):
+        v = bar[i]
+        ok = False
+        for j in range(len(allowedPixelsColors)):
+            if v == allowedPixelsColors[j]:
+                ok = True
+                break
+        if ok:
+            filled += 1
+
+    return (filled * 100 // total)
 
 
 # TODO: add unit tests

@@ -33,13 +33,21 @@ class UseLadderWaypointTask(VectorTask):
             region=context.get('ng_capture_region'),
             absolute_region=context.get('ng_capture_absolute_region'),
         )
-        context['ng_radar']['coordinate'] = getCoordinate(
-            context['ng_screenshot'], previousCoordinate=context['ng_radar']['previousCoordinate'])
-        if context['ng_radar']['coordinate'][2] != self.waypoint['coordinate'][2] - 1:
+        try:
+            coord = getCoordinate(
+                context['ng_screenshot'], previousCoordinate=context['ng_radar']['previousCoordinate'])
+        except Exception:
+            coord = None
+        context['ng_radar']['coordinate'] = coord
+
+        if coord is None:
+            return context
+
+        if coord[2] != self.waypoint['coordinate'][2] - 1:
             context['ng_cave']['waypoints']['currentIndex'] = getClosestWaypointIndexFromCoordinate(
-                context['ng_radar']['coordinate'], context['ng_cave']['waypoints']['items'])
+                coord, context['ng_cave']['waypoints']['items'])
             currentWaypoint = context['ng_cave']['waypoints']['items'][context['ng_cave']
                                                                 ['waypoints']['currentIndex']]
             context['ng_cave']['waypoints']['state'] = resolveGoalCoordinate(
-                context['ng_radar']['coordinate'], currentWaypoint)
+                coord, currentWaypoint)
         return context

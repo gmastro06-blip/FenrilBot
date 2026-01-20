@@ -12,9 +12,16 @@ class RightClickUseTask(BaseTask):
         self.waypoint = waypoint
 
     def do(self, context: Context) -> Context:
-        slot = gameWindowCore.getSlotFromCoordinate(
-            context['ng_radar']['coordinate'], self.waypoint['coordinate'])
+        current_coord = context.get('ng_radar', {}).get('coordinate')
+        game_window_pos = context.get('gameWindow', {}).get('coordinate')
+        if current_coord is None or game_window_pos is None:
+            return context
+
+        slot = gameWindowCore.getSlotFromCoordinate(current_coord, self.waypoint['coordinate'])
+        if slot is None:
+            return context
+
         sleep(0.2)
-        gameWindowSlot.rightClickSlot(slot, context['gameWindow']['coordinate'])
+        gameWindowSlot.rightClickSlot(slot, game_window_pos)
         sleep(0.2)
         return context

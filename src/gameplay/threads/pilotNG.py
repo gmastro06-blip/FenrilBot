@@ -137,12 +137,17 @@ class PilotNGThread:
     def handleGameplayTasks(self, context):
         # TODO: func to check if coord is none
         if context['ng_radar']['coordinate'] is None:
-            if 'ng_debug' in context:
-                context['ng_debug']['last_tick_reason'] = 'no coord'
+            if 'ng_debug' in context and isinstance(context['ng_debug'], dict):
+                # Preserve a more specific reason from middlewares (e.g. "radar tools not found").
+                prev = context['ng_debug'].get('last_tick_reason')
+                if prev in (None, 'running', 'no coord'):
+                    context['ng_debug']['last_tick_reason'] = 'no coord'
             return context
         if any(coord is None for coord in context['ng_radar']['coordinate']):
-            if 'ng_debug' in context:
-                context['ng_debug']['last_tick_reason'] = 'partial coord'
+            if 'ng_debug' in context and isinstance(context['ng_debug'], dict):
+                prev = context['ng_debug'].get('last_tick_reason')
+                if prev in (None, 'running', 'partial coord'):
+                    context['ng_debug']['last_tick_reason'] = 'partial coord'
             return context
         if not context.get('ng_cave', {}).get('waypoints', {}).get('items'):
             if 'ng_debug' in context:

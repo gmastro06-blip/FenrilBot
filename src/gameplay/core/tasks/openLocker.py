@@ -15,10 +15,17 @@ class OpenLockerTask(BaseTask):
         return inventoryCore.isContainerOpen(context['ng_screenshot'], 'locker')
 
     def do(self, context: Context) -> Context:
-        slot = gameWindowCore.getSlotFromCoordinate(
-            context['ng_radar']['coordinate'], context['ng_deposit']['lockerCoordinate'])
-        gameWindowSlot.rightClickSlot(
-            slot, context['gameWindow']['coordinate'])
+        current_coord = context.get('ng_radar', {}).get('coordinate')
+        locker_coord = context.get('ng_deposit', {}).get('lockerCoordinate')
+        game_window_pos = context.get('gameWindow', {}).get('coordinate')
+        if current_coord is None or locker_coord is None or game_window_pos is None:
+            return context
+
+        slot = gameWindowCore.getSlotFromCoordinate(current_coord, locker_coord)
+        if slot is None:
+            return context
+
+        gameWindowSlot.rightClickSlot(slot, game_window_pos)
         return context
 
     def did(self, context: Context) -> bool:

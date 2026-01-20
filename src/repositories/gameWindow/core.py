@@ -114,7 +114,10 @@ def getImageByCoordinate(screenshot: GrayImage, coordinate: BBox, gameWindowSize
 
 # TODO: add unit tests
 # TODO: add perf
-def getSlotFromCoordinate(currentCoordinate: Coordinate, coordinate: Coordinate) -> Union[Slot, None]:
+def getSlotFromCoordinate(currentCoordinate: Union[Coordinate, None], coordinate: Union[Coordinate, None]) -> Union[Slot, None]:
+    if currentCoordinate is None or coordinate is None:
+        return None
+
     diffX = coordinate[0] - currentCoordinate[0]
     if abs(diffX) > 7:
         return None
