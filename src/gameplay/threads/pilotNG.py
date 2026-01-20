@@ -2,6 +2,7 @@ import pyautogui
 from time import sleep, time
 import traceback
 import sys
+import os
 from src.gameplay.cavebot import resolveCavebotTasks, shouldAskForCavebotTasks
 from src.gameplay.combo import comboSpells
 from src.gameplay.core.middlewares.battleList import setBattleListMiddleware
@@ -11,6 +12,7 @@ from src.gameplay.core.middlewares.playerStatus import setMapPlayerStatusMiddlew
 from src.gameplay.core.middlewares.statsBar import setMapStatsBarMiddleware
 from src.gameplay.core.middlewares.radar import setRadarMiddleware, setWaypointIndexMiddleware
 from src.gameplay.core.middlewares.screenshot import setScreenshotMiddleware
+from src.gameplay.core.middlewares.window import setTibiaWindowMiddleware
 from src.gameplay.core.middlewares.tasks import setCleanUpTasksMiddleware
 from src.gameplay.core.tasks.lootCorpse import LootCorpseTask
 from src.gameplay.resolvers import resolveTasksByWaypoint
@@ -25,6 +27,8 @@ from src.gameplay.healing.observers.swapRing import swapRing
 from src.gameplay.targeting import hasCreaturesToAttack
 from src.repositories.gameWindow.creatures import getClosestCreature, getTargetCreature
 
+from src.utils.console_log import log, log_throttled
+
 pyautogui.FAILSAFE = False
 pyautogui.PAUSE = 0
 
@@ -32,6 +36,7 @@ class PilotNGThread:
     # TODO: add typings
     def __init__(self, context):
         self.context = context
+        self._last_reason = None
 
     def mainloop(self):
         while True:
@@ -42,6 +47,7 @@ class PilotNGThread:
                     self.context.context['ng_debug'] = {'last_tick_reason': None, 'last_exception': None}
                 if self.context.context['ng_pause']:
                     self.context.context['ng_debug']['last_tick_reason'] = 'paused'
+                    log_throttled('pilot.status.paused', 'info', 'Paused (ng_pause=1)', float(os.getenv('FENRIL_STATUS_LOG_INTERVAL', '2.0')))
                     sleep(1)
                     continue
                 startTime = time()
@@ -51,6 +57,39 @@ class PilotNGThread:
                     self.context.context)
                 self.context.context = self.context.context['ng_tasksOrchestrator'].do(
                     self.context.context)
+
+                # Periodic status line to make it obvious why cavebot isn't acting.
+                interval = float(os.getenv('FENRIL_STATUS_LOG_INTERVAL', '2.0'))
+                dbg = self.context.context.get('ng_debug', {})
+                reason = dbg.get('last_tick_reason')
+                cave = self.context.context.get('ng_cave', {})
+                coord = self.context.context.get('ng_radar', {}).get('coordinate')
+                current_task = None
+                try:
+                    current_task = self.context.context['ng_tasksOrchestrator'].getCurrentTask(self.context.context)
+                except Exception:
+                    current_task = None
+
+                root_name = None
+                task_name = None
+                try:
+                    if current_task is not None:
+                        task_name = getattr(current_task, 'name', None)
+                        root = getattr(current_task, 'rootTask', None)
+                        root_name = getattr(root, 'name', None) if root is not None else None
+                except Exception:
+                    pass
+
+                status_msg = (
+                    f"cave_enabled={cave.get('enabled')} runToCreatures={cave.get('runToCreatures')} "
+                    f"way={self.context.context.get('way')} coord={coord} "
+                    f"task={task_name} root={root_name} reason={reason}"
+                )
+                log_throttled('pilot.status', 'info', status_msg, interval)
+                if reason != self._last_reason and reason is not None:
+                    self._last_reason = reason
+                    log('info', f"Tick reason changed: {reason}")
+
                 self.context.context['ng_radar']['lastCoordinateVisited'] = self.context.context['ng_radar']['coordinate']
                 healingByPotions(self.context.context)
                 healingByMana(self.context.context)
@@ -70,12 +109,14 @@ class PilotNGThread:
                 if 'ng_debug' not in self.context.context:
                     self.context.context['ng_debug'] = {'last_tick_reason': None, 'last_exception': None}
                 self.context.context['ng_debug']['last_exception'] = f"{type(e).__name__}: {e}"
-                print(f"An exception occurred: {e}")
-                print(traceback.format_exc())
+                log('error', f"Exception: {type(e).__name__}: {e}")
+                log('error', traceback.format_exc())
 
     def handleGameData(self, context):
         if context['ng_pause']:
             return context
+        # Resolve action/capture windows (dual-window support) before grabbing screenshots.
+        context = setTibiaWindowMiddleware(context)
         context = setScreenshotMiddleware(context)
         context = setRadarMiddleware(context)
         context = setChatTabsMiddleware(context)

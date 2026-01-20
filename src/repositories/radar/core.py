@@ -1,7 +1,7 @@
 from numba import njit
 import numpy as np
 from scipy.spatial import distance
-from typing import Union
+from typing import Any, Dict, Optional, Union
 from src.shared.typings import Coordinate, GrayImage, GrayPixel, WaypointList
 from src.utils.core import hashit, locate
 from src.utils.coordinate import getCoordinateFromPixel, getPixelFromCoordinate
@@ -14,17 +14,28 @@ from .typings import FloorLevel, TileFriction
 # TODO: add unit tests
 # TODO: add perf
 # TODO: get by cached images coordinates hashes
-def getCoordinate(screenshot: GrayImage, previousCoordinate: Coordinate = None) -> Coordinate | None:
+def getCoordinate(
+    screenshot: GrayImage,
+    previousCoordinate: Optional[Coordinate] = None,
+    debug: Optional[Dict[str, Any]] = None,
+) -> Optional[Coordinate]:
     radarToolsPosition = getRadarToolsPosition(screenshot)
     if radarToolsPosition is None:
+        if debug is not None:
+            debug['radar_tools'] = False
         return None
     radarImage = getRadarImage(screenshot, radarToolsPosition)
     radarHashedImg = hashit(radarImage)
     hashedCoordinate = coordinates.get(radarHashedImg, None)
     if hashedCoordinate is not None:
+        if debug is not None:
+            debug['radar_tools'] = True
         return hashedCoordinate
     floorLevel = getFloorLevel(screenshot)
     if floorLevel is None:
+        if debug is not None:
+            debug['radar_tools'] = True
+            debug['floor_level'] = None
         return None
     radarImage[52, 53] = 128
     radarImage[52, 54] = 128
@@ -80,7 +91,7 @@ def getCoordinate(screenshot: GrayImage, previousCoordinate: Coordinate = None) 
 
 # TODO: add unit tests
 # TODO: add perf
-def getFloorLevel(screenshot: GrayImage) -> FloorLevel | None:
+def getFloorLevel(screenshot: GrayImage) -> Optional[FloorLevel]:
     radarToolsPosition = getRadarToolsPosition(screenshot)
     if radarToolsPosition is None:
         return None
@@ -163,4 +174,4 @@ def isCoordinateWalkable(coordinate: Coordinate) -> bool:
 # TODO: add unit tests
 # TODO: add perf
 def isNonWalkablePixelColor(pixelColor: GrayPixel) -> bool:
-    return np.isin(pixelColor, nonWalkablePixelsColors)
+    return bool(np.isin(pixelColor, nonWalkablePixelsColors))

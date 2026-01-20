@@ -1,12 +1,12 @@
 from numba import njit
 import numpy as np
 from scipy.spatial import distance
-from typing import List, Union
+from typing import Any, Union
 from src.shared.typings import Coordinate, CoordinateList, XYCoordinate
 
 
 # TODO: add unit tests
-def getAroundPixelsCoordinates(pixelCoordinate: XYCoordinate) -> List[XYCoordinate]:
+def getAroundPixelsCoordinates(pixelCoordinate: XYCoordinate) -> np.ndarray:
     aroundPixelsCoordinatesIndexes = np.array(
         [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]])
     pixelCoordinates = np.broadcast_to(
@@ -15,7 +15,7 @@ def getAroundPixelsCoordinates(pixelCoordinate: XYCoordinate) -> List[XYCoordina
 
 
 # TODO: add unit tests
-def getAvailableAroundPixelsCoordinates(aroundPixelsCoordinates: List[XYCoordinate], walkableFloorSqms: np.ndarray) -> List[XYCoordinate]:
+def getAvailableAroundPixelsCoordinates(aroundPixelsCoordinates: Any, walkableFloorSqms: np.ndarray) -> np.ndarray:
     yPixelsCoordinates = aroundPixelsCoordinates[:, 1]
     xPixelsCoordinates = aroundPixelsCoordinates[:, 0]
     nonzero = np.nonzero(
@@ -25,7 +25,7 @@ def getAvailableAroundPixelsCoordinates(aroundPixelsCoordinates: List[XYCoordina
 
 
 # TODO: add unit tests
-def getAvailableAroundCoordinates(coordinate: Coordinate, walkableFloorSqms: np.ndarray) -> CoordinateList:
+def getAvailableAroundCoordinates(coordinate: Coordinate, walkableFloorSqms: np.ndarray) -> np.ndarray:
     pixelCoordinate = getPixelFromCoordinate(coordinate)
     aroundPixelsCoordinates = getAroundPixelsCoordinates(pixelCoordinate)
     availableAroundPixelsCoordinates = getAvailableAroundPixelsCoordinates(
@@ -38,7 +38,7 @@ def getAvailableAroundCoordinates(coordinate: Coordinate, walkableFloorSqms: np.
         (xCoordinates, yCoordinates, floors))
 
 
-def getClosestCoordinate(coordinate: Coordinate, coordinates: CoordinateList) -> Coordinate:
+def getClosestCoordinate(coordinate: Coordinate, coordinates: Any) -> Coordinate:
     coordinateWithoutFloor = (coordinate[0], coordinate[1])
     coordinatesWithoutFloor = [(x[0], x[1]) for x in coordinates]
     distancesOfCoordinates = distance.cdist(
@@ -47,7 +47,7 @@ def getClosestCoordinate(coordinate: Coordinate, coordinates: CoordinateList) ->
     return coordinates[closestCoordinateIndex]
 
 
-def getCoordinateFromPixel(pixel: XYCoordinate) -> Coordinate:
+def getCoordinateFromPixel(pixel: XYCoordinate) -> XYCoordinate:
     return pixel[0] + 31744, pixel[1] + 30976
 
 
@@ -60,6 +60,7 @@ def getDirectionBetweenCoordinates(coordinate: Coordinate, nextCoordinate: Coord
         return 'down'
     if nextCoordinate[1] < coordinate[1]:
         return 'up'
+    return None
 
 
 @njit(cache=True, fastmath=True)

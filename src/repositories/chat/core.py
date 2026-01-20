@@ -30,14 +30,22 @@ def getTabs(screenshot: GrayImage) -> Dict[str, Dict[str, Any]]:
     if leftSidebarArrowsPosition is not None and chatMenuPosition is not None:
         x, y, width, height = leftSidebarArrowsPosition[0] + 18, chatMenuPosition[1], chatMenuPosition[0] - (
             leftSidebarArrowsPosition[0] + 18), 20
+        if width <= 0 or height <= 0:
+            return {}
         chatsTabsContainerImage = screenshot[y:y + height, x:x + width]
+        if chatsTabsContainerImage.size == 0:
+            return {}
         while shouldFindTabs:
             xOfTab = tabIndex * 96
+            if xOfTab < 0 or xOfTab >= chatsTabsContainerImage.shape[1]:
+                break
             firstPixel = chatsTabsContainerImage[0, xOfTab]
             if firstPixel != 114 and firstPixel != 125:
                 shouldFindTabs = False
                 continue
             tabImage = chatsTabsContainerImage[2:16, xOfTab + 2:xOfTab + 2 + 92]
+            if tabImage.size == 0:
+                break
             tabName = hashes['tabs'].get(hashit(tabImage), 'Unknown')
             if tabName != 'Unknown':
                 tabs.setdefault(

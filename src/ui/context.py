@@ -8,6 +8,7 @@ import pygetwindow as gw
 from src.gameplay.core.load import loadContextFromConfig, loadNgCfgs
 from src.repositories.chat.core import resetOldList
 # from src.utils.core import getScreenshot
+from src.utils.console_log import log
 
 
 class Context:
@@ -459,6 +460,7 @@ class Context:
         self.context['ng_cave']['enabled'] = enabled
         self.enabledProfile['config']['ng_cave']['enabled'] = enabled
         self.db.update(self.enabledProfile)
+        log('info', f"Cavebot enabled={enabled}")
         if enabled and self.context.get('ng_pause'):
             self.play()
 

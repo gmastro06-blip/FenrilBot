@@ -3,7 +3,7 @@ from .common.base import BaseTask
 from src.repositories.actionBar.core import hasCooldownByName
 from src.utils.array import getNextArrayIndex
 from time import time
-from src.utils.core import getScreenshot
+from src.utils.core import getScreenshot, getScreenshotDebugInfo, setScreenshotOutputIdx
 
 class SetNextSpellTask(BaseTask):
     def __init__(self, spell: str):
@@ -13,7 +13,17 @@ class SetNextSpellTask(BaseTask):
 
     # TODO: add unit tests
     def do(self, context: Context) -> Context:
-        curScreen = context['ng_screenshot'] = getScreenshot()
+        # Refresh screenshot from the capture window (OBS projector) region.
+        try:
+            out_idx = context.get('ng_capture_output_idx')
+            if out_idx is not None and getScreenshotDebugInfo().get('output_idx') != out_idx:
+                setScreenshotOutputIdx(int(out_idx))
+        except Exception:
+            pass
+        curScreen = context['ng_screenshot'] = getScreenshot(
+            region=context.get('ng_capture_region'),
+            absolute_region=context.get('ng_capture_absolute_region'),
+        )
         hasCooldown = hasCooldownByName(curScreen, self.spell)
         if hasCooldown:
             comboSpell = context['ng_comboSpells']['items'][0]

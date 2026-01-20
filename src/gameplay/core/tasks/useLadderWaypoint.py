@@ -1,11 +1,11 @@
 from src.shared.typings import Waypoint
-from ...typings import Context
+from src.gameplay.typings import Context
 from .common.vector import VectorTask
 from .rightClickUse import RightClickUseTask
 from .setNextWaypoint import SetNextWaypointTask
-from src.utils.core import getScreenshot
+from src.utils.core import getScreenshot, getScreenshotDebugInfo, setScreenshotOutputIdx
 from src.repositories.radar.core import getClosestWaypointIndexFromCoordinate, getCoordinate
-from ..waypoint import resolveGoalCoordinate
+from src.gameplay.core.waypoint import resolveGoalCoordinate
 
 class UseLadderWaypointTask(VectorTask):
     def __init__(self, waypoint: Waypoint):
@@ -22,7 +22,17 @@ class UseLadderWaypointTask(VectorTask):
         return context
 
     def onComplete(self, context: Context) -> Context:
-        context['ng_screenshot'] = getScreenshot()
+        # Refresh screenshot from the capture window (OBS projector) region.
+        try:
+            out_idx = context.get('ng_capture_output_idx')
+            if out_idx is not None and getScreenshotDebugInfo().get('output_idx') != out_idx:
+                setScreenshotOutputIdx(int(out_idx))
+        except Exception:
+            pass
+        context['ng_screenshot'] = getScreenshot(
+            region=context.get('ng_capture_region'),
+            absolute_region=context.get('ng_capture_absolute_region'),
+        )
         context['ng_radar']['coordinate'] = getCoordinate(
             context['ng_screenshot'], previousCoordinate=context['ng_radar']['previousCoordinate'])
         if context['ng_radar']['coordinate'][2] != self.waypoint['coordinate'][2] - 1:
