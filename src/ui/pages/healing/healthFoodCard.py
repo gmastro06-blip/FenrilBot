@@ -1,9 +1,10 @@
 import re
 import tkinter as tk
 import customtkinter
+from typing import Any
 
 class HealthFoodCard(customtkinter.CTkFrame):
-    def __init__(self, parent, context):
+    def __init__(self, parent: tk.Misc, context: Any) -> None:
         super().__init__(parent)
         self.context = context
         self.columnconfigure(0, weight=3)
@@ -55,22 +56,22 @@ class HealthFoodCard(customtkinter.CTkFrame):
         self.hpLessThanOrEqualLabel.grid(
             column=1, row=4, sticky='nsew')
 
-    def onToggleCheckButton(self):
+    def onToggleCheckButton(self) -> None:
         self.context.toggleHealingHighPriorityByKey(
             'healthFood', self.checkVar.get())
 
-    def onChangeHp(self, _):
+    def onChangeHp(self, _: float) -> None:
         self.context.setHealthFoodHpPercentageLessThanOrEqual(
             self.hpLessThanOrEqualVar.get())
 
-    def onChangeHotkey(self, event):
-            key = event.char
-            key_pressed = event.keysym
-            if key == '\b':
-                return
-            if re.match(r'^F[1-9]|1[0-2]$', key) or re.match(r'^[0-9]$', key) or re.match(r'^[a-z]$', key):
-                self.hotkeyEntry.delete(0, tk.END)
-                self.context.setHotkeyHealingHighPriorityByKey('healthFood', key)
-            else:
-                self.context.setHotkeyHealingHighPriorityByKey('healthFood', key_pressed)
-                self.hotkeyEntryVar.set(key_pressed)
+    def onChangeHotkey(self, event: tk.Event) -> None:
+        key = event.char
+        key_pressed = event.keysym
+        if key == '\b':
+            return
+        if re.match(r'^F[1-9]|1[0-2]$', key) or re.match(r'^[0-9]$', key) or re.match(r'^[a-z]$', key):
+            self.hotkeyEntry.delete(0, tk.END)
+            self.context.setHotkeyHealingHighPriorityByKey('healthFood', key)
+        else:
+            self.context.setHotkeyHealingHighPriorityByKey('healthFood', key_pressed)
+            self.hotkeyEntryVar.set(key_pressed)

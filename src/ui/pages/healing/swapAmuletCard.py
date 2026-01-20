@@ -2,9 +2,10 @@ import tkinter as tk
 import customtkinter
 import re
 from tkinter import messagebox
+from typing import Any
 
 class SwapAmuletCard(customtkinter.CTkFrame):
-    def __init__(self, parent, context):
+    def __init__(self, parent: tk.Misc, context: Any) -> None:
         super().__init__(parent)
         self.context = context
         self.columnconfigure(0, weight=3)
@@ -107,19 +108,19 @@ class SwapAmuletCard(customtkinter.CTkFrame):
         self.hpGreaterThanLabel.grid(
             column=1, row=9, sticky='nsew')
 
-    def onToggleCheckButton(self):
+    def onToggleCheckButton(self) -> None:
         self.context.toggleHealingHighPriorityByKey(
             'swapAmulet', self.checkVar.get())
 
-    def onChangeHpLessThanOrEqual(self, _):
+    def onChangeHpLessThanOrEqual(self, _: float) -> None:
         self.context.setSwapAmuletHpPercentageLessThanOrEqual(
             self.hpLessThanOrEqualVar.get())
 
-    def onChangeHpGreaterThan(self, _):
+    def onChangeHpGreaterThan(self, _: float) -> None:
         self.context.setSwapAmuletHpPercentageGreaterThan(
             self.hpGreaterThanVar.get())
 
-    def onChangeTankHotkey(self, event):
+    def onChangeTankHotkey(self, event: tk.Event) -> None:
         key = event.char
         key_pressed = event.keysym
         if key == '\b':
@@ -131,7 +132,7 @@ class SwapAmuletCard(customtkinter.CTkFrame):
             self.context.setSwapTankAmuletHotkey(key_pressed)
             self.tankHotkeyEntryVar.set(key_pressed)
 
-    def onChangeMainHotkey(self, event):
+    def onChangeMainHotkey(self, event: tk.Event) -> None:
         key = event.char
         key_pressed = event.keysym
         if key == '\b':
@@ -143,17 +144,17 @@ class SwapAmuletCard(customtkinter.CTkFrame):
             self.context.setSwapMainAmuletHotkey(key_pressed)
             self.mainHotkeyEntryVar.set(key_pressed)
 
-    def onChangeTankNumber(self, event):
+    def onChangeTankNumber(self, event: tk.Event) -> None:
         value = self.slotTankEntry.get()
         if value.isdigit() and int(value) > 0:
             self.context.setSwapTankAmuletSlotByKey(int(value))
 
-    def onChangeMainNumber(self, event):
+    def onChangeMainNumber(self, event: tk.Event) -> None:
         value = self.slotMainEntry.get()
         if value.isdigit() and int(value) > 0:
             self.context.setSwapMainAmuletSlotByKey(int(value))
 
-    def validateNumber(self, value: int) -> bool:
+    def validateNumber(self, value: str) -> bool:
         if value == '':
             return True
         if value.isdigit() and int(value) > 0:

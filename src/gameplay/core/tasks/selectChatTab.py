@@ -5,7 +5,7 @@ from .common.base import BaseTask
 
 # TODO: implement should ignore if tab already selected
 class SelectChatTabTask(BaseTask):
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         super().__init__()
         self.name = 'selectChatTab'
         self.delayBeforeStart = 0.5
@@ -20,7 +20,7 @@ class SelectChatTabTask(BaseTask):
         return tab['isSelected']
 
     # TODO: add unit tests
-    def do(self, context):
+    def do(self, context: Context) -> Context:
         tabPosition = context['ng_chat']['tabs'][self.tabName]['position']
         # TODO: implement random click in BBox
         leftClick((tabPosition[0] + 10, tabPosition[1] + 5))

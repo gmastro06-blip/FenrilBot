@@ -17,5 +17,7 @@ class CloseContainerTask(BaseTask):
     def do(self, context: Context) -> Context:
         containerPosition = locate(
             context['ng_screenshot'], self.containerBarImage, confidence=0.8)
+        if containerPosition is None:
+            return context
         leftClick((containerPosition[0] + 165, containerPosition[1] + 5))
         return context

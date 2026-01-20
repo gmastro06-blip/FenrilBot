@@ -1,6 +1,7 @@
 from tkinter import messagebox
 import customtkinter
 from ..utils import genRanStr
+from typing import Any
 
 class InventoryPage(customtkinter.CTkToplevel):
     backpacks = [
@@ -31,7 +32,7 @@ class InventoryPage(customtkinter.CTkToplevel):
         'Wolf Backpack',
     ]
 
-    def __init__(self, context):
+    def __init__(self, context: Any) -> None:
         super().__init__()
         self.context = context
 
@@ -78,7 +79,7 @@ class InventoryPage(customtkinter.CTkToplevel):
         self.columnconfigure(1, weight=1)
         self.columnconfigure(1, weight=1)
 
-    def setMainBackpack(self, _):
+    def setMainBackpack(self, _: str) -> None:
         if not self.canChangeBackpack():
             self.listOfMainBackpacksCombobox.set(
                 self.context.enabledProfile['config']['ng_backpacks']['main'])
@@ -87,7 +88,7 @@ class InventoryPage(customtkinter.CTkToplevel):
             return
         self.context.updateMainBackpack(self.listOfMainBackpacksCombobox.get())
 
-    def setLootBackpack(self, _):
+    def setLootBackpack(self, _: str) -> None:
         if not self.canChangeBackpack():
             self.listOfLootBackpacksombobox.set(
                 self.context.enabledProfile['config']['ng_backpacks']['loot'])
@@ -96,6 +97,6 @@ class InventoryPage(customtkinter.CTkToplevel):
             return
         self.context.updateLootBackpack(self.listOfLootBackpacksombobox.get())
 
-    def canChangeBackpack(self):
+    def canChangeBackpack(self) -> bool:
         return self.listOfMainBackpacksCombobox.get(
         ) != self.listOfLootBackpacksombobox.get()

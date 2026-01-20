@@ -174,20 +174,6 @@ def test_should_return_True_when_antidote_potion_is_available():
     assert isAvailable == expectedSlotIsAvailable
 
 
-def test_should_return_False_when_antidote_potion_is_not_available():
-    screenshotImage = loadFromRGBToGray(f'{currentPath}/antidotePotionNotAvailable.png')
-    isAvailable = slotIsAvailable(screenshotImage, 1)
-    expectedSlotIsAvailable = False
-    assert isAvailable == expectedSlotIsAvailable
-
-
-def test_should_return_True_when_antidote_potion_is_available():
-    screenshotImage = loadFromRGBToGray(f'{currentPath}/antidotePotionAvailable.png')
-    isAvailable = slotIsAvailable(screenshotImage, 1)
-    expectedSlotIsAvailable = True
-    assert isAvailable == expectedSlotIsAvailable
-
-
 def test_should_return_False_when_mastermind_potion_is_not_available():
     screenshotImage = loadFromRGBToGray(f'{currentPath}/mastermindPotionNotAvailable.png')
     isAvailable = slotIsAvailable(screenshotImage, 1)
@@ -197,20 +183,6 @@ def test_should_return_False_when_mastermind_potion_is_not_available():
 
 def test_should_return_False_when_mastermind_potion_is_available():
     screenshotImage = loadFromRGBToGray(f'{currentPath}/mastermindPotionAvailable.png')
-    isAvailable = slotIsAvailable(screenshotImage, 1)
-    expectedSlotIsAvailable = True
-    assert isAvailable == expectedSlotIsAvailable
-
-
-def test_should_return_False_when_berserk_potion_is_not_available():
-    screenshotImage = loadFromRGBToGray(f'{currentPath}/berserkPotionNotAvailable.png')
-    isAvailable = slotIsAvailable(screenshotImage, 1)
-    expectedSlotIsAvailable = False
-    assert isAvailable == expectedSlotIsAvailable
-
-
-def test_should_return_False_when_berserk_potion_is_available():
-    screenshotImage = loadFromRGBToGray(f'{currentPath}/berserkPotionAvailable.png')
     isAvailable = slotIsAvailable(screenshotImage, 1)
     expectedSlotIsAvailable = True
     assert isAvailable == expectedSlotIsAvailable

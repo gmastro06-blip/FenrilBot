@@ -3,10 +3,12 @@ from typing import Optional
 
 from src.gameplay.typings import Context
 from .common.base import BaseTask
+from .common.vector import VectorTask
 
 
 class TasksOrchestrator:
-    rootTask = None
+    def __init__(self) -> None:
+        self.rootTask: Optional[BaseTask] = None
 
     # TODO: add unit tests
     def setRootTask(self, context: Context, task: BaseTask) -> None:
@@ -38,12 +40,12 @@ class TasksOrchestrator:
             return 'unknown'
         if currentTask.isRootTask:
             return currentTask.name
-        return currentTask.rootTask.name
+        return currentTask.rootTask.name if currentTask.rootTask is not None else currentTask.name
 
     def getNestedTask(self, task: Optional[BaseTask], context: Context) -> Optional[BaseTask]:
         if task is None:
             return None
-        if hasattr(task, 'tasks'):
+        if isinstance(task, VectorTask):
             if task.status == 'notStarted':
                 context = task.onBeforeStart(context)
                 task.status = 'running'
@@ -67,7 +69,7 @@ class TasksOrchestrator:
         if currentTask is not None and currentTask.status != 'notStarted' and currentTask.shouldRestart(context):
             currentTask.status = 'notStarted'
             currentTask.retryCount += 1
-            if hasattr(currentTask, 'tasks'):
+            if isinstance(currentTask, VectorTask):
                 currentTask.currentTaskIndex = 0
             context = currentTask.onBeforeRestart(context)
         if currentTask is not None and currentTask.parentTask:
@@ -148,23 +150,29 @@ class TasksOrchestrator:
                 context = self.markCurrentTaskAsFinished(
                     task.parentTask, context, shouldTimeoutTreeWhenTimeout=shouldTimeoutTreeWhenTimeout)
                 return context
-            if task.parentTask.currentTaskIndex < len(task.parentTask.tasks) - 1:
-                task.parentTask.currentTaskIndex += 1
-            else:
-                if task.parentTask.shouldRestartAfterAllChildrensComplete(context):
-                    task.parentTask.status = 'notStarted'
-                    task.parentTask.currentTaskIndex = 0
-                    task.parentTask.retryCount += 1
-                    return task.parentTask.onBeforeRestart(context)
-                context = self.markCurrentTaskAsFinished(
-                    task.parentTask, context)
+            if isinstance(task.parentTask, VectorTask):
+                if task.parentTask.currentTaskIndex < len(task.parentTask.tasks) - 1:
+                    task.parentTask.currentTaskIndex += 1
+                else:
+                    if task.parentTask.shouldRestartAfterAllChildrensComplete(context):
+                        task.parentTask.status = 'notStarted'
+                        task.parentTask.currentTaskIndex = 0
+                        task.parentTask.retryCount += 1
+                        return task.parentTask.onBeforeRestart(context)
+                    context = self.markCurrentTaskAsFinished(task.parentTask, context)
         return context
 
     def didPassedEnoughTimeToExecute(self, task: BaseTask) -> bool:
+        if task.startedAt is None:
+            return False
         return time() - task.startedAt >= task.delayBeforeStart
 
     def didPassedEnoughDelayAfterTaskComplete(self, task: BaseTask) -> bool:
+        if task.finishedAt is None:
+            return False
         return time() - task.finishedAt >= task.delayAfterComplete
 
     def didTaskTimedout(self, task: BaseTask) -> bool:
+        if task.startedAt is None:
+            return False
         return task.delayOfTimeout > 0 and time() - task.startedAt >= task.delayOfTimeout

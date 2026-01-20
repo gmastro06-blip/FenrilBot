@@ -3,10 +3,12 @@ from .manaFoodCard import ManaFoodCard
 from .swapAmuletCard import SwapAmuletCard
 from .swapRingCard import SwapRingCard
 import customtkinter
+import tkinter as tk
+from typing import Any
 
 
 class HighPriorityTab(customtkinter.CTkFrame):
-    def __init__(self, parent, context):
+    def __init__(self, parent: tk.Misc, context: Any) -> None:
         super().__init__(parent)
         self.context = context
         self.columnconfigure(0, weight=1)

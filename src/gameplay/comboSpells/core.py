@@ -14,7 +14,10 @@ spellsPath = {
 
 
 # TODO: add typings
-def comboSpellDidMatch(comboSpell, nearestCreaturesCount: int) -> bool:
+from typing import Any
+
+
+def comboSpellDidMatch(comboSpell: dict[str, Any], nearestCreaturesCount: int) -> bool:
     if comboSpell['creatures']['compare'] == 'lessThan':
         return nearestCreaturesCount < comboSpell['creatures']['value']
     if comboSpell['creatures']['compare'] == 'lessThanOrEqual':

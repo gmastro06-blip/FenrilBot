@@ -1,10 +1,12 @@
 import customtkinter
+import tkinter as tk
 from .comboModal import ComboModal
 from tkinter import ttk, BooleanVar
 from ..utils import genRanStr
+from typing import Any
 
 class ComboSpellsPage(customtkinter.CTkToplevel):
-    def __init__(self, context):
+    def __init__(self, context: Any) -> None:
         super().__init__()
         self.context = context
         self.title(genRanStr())
@@ -22,9 +24,9 @@ class ComboSpellsPage(customtkinter.CTkToplevel):
                             ('active', bg_color),
                             ('disabled',"#C20034")])
         treestyle.map('Treeview', background=[('selected', '#C20034')], foreground=[('selected', '#FFF')])
-        self.bind("<<TreeviewSelect>>", lambda event: self.focus_set())
+        self.bind("<<TreeviewSelect>>", lambda _event: self.focus_set())
 
-        self.comboModal = None
+        self.comboModal: ComboModal | None = None
 
         self.columnconfigure(0, weight=8)
         self.columnconfigure(1, weight=2)
@@ -75,7 +77,7 @@ class ComboSpellsPage(customtkinter.CTkToplevel):
             border_width=2, hover_color="#C20034")
         self.deleteButton.grid(row=2, column=0, padx=5, pady=5, sticky='nsew')
 
-    def addCombo(self):
+    def addCombo(self) -> None:
         combo = {
             "enabled": False,
             "name": "Default",
@@ -90,14 +92,14 @@ class ComboSpellsPage(customtkinter.CTkToplevel):
         self.table.insert('', 'end', values=(
             combo['name'], combo['enabled']))
 
-    def deleteSelectedCombos(self):
+    def deleteSelectedCombos(self) -> None:
         selectedCombos = self.table.selection()
         for combo in selectedCombos:
             indextable = self.table.index(combo)
             self.table.delete(combo)
             self.context.removeComboByIndex(indextable)
 
-    def onComboDoubleClick(self, event):
+    def onComboDoubleClick(self, event: tk.Event) -> None:
         item = self.table.identify_row(event.y)
         if item:
             index = self.table.index(item)
@@ -106,6 +108,6 @@ class ComboSpellsPage(customtkinter.CTkToplevel):
                 self.comboModal = ComboModal(
                         self, combo=combo, context=self.context, index=index)
                 
-    def onToggleEnabledButton(self):
+    def onToggleEnabledButton(self) -> None:
         enabled = self.enabledVar.get()
         self.context.toggleComboSpells(enabled)

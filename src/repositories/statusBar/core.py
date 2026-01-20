@@ -1,5 +1,7 @@
 from numba import njit
-from typing import Union
+from typing import Any, Union
+
+import numpy as np
 from src.shared.typings import GrayImage
 from .config import hpBarAllowedPixelsColors, manaBarAllowedPixelsColors
 from .extractors import getHpBar, getManaBar
@@ -10,7 +12,9 @@ from .locators import getHpIconPosition, getManaIconPosition
 # TODO: add unit tests
 # TODO: add perf
 @njit(cache=True, fastmath=True)
-def getFilledBarPercentage(bar, allowedPixelsColors=[]) -> int:
+def getFilledBarPercentage(bar: np.ndarray, allowedPixelsColors: list[Any] | None = None) -> int:
+    if allowedPixelsColors is None:
+        allowedPixelsColors = []
     barPercent = len(bar)
     for i in range(len(bar)):
         if bar[i] not in allowedPixelsColors:

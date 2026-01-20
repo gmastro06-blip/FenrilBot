@@ -2,29 +2,33 @@ import cv2
 from numba import njit
 import numpy as np
 from PIL import Image
-from typing import Union
+from typing import Any, Callable, Optional, Sequence, Union, cast
 from src.shared.typings import BBox, GrayImage
 from src.utils.core import hashit, locate
 
 
 # TODO: add types
 # TODO: add unit tests
-def cacheChain(imageList):
-    def decorator(_):
-        lastX = None
-        lastY = None
-        lastW = None
-        lastH = None
-        lastImageHash = None
+def cacheChain(imageList: Sequence[GrayImage]) -> Callable[[Callable[..., Any]], Callable[[GrayImage], Union[BBox, None]]]:
+    def decorator(_: Callable[..., Any]) -> Callable[[GrayImage], Union[BBox, None]]:
+        lastX: Optional[int] = None
+        lastY: Optional[int] = None
+        lastW: Optional[int] = None
+        lastH: Optional[int] = None
+        lastImageHash: Optional[int] = None
 
         def inner(screenshot: GrayImage) -> Union[BBox, None]:
             nonlocal lastX, lastY, lastW, lastH, lastImageHash
-            if lastX != None and lastY != None and lastW != None and lastH != None:
-                copiedImage = screenshot[lastY:lastY +
-                                         lastH, lastX:lastX + lastW]
+            screenshot_arr = cast(Any, screenshot)
+            if lastX is not None and lastY is not None and lastW is not None and lastH is not None and lastImageHash is not None:
+                x = cast(int, lastX)
+                y = cast(int, lastY)
+                w = cast(int, lastW)
+                h = cast(int, lastH)
+                copiedImage = screenshot_arr[y:y + h, x:x + w]
                 copiedImageHash = hashit(copiedImage)
                 if copiedImageHash == lastImageHash:
-                    return (lastX, lastY, lastW, lastH)
+                    return (x, y, w, h)
             for image in imageList:
                 imagePosition = locate(screenshot, image)
                 if imagePosition is not None:
@@ -33,8 +37,7 @@ def cacheChain(imageList):
                     lastY = y
                     lastW = w
                     lastH = h
-                    lastImage = screenshot[lastY:lastY +
-                                           lastH, lastX:lastX + lastW]
+                    lastImage = screenshot_arr[y:y + h, x:x + w]
                     lastImageHash = hashit(lastImage)
                     return (x, y, w, h)
             return None
@@ -63,7 +66,7 @@ def loadFromRGBToGray(path: str) -> GrayImage:
 
 
 # TODO: add unit tests
-def save(arr: GrayImage, name: str):
+def save(arr: GrayImage, name: str) -> None:
     im = Image.fromarray(arr)
     im.save(name)
 
@@ -75,4 +78,7 @@ def crop(image: GrayImage, x: int, y: int, width: int, height: int) -> GrayImage
 
 # TODO: add unit tests
 def load(path: str) -> np.ndarray:
-    return np.array(cv2.cvtColor(cv2.imread(path), cv2.COLOR_BGR2RGB), dtype=np.uint8)
+    bgr = cv2.imread(path)
+    if bgr is None:
+        raise FileNotFoundError(path)
+    return np.array(cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB), dtype=np.uint8)

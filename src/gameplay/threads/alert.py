@@ -2,15 +2,16 @@ from threading import Thread
 import winsound
 import pathlib
 from time import sleep
+from typing import Any
 
 class AlertThread(Thread):
     # TODO: add typings
-    def __init__(self, context):
+  def __init__(self, context: Any) -> None:
         Thread.__init__(self, daemon=True)
         self.context = context
         self.runCount = 0
 
-    def run(self):
+  def run(self) -> None:
         currentPath = pathlib.Path(__file__).parent.resolve()
         soundsPath = f'{currentPath}/sounds'        
 

@@ -1,10 +1,18 @@
 import customtkinter
+import tkinter as tk
 from tkinter import ttk, BooleanVar, StringVar
 from .comboSpellModal import ComboSpellModal
 from ..utils import genRanStr
+from typing import Any
 
 class ComboModal(customtkinter.CTkToplevel):
-    def __init__(self, parent, combo=None, context=None, index=None):
+    def __init__(
+        self,
+        parent: tk.Misc,
+        combo: Any = None,
+        context: Any = None,
+        index: int | None = None,
+    ) -> None:
         super().__init__(parent)
         self.context = context
         self.index = index
@@ -27,9 +35,9 @@ class ComboModal(customtkinter.CTkToplevel):
                             ('active', bg_color),
                             ('disabled',"#C20034")])
         treestyle.map('Treeview', background=[('selected', '#C20034')], foreground=[('selected', '#FFF')])
-        self.bind("<<TreeviewSelect>>", lambda event: self.focus_set())
+        self.bind("<<TreeviewSelect>>", lambda _event: self.focus_set())
 
-        self.comboModal = None
+        self.comboModal: ComboSpellModal | None = None
 
         self.columnconfigure(0, weight=8)
         self.columnconfigure(1, weight=2)
@@ -109,7 +117,7 @@ class ComboModal(customtkinter.CTkToplevel):
             border_width=2, hover_color="#C20034")
         self.deleteButton.grid(row=8, column=0, padx=5, pady=5, sticky='nsew')
 
-    def addSpell(self):
+    def addSpell(self) -> None:
         spell = {
             "name": "exori",
             "hotkey": "f4"
@@ -118,30 +126,30 @@ class ComboModal(customtkinter.CTkToplevel):
         self.table.insert('', 'end', values=(
             spell['name'], spell['hotkey']))
 
-    def removeSelectedSpells(self):
+    def removeSelectedSpells(self) -> None:
         selectedSpells = self.table.selection()
         for spell in selectedSpells:
             indextable = self.table.index(spell)
             self.table.delete(spell)
             self.context.removeSpellByIndex(self.index, indextable)
 
-    def changeComboName(self, var, index, mode):
+    def changeComboName(self, *_args: Any) -> None:
         name = self.labelEntryVar.get()
         self.context.changeComboName(name, self.index)
 
-    def changeCompareValue(self, var, index, mode):
+    def changeCompareValue(self, *_args: Any) -> None:
         compareValue = self.compareValueVar.get()
         self.context.changeCompareValue(compareValue, self.index)
 
-    def onToggleEnabledButton(self):
+    def onToggleEnabledButton(self) -> None:
         enabled = self.enabledVar.get()
         self.context.toggleSingleCombo(enabled, self.index)
 
-    def onChangeCompare(self, _):
+    def onChangeCompare(self, _: str) -> None:
         selectedCompare = self.compareCondition.get()
         self.context.setCompare(selectedCompare, index=self.index)
 
-    def onComboDoubleClick(self, event):
+    def onComboDoubleClick(self, event: tk.Event) -> None:
         item = self.table.identify_row(event.y)
         if item:
             indexSecond = self.table.index(item)

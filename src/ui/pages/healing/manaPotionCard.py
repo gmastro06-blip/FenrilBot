@@ -2,9 +2,10 @@ import tkinter as tk
 import re
 import customtkinter
 from tkinter import messagebox
+from typing import Any
 
 class ManaPotionCard(customtkinter.CTkFrame):
-    def __init__(self, parent, context, healthPotionType, title=''):
+    def __init__(self, parent: tk.Misc, context: Any, healthPotionType: str, title: str = '') -> None:
         super().__init__(parent)
         self.context = context
         self.healthPotionType = healthPotionType
@@ -72,15 +73,15 @@ class ManaPotionCard(customtkinter.CTkFrame):
         self.manaPercentageLessThenOrEqualLabel.grid(
             column=1, row=5, sticky='nsew')
 
-    def onToggleCheckButton(self):
+    def onToggleCheckButton(self) -> None:
         self.context.toggleHealingPotionsByKey(
             self.healthPotionType, self.checkVar.get())
 
-    def onChangeMana(self, _):
+    def onChangeMana(self, _: float) -> None:
         self.context.setHealthPotionManaPercentageLessThanOrEqual(
             self.healthPotionType, self.manaPercentageLessThenOrEqualVar.get())
 
-    def onChangeHotkey(self, event):
+    def onChangeHotkey(self, event: tk.Event) -> None:
         key = event.char
         key_pressed = event.keysym
         if key == '\b':
@@ -92,12 +93,12 @@ class ManaPotionCard(customtkinter.CTkFrame):
             self.context.setHealthPotionHotkeyByKey(self.healthPotionType, key_pressed)
             self.hotkeyEntryVar.set(key_pressed)
 
-    def onChangeNumber(self, event):
+    def onChangeNumber(self, event: tk.Event) -> None:
         value = self.slotEntry.get()
         if value.isdigit() and int(value) > 0:
             self.context.setHealthPotionSlotByKey(self.healthPotionType, int(value))
 
-    def validateNumber(self, value: int) -> bool:
+    def validateNumber(self, value: str) -> bool:
         if value == '':
             return True
         if value.isdigit() and int(value) > 0:

@@ -21,6 +21,8 @@ class ScrollToItemTask(BaseTask):
     # TODO: add unit tests
     def do(self, context: Context) -> Context:
         containerPosition = locate(context['ng_screenshot'], self.containerImage, confidence=0.8)
+        if containerPosition is None:
+            return context
         moveTo((containerPosition[0] + 10, containerPosition[1] + 15))
         scroll(-10)
         return context

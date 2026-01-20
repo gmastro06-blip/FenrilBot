@@ -1,10 +1,11 @@
 import re
 import tkinter as tk
 import customtkinter
+from typing import Any
 
 
 class SpellCard(customtkinter.CTkFrame):
-    def __init__(self, parent, context, healingType, title=''):
+    def __init__(self, parent: tk.Misc, context: Any, healingType: str, title: str = '') -> None:
         super().__init__(parent)
         self.context = context
         self.text = title
@@ -89,22 +90,22 @@ class SpellCard(customtkinter.CTkFrame):
         self.manaPercentageGreaterThanOrEqualLabel.grid(
             column=1, row=7, sticky='nsew')
 
-    def onToggleCheckButton(self):
+    def onToggleCheckButton(self) -> None:
         self.context.toggleSpellByKey(
             self.healingType, self.checkVar.get())
 
-    def onChangeSpell(self, _):
+    def onChangeSpell(self, _: str) -> None:
         self.context.setSpellName(self.healingType, self.spellsCombobox.get())
 
-    def onChangeHp(self, _):
+    def onChangeHp(self, _: float) -> None:
         self.context.setSpellHpPercentageLessThanOrEqual(
             self.healingType, self.hpLessThanOrEqualVar.get())
 
-    def onChangeMana(self, _):
+    def onChangeMana(self, _: float) -> None:
         self.context.setSpellManaPercentageGreaterThanOrEqual(
             self.healingType, self.manaPercentageGreaterThanOrEqualVar.get())
 
-    def onChangeHotkey(self, event):
+    def onChangeHotkey(self, event: tk.Event) -> None:
         key = event.char
         key_pressed = event.keysym
         if key == '\b':

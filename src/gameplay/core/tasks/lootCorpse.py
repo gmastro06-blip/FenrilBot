@@ -1,11 +1,12 @@
-from src.repositories.gameWindow.typings import Creature
+from typing import Any
+
 from ...typings import Context
 from .common.vector import VectorTask
 from .collectDeadCorpse import CollectDeadCorpseTask
 
 
 class LootCorpseTask(VectorTask):
-    def __init__(self, creature: Creature):
+    def __init__(self, creature: Any):
         super().__init__()
         self.name = 'lootCorpse'
         self.isRootTask = True

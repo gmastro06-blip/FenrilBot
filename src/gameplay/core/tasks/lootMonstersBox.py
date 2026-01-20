@@ -4,7 +4,7 @@ from src.utils.keyboard import keyDown, keyUp
 import src.repositories.gameWindow.slot as gameWindowSlot
 
 class LootMonstersBoxTask(BaseTask):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.name = 'lootMonstersBox'
         self.isRootTask = True
@@ -20,22 +20,22 @@ class LootMonstersBoxTask(BaseTask):
     def do(self, context: Context) -> Context:
         keyDown('shift')
         gameWindowSlot.rightClickSlot(
-            [6, 4], context['gameWindow']['coordinate'])
+            (6, 4), context['gameWindow']['coordinate'])
         gameWindowSlot.rightClickSlot(
-            [7, 4], context['gameWindow']['coordinate'])
+            (7, 4), context['gameWindow']['coordinate'])
         gameWindowSlot.rightClickSlot(
-            [8, 4], context['gameWindow']['coordinate'])
+            (8, 4), context['gameWindow']['coordinate'])
         gameWindowSlot.rightClickSlot(
-            [6, 5], context['gameWindow']['coordinate'])
+            (6, 5), context['gameWindow']['coordinate'])
         gameWindowSlot.rightClickSlot(
-            [7, 5], context['gameWindow']['coordinate'])
+            (7, 5), context['gameWindow']['coordinate'])
         gameWindowSlot.rightClickSlot(
-            [8, 5], context['gameWindow']['coordinate'])
+            (8, 5), context['gameWindow']['coordinate'])
         gameWindowSlot.rightClickSlot(
-            [6, 6], context['gameWindow']['coordinate'])
+            (6, 6), context['gameWindow']['coordinate'])
         gameWindowSlot.rightClickSlot(
-            [7, 6], context['gameWindow']['coordinate'])
+            (7, 6), context['gameWindow']['coordinate'])
         gameWindowSlot.rightClickSlot(
-            [8, 6], context['gameWindow']['coordinate'])
+            (8, 6), context['gameWindow']['coordinate'])
         keyUp('shift')
         return context

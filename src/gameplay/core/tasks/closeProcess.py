@@ -3,7 +3,7 @@ from .common.base import BaseTask
 
 
 class CloseProcessTask(BaseTask):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.name = 'closeProcess'
         self.delayBeforeStart = 1

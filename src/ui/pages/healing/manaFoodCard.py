@@ -1,9 +1,10 @@
 import re
 import tkinter as tk
 import customtkinter
+from typing import Any
 
 class ManaFoodCard(customtkinter.CTkFrame):
-    def __init__(self, parent, context):
+    def __init__(self, parent: tk.Misc, context: Any) -> None:
         super().__init__(parent)
         self.context = context
         self.columnconfigure(0, weight=3)
@@ -56,15 +57,15 @@ class ManaFoodCard(customtkinter.CTkFrame):
         self.manaPercentageLessThanOrEqualLabel.grid(
             column=1, row=4, sticky='nsew')
 
-    def onToggleCheckButton(self):
+    def onToggleCheckButton(self) -> None:
         self.context.toggleHealingHighPriorityByKey(
             'manaFood', self.checkVar.get())
 
-    def onChangeMana(self, _):
+    def onChangeMana(self, _: float) -> None:
         self.context.setManaFoodHpPercentageLessThanOrEqual(
             self.manaPercentageLessThanOrEqualVar.get())
         
-    def onChangeHotkey(self, event):
+    def onChangeHotkey(self, event: tk.Event) -> None:
         key = event.char
         key_pressed = event.keysym
         if key == '\b':

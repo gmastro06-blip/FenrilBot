@@ -1,9 +1,11 @@
 from .healthPotionCard import HealthPotionCard
 from .manaPotionCard import ManaPotionCard
 import customtkinter
+import tkinter as tk
+from typing import Any
 
 class PotionsTab(customtkinter.CTkFrame):
-    def __init__(self, parent, context):
+    def __init__(self, parent: tk.Misc, context: Any) -> None:
         super().__init__(parent)
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
