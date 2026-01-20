@@ -8,7 +8,7 @@ from src.repositories.radar.core import getClosestWaypointIndexFromCoordinate, g
 from src.gameplay.core.waypoint import resolveGoalCoordinate
 
 class UseLadderWaypointTask(VectorTask):
-    def __init__(self, waypoint: Waypoint):
+    def __init__(self: "UseLadderWaypointTask", waypoint: Waypoint) -> None:
         super().__init__()
         self.name = 'useLadderWaypoint'
         self.isRootTask = True
@@ -17,7 +17,7 @@ class UseLadderWaypointTask(VectorTask):
     def onBeforeStart(self, context: Context) -> Context:
         self.tasks = [
             RightClickUseTask(self.waypoint).setParentTask(self).setRootTask(self),
-            SetNextWaypointTask().setParentTask(self).setRootTask(self),
+            SetNextWaypointTask().setParentTask(self).setRootTask(self),  # type: ignore[no-untyped-call]
         ]
         return context
 

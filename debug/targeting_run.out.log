@@ -1,22 +1,27 @@
-[17:22:44][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32648, 31692, 7) task=walk root=walkToWaypoint reason=set task: walk
-[17:22:44][fenril][info] Tick reason changed: set task: walk
-[17:22:45][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32648, 31692, 7) task=walkToWaypoint root=None reason=set task: walk
-[17:22:46][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32648, 31693, 7) task=walk root=walkToWaypoint reason=set task: walk
-[17:22:46][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32646, 31693, 7) task=walk root=walkToWaypoint reason=set task: walk
-[17:22:47][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31693, 7) task=walk root=walkToWaypoint reason=set task: walk
-[17:22:47][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31695, 7) task=walk root=walkToWaypoint reason=set task: walk
-[17:22:48][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31696, 7) task=walk root=walkToWaypoint reason=set task: walk
-[17:22:48][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31697, 7) task=walk root=walkToWaypoint reason=set task: walk
-[17:22:49][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31698, 7) task=walk root=walkToWaypoint reason=set task: walk
-[17:22:49][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31699, 7) task=walk root=walkToWaypoint reason=set task: walk
-[17:22:50][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31700, 7) task=walk root=walkToWaypoint reason=set task: walk
-[17:22:50][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31701, 7) task=walk root=walkToWaypoint reason=set task: walk
-[17:22:51][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31702, 7) task=walk root=walkToWaypoint reason=set task: walk
-[17:22:51][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31703, 7) task=walk root=walkToWaypoint reason=set task: walk
-[17:22:52][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31704, 7) task=walk root=walkToWaypoint reason=set task: walk
-[17:22:52][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31705, 7) task=walk root=walkToWaypoint reason=set task: walk
-[17:22:53][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32645, 31706, 7) task=walk root=walkToWaypoint reason=set task: walk
-[17:22:53][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32644, 31706, 7) task=walk root=walkToWaypoint reason=set task: walk
-[17:22:54][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32643, 31706, 7) task=walk root=walkToWaypoint reason=set task: walk
-[17:22:54][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32642, 31706, 7) task=walk root=walkToWaypoint reason=set task: walk
-[17:22:55][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32642, 31707, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:58:35][fenril][info] battleList: icon=True content=True bottom=True
+[17:58:35][fenril][info] targeting: monsters=0 bl=0 blIcon=True blContent=True blBottom=True hasCreaturesToAttack=False canIgnore=True hasIgnorable=False closest=None target=None
+[17:58:35][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32679, 31689, 7) task=rightClickUse root=useLadderWaypoint reason=set task: useLadder
+[17:58:35][fenril][info] Tick reason changed: set task: useLadder
+[17:58:37][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32679, 31689, 7) task=rightClickUse root=useLadderWaypoint reason=set task: useLadder
+[17:58:38][fenril][info] battleList: icon=True content=False bottom=False
+[17:58:38][fenril][info] targeting: monsters=0 bl=0 blIcon=True blContent=False blBottom=False hasCreaturesToAttack=False canIgnore=True hasIgnorable=False closest=None target=None
+[17:58:38][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32679, 31689, 7) task=rightClickUse root=useLadderWaypoint reason=set task: useLadder
+[17:58:38][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32679, 31689, 7) task=useLadderWaypoint root=None reason=set task: useLadder
+[17:58:39][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32679, 31689, 7) task=useLadderWaypoint root=None reason=set task: useLadder
+[17:58:40][fenril][info] battleList: icon=True content=False bottom=False
+[17:58:40][fenril][info] targeting: monsters=0 bl=0 blIcon=True blContent=False blBottom=False hasCreaturesToAttack=False canIgnore=True hasIgnorable=False closest=None target=None
+[17:58:40][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32679, 31689, 7) task=rightClickUse root=useLadderWaypoint reason=set task: useLadder
+[17:58:40][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32679, 31689, 7) task=useLadderWaypoint root=None reason=set task: useLadder
+[17:58:41][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32679, 31689, 7) task=rightClickUse root=useLadderWaypoint reason=set task: useLadder
+[17:58:42][fenril][info] battleList: icon=False content=False bottom=False
+[17:58:43][fenril][info] targeting: monsters=0 bl=0 blIcon=False blContent=False blBottom=False hasCreaturesToAttack=False canIgnore=True hasIgnorable=False closest=None target=None
+[17:58:43][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32679, 31689, 7) task=rightClickUse root=useLadderWaypoint reason=set task: useLadder
+[17:58:43][fenril][info] Tick reason changed: set task: walk
+[17:58:43][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32679, 31689, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:58:44][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32679, 31689, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:58:44][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32679, 31689, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:58:44][fenril][info] battleList: icon=True content=True bottom=True
+[17:58:45][fenril][info] targeting: monsters=0 bl=0 blIcon=True blContent=True blBottom=True hasCreaturesToAttack=False canIgnore=True hasIgnorable=False closest=None target=None
+[17:58:45][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32679, 31689, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:58:45][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32679, 31689, 7) task=walk root=walkToWaypoint reason=set task: walk
+[17:58:46][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32679, 31689, 7) task=walk root=walkToWaypoint reason=set task: walk

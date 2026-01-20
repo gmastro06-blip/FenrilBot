@@ -1,13 +1,12 @@
-from src.gameplay.typings import Context
 import src.repositories.refill.core as refillCore
-from ...typings import Context
+from src.gameplay.typings import Context
 from .common.base import BaseTask
 
 
 # TODO: check if item was bought checking gold difference on did
 # TODO: check if has necessary money to buy item. If not, an alert to user must be sent
 class BuyItemTask(BaseTask):
-    def __init__(self, itemName: str, itemQuantity: str, ignore=False):
+    def __init__(self: "BuyItemTask", itemName: str, itemQuantity: int, ignore: bool = False) -> None:
         super().__init__()
         self.name = 'buyItem'
         self.delayBeforeStart = 1

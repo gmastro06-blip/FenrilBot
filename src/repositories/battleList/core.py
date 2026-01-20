@@ -1,6 +1,6 @@
 from numba import njit
 import numpy as np
-from typing import Generator, Union
+from typing import Generator, Optional, Union
 from src.shared.typings import CreatureCategory, CreatureCategoryOrUnknown, GrayImage
 from src.utils.core import hashit, locate
 from .config import creaturesNamesImagesHashes, images
@@ -35,7 +35,7 @@ def getBeingAttackedCreatures(content: GrayImage, filledSlotsCount: int) -> Gene
 
 
 # PERF: [0.00017040000000001498, 7.330000000038694e-05]
-def getCreatures(content: GrayImage) -> CreatureList:
+def getCreatures(content: Optional[GrayImage]) -> CreatureList:
     if content is not None:
         filledSlotsCount = getFilledSlotsCount(content)
         if filledSlotsCount == 0:

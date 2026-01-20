@@ -15,7 +15,7 @@ from src.utils.array import getNextArrayIndex
 from src.gameplay.core.waypoint import resolveGoalCoordinate
 
 class DepositItemsTask(VectorTask):
-    def __init__(self, waypoint: Waypoint):
+    def __init__(self: "DepositItemsTask", waypoint: Waypoint) -> None:
         super().__init__()
         self.name = 'depositItems'
         self.delayBeforeStart = 1

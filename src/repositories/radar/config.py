@@ -2,12 +2,13 @@ import numpy as np
 import numpy.typing as npt
 import pathlib
 from typing import Any, Dict
+from src.shared.typings import Coordinate
 from src.utils.core import hashit
 from src.utils.image import loadFromRGBToGray
 
 
 currentPath = pathlib.Path(__file__).parent.resolve()
-coordinates: Dict[str, Any] = {}
+coordinates: Dict[int, Coordinate] = {}
 dimensions = {
     'width': 106,
     'height': 109,

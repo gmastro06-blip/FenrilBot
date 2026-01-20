@@ -1,7 +1,6 @@
-from src.gameplay.typings import Context
 import src.gameplay.utils as gameplayUtils
-from src.repositories.radar.typings import Coordinate
-from ...typings import Context
+from src.shared.typings import Coordinate
+from src.gameplay.typings import Context
 from ..waypoint import generateFloorWalkpoints
 from .common.vector import VectorTask
 from .walk import WalkTask
@@ -12,7 +11,7 @@ from .clickInClosestCreature import ClickInClosestCreatureTask
 from .walkToTargetCreature import WalkToTargetCreatureTask
 
 class WalkToCoordinateTask(VectorTask):
-    def __init__(self, coordinate: Coordinate, passinho=False):
+    def __init__(self: "WalkToCoordinateTask", coordinate: Coordinate, passinho: bool = False) -> None:
         super().__init__()
         self.name = 'walkToCoordinate'
         self.coordinate = coordinate
@@ -36,11 +35,11 @@ class WalkToCoordinateTask(VectorTask):
     def onInterrupt(self, context: Context) -> Context:
         return gameplayUtils.releaseKeys(context)
 
-    def onComplete(self, context: Context):
+    def onComplete(self, context: Context) -> Context:
         return gameplayUtils.releaseKeys(context)
 
     # TODO: add unit tests
-    def calculateWalkpoint(self, context: Context):
+    def calculateWalkpoint(self, context: Context) -> None:
         nonWalkableCoordinates = context['ng_cave']['holesOrStairs'].copy()
         for monster in context['gameWindow']['monsters']:
             # TODO: func to check if coord is none

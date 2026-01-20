@@ -8,7 +8,7 @@ from src.repositories.radar.core import getClosestWaypointIndexFromCoordinate, g
 from src.gameplay.core.waypoint import resolveGoalCoordinate
 
 class UseRopeWaypointTask(VectorTask):
-    def __init__(self, waypoint: Waypoint):
+    def __init__(self: "UseRopeWaypointTask", waypoint: Waypoint) -> None:
         super().__init__()
         self.name = 'useRopeWaypoint'
         self.isRootTask = True
@@ -17,7 +17,7 @@ class UseRopeWaypointTask(VectorTask):
     def onBeforeStart(self, context: Context) -> Context:
         self.tasks = [
             UseRopeTask(self.waypoint).setParentTask(self).setRootTask(self),
-            SetNextWaypointTask().setParentTask(self).setRootTask(self),
+            SetNextWaypointTask().setParentTask(self).setRootTask(self),  # type: ignore[no-untyped-call]
         ]
         return context
     
@@ -35,6 +35,9 @@ class UseRopeWaypointTask(VectorTask):
         )
         context['ng_radar']['coordinate'] = getCoordinate(
             context['ng_screenshot'], previousCoordinate=context['ng_radar']['previousCoordinate'])
+        coord = context['ng_radar']['coordinate']
+        if coord is None:
+            return context
         if context['ng_radar']['coordinate'][2] != self.waypoint['coordinate'][2] - 1:
             context['ng_cave']['waypoints']['currentIndex'] = getClosestWaypointIndexFromCoordinate(
                 context['ng_radar']['coordinate'], context['ng_cave']['waypoints']['items'])

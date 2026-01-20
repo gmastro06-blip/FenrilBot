@@ -10,7 +10,7 @@ from src.repositories.gameWindow.slot import getSlotPosition
 
 # TODO: check if item was moved on did. Is possible to check it by cap
 class DragItemsToFloorTask(BaseTask):
-    def __init__(self, containerBarImage: GrayImage):
+    def __init__(self: "DragItemsToFloorTask", containerBarImage: GrayImage) -> None:
         super().__init__()
         self.name = 'dragItemsToFloor'
         self.terminable = False
@@ -19,6 +19,8 @@ class DragItemsToFloorTask(BaseTask):
     # TODO: add unit tests
     def do(self, context: Context) -> Context:
         containerBarPosition = locate(context['ng_screenshot'], self.containerBarImage, confidence=0.8)
+        if containerBarPosition is None:
+            return context
         firstSlotImage = context['ng_screenshot'][containerBarPosition[1] + 18:containerBarPosition[1] + 18 + 32, containerBarPosition[0] + 10:containerBarPosition[0] + 10 + 32]
         isLootBackpackItem = locate(firstSlotImage, images['slots'][context['ng_backpacks']['loot']], confidence=0.8) is not None
         if isLootBackpackItem:

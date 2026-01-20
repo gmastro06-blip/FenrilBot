@@ -26,7 +26,7 @@ def getCoordinate(
         return None
     radarImage = getRadarImage(screenshot, radarToolsPosition)
     radarHashedImg = hashit(radarImage)
-    hashedCoordinate = coordinates.get(radarHashedImg, None)
+    hashedCoordinate = coordinates.get(radarHashedImg)
     if hashedCoordinate is not None:
         if debug is not None:
             debug['radar_tools'] = True
@@ -135,7 +135,10 @@ def getBreakpointTileMovementSpeed(charSpeed: int, tileFriction: TileFriction) -
         charSpeed >= tilesFrictionsWithBreakpoints[tileFriction])
     if len(availableBreakpointsIndexes) == 0:
         return breakpointTileMovementSpeed[1]
-    return breakpointTileMovementSpeed.get(availableBreakpointsIndexes[-1] + 1)
+    return breakpointTileMovementSpeed.get(
+        int(availableBreakpointsIndexes[-1] + 1),
+        breakpointTileMovementSpeed[1],
+    )
 
 
 # TODO: add unit tests

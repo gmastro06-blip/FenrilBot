@@ -6,7 +6,7 @@ from .walkToCoordinate import WalkToCoordinateTask
 from .attackMonstersBox import AttackMonstersBoxTask
 from .lootMonstersBox import LootMonstersBoxTask
 from .resetSpellIndex import ResetSpellIndexTask
-from .sayPlayerAfterBox import sayPlayerAfterBoxTask
+from .sayPlayerAfterBox import SayPlayerAfterBoxTask
 
 class WalkToWaypointTask(VectorTask):
     def __init__(self, coordinate: Coordinate, ignore: bool = False, passinho: bool = False):
@@ -33,7 +33,7 @@ class WalkToWaypointTask(VectorTask):
                 LootMonstersBoxTask().setParentTask(self).setRootTask(self),
                 LootMonstersBoxTask().setParentTask(self).setRootTask(self),
                 ResetSpellIndexTask().setParentTask(self).setRootTask(self),
-                sayPlayerAfterBoxTask().setParentTask(self).setRootTask(self),
+                SayPlayerAfterBoxTask().setParentTask(self).setRootTask(self),
                 SetNextWaypointTask().setParentTask(self).setRootTask(self),
             ]
         return context

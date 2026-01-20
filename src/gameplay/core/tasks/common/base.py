@@ -4,6 +4,7 @@ from time import time
 from typing import Optional
 
 from src.gameplay.typings import Context
+from src.shared.typings import Coordinate
 
 
 class BaseTask:
@@ -36,6 +37,15 @@ class BaseTask:
         self.shouldTimeoutTreeWhenTimeout = shouldTimeoutTreeWhenTimeout
         self.status = 'notStarted'
         self.statusReason: Optional[str] = None
+
+        # Vector-like tasks populate these; keeping them here avoids repeated
+        # `hasattr` checks in child tasks and satisfies static type-checkers.
+        self.currentTaskIndex: int = 0
+        self.tasks: list[BaseTask] = []
+
+        # Many navigation tasks set a walkpoint and parent tasks may look ahead
+        # to the next task's walkpoint.
+        self.walkpoint: Optional[Coordinate] = None
 
     def setParentTask(self, parentTask: Optional[BaseTask]) -> BaseTask:
         self.parentTask = parentTask

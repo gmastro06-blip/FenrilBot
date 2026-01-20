@@ -1,8 +1,9 @@
 import time
+from typing import Optional, Tuple
+
 from src.repositories.gameWindow.slot import getSlotPosition
 from src.repositories.inventory.config import slotsImagesHashes
 from src.repositories.inventory.core import images
-from src.shared.typings import Slot
 from src.utils.core import hashit, locate
 from src.utils.mouse import drag
 from ...typings import Context
@@ -10,7 +11,7 @@ from .common.base import BaseTask
 
 
 class DropEachFlaskTask(BaseTask):
-    def __init__(self, backpack: str):
+    def __init__(self: "DropEachFlaskTask", backpack: str) -> None:
         super().__init__()
         self.name = 'dropEachFlask'
         self.delayOfTimeout = 1
@@ -34,7 +35,7 @@ class DropEachFlaskTask(BaseTask):
         return context
 
     # TODO: add unit tests
-    def getSlot(self, context: Context, slotIndex: int) -> Slot:
+    def getSlot(self, context: Context, slotIndex: int) -> Tuple[Optional[str], Tuple[int, int]]:
         backpackBarPosition = locate(context['ng_screenshot'], images['containersBars'][self.backpack], confidence=0.8)
         if backpackBarPosition is None:
             return (None, (0, 0))

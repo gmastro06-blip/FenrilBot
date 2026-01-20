@@ -6,7 +6,7 @@ from .common.base import BaseTask
 
 # TODO: check if npc tradebox was closed
 class CloseNpcTradeBoxTask(BaseTask):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.name = 'closeNpcTradeBox'
         self.delayBeforeStart = 1

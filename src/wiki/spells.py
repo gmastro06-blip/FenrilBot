@@ -1,4 +1,12 @@
-spells = {
+from typing import Optional, TypedDict
+
+
+class SpellInfo(TypedDict):
+    manaNeeded: Optional[int]
+    cooldownInSeconds: int
+
+
+spells: dict[str, SpellInfo] = {
     'exana kor': {'manaNeeded': 30, 'cooldownInSeconds': 6},
     'exana pox': {'manaNeeded': 30, 'cooldownInSeconds': 6},
     'exani hur down': {'manaNeeded': 50, 'cooldownInSeconds': 2},

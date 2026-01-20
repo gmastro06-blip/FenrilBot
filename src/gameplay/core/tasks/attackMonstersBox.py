@@ -6,7 +6,7 @@ from src.repositories.gameWindow.creatures import getNearestCreaturesCount
 from .setNextWaypoint import SetNextWaypointTask
 
 class AttackMonstersBoxTask(VectorTask):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.name = 'attackMonstersBox'
         self.isRootTask = True

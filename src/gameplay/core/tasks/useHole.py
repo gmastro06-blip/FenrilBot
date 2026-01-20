@@ -6,7 +6,7 @@ from .common.base import BaseTask
 
 
 class UseHoleTask(BaseTask):
-    def __init__(self, waypoint: Waypoint):
+    def __init__(self: "UseHoleTask", waypoint: Waypoint) -> None:
         super().__init__()
         self.name = 'useHole'
         self.delayBeforeStart = 2
@@ -16,5 +16,7 @@ class UseHoleTask(BaseTask):
     def do(self, context: Context) -> Context:
         slot = gameWindowCore.getSlotFromCoordinate(
             context['ng_radar']['coordinate'], self.waypoint['coordinate'])
+        if slot is None:
+            return context
         gameWindowSlot.rightClickSlot(slot, context['gameWindow']['coordinate'])
         return context

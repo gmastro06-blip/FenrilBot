@@ -5,7 +5,7 @@ from .common.base import BaseTask
 
 
 class SetNextWaypointTask(BaseTask):
-    def __init__(self):
+    def __init__(self: "SetNextWaypointTask") -> None:
         super().__init__()
         self.name = 'setNextWaypoint'
 

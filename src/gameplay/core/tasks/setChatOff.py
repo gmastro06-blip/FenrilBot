@@ -7,7 +7,7 @@ from .common.base import BaseTask
 
 # TODO: check if chat is off on did
 class SetChatOffTask(BaseTask):
-    def __init__(self):
+    def __init__(self: "SetChatOffTask") -> None:
         super().__init__()
         self.name = 'setChatOff'
         self.delayBeforeStart = 0.5

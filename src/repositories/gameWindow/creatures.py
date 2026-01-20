@@ -38,7 +38,7 @@ for creature in wikiCreatures:
 # TODO: add unit tests
 # TODO: add perf
 # TODO: add typings
-def getClosestCreature(gameWindowCreatures: CreatureList, coordinate: Coordinate) -> Optional[Any]:
+def getClosestCreature(gameWindowCreatures: list[dict[str, Any]], coordinate: Coordinate) -> Optional[dict[str, Any]]:
     if len(gameWindowCreatures) == 0:
         return None
     if len(gameWindowCreatures) == 1:
@@ -109,20 +109,20 @@ def getCreaturesBars(gameWindowImage: GrayImage) -> List[tuple[int, int]]:
 # TODO: Find a way to avoid 3 calculation times when comparing names since some words have a wrong location
 # TODO: Whenever the last species is left, avoid loops and resolve species immediately for remaining creatures bars
 def getCreatures(
-    battleListCreatures,
-    direction,
+    battleListCreatures: Any,
+    direction: Any,
     gameWindowCoordinate: XYCoordinate,
     gameWindowImage: GrayImage,
     coordinate: Coordinate,
     beingAttackedCreatureCategory: Optional[str] = None,
     walkedPixelsInSqm: int = 0,
-):
+)-> List[dict[str, Any]]:
     if len(battleListCreatures) == 0:
         return []
     creaturesBars = getCreaturesBars(gameWindowImage)
     if len(creaturesBars) == 0:
         return []
-    creatures = []
+    creatures: List[dict[str, Any]] = []
     gameWindowWidth = len(gameWindowImage[1])
     x = (len(gameWindowImage[1]) / 2) - 1
     y = (len(gameWindowImage[0]) / 2) - 1
@@ -131,7 +131,7 @@ def getCreatures(
         math.sqrt(((creatureBar[0] - x) ** 2) + ((creatureBar[1] - y) ** 2)) for creatureBar in creaturesBars], dtype=np.float64)
     creaturesBarsSortedIndexes = np.argsort(sqrt)
     discoverTarget = beingAttackedCreatureCategory is not None
-    nonCreaturesForCurrentBar = {}
+    nonCreaturesForCurrentBar: dict[str, bool] = {}
     for creatureBarSortedIndex in creaturesBarsSortedIndexes:
         for battleListIndex in range(len(battleListCreatures)):
             creatureName = battleListCreatures[battleListIndex]['name']
@@ -230,8 +230,12 @@ def getCreatures(
 # TODO: add unit tests
 # TODO: add perf
 # TODO: add typings
-def getCreaturesByType(gameWindowCreatures: CreatureList, creatureType):
-    return [gameWindowCreature for gameWindowCreature in gameWindowCreatures if gameWindowCreature['type'] == creatureType]
+def getCreaturesByType(gameWindowCreatures: list[dict[str, Any]], creatureType: str) -> list[dict[str, Any]]:
+    return [
+        gameWindowCreature
+        for gameWindowCreature in gameWindowCreatures
+        if gameWindowCreature['type'] == creatureType
+    ]
 
 
 # TODO: add unit tests
@@ -279,7 +283,7 @@ def getGameWindowWalkableFloorsSqms(walkableFloorsSqms: np.ndarray, coordinate: 
 # TODO: add perf
 # TODO: if something is already compared, avoid it. Check if it is faster
 # TODO: add types
-def getNearestCreaturesCount(creatures) -> int:
+def getNearestCreaturesCount(creatures: Any) -> int:
     nearestCreaturesCount = 0
     for creature in creatures:
         if (creature['slot'][0] == 6 and creature['slot'][1] == 4) or (creature['slot'][0] == 7 and creature['slot'][1] == 4) or (creature['slot'][0] == 8 and creature['slot'][1] == 4) or (creature['slot'][0] == 6 and creature['slot'][1] == 5) or (creature['slot'][0] == 8 and creature['slot'][1] == 5) or (creature['slot'][0] == 6 and creature['slot'][1] == 6) or (creature['slot'][0] == 7 and creature['slot'][1] == 6) or (creature['slot'][0] == 8 and creature['slot'][1] == 6):
@@ -290,7 +294,7 @@ def getNearestCreaturesCount(creatures) -> int:
 # TODO: add unit tests
 # TODO: add perf
 # TODO: add types
-def getTargetCreature(gameWindowCreatures: CreatureList) -> Optional[Any]:
+def getTargetCreature(gameWindowCreatures: list[dict[str, Any]]) -> Optional[dict[str, Any]]:
     if len(gameWindowCreatures) == 0:
         return None
     for gameWindowCreature in gameWindowCreatures:
@@ -420,7 +424,7 @@ def makeCreature(
     discoverTarget: bool = True,
     beingAttackedCreatureCategory: Optional[str] = None,
     walkedPixelsInSqm: int = 0,
-):
+) -> dict[str, Any]:
     isBigGameWindow = slotWidth == 64
     gameWindowMisalignment = {'x': 0, 'y': 0}
     if creatureType == 'monster':

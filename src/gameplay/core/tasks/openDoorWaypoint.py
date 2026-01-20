@@ -47,7 +47,7 @@ class OpenDoorWaypointTask(VectorTask):
             ]
         else:
             self.tasks = [
-                SetNextWaypointTask().setParentTask(self).setRootTask(self),
+                SetNextWaypointTask().setParentTask(self).setRootTask(self),  # type: ignore[no-untyped-call]
             ]
         return context
     
@@ -65,6 +65,8 @@ class OpenDoorWaypointTask(VectorTask):
         )
         context['ng_radar']['coordinate'] = getCoordinate(
             context['ng_screenshot'], previousCoordinate=context['ng_radar']['previousCoordinate'])
+        if context['ng_radar']['coordinate'] is None:
+            return context
         if not gameplayUtils.coordinatesAreEqual(context['ng_radar']['coordinate'], self.waypoint['coordinate']):
             context['ng_cave']['waypoints']['currentIndex'] = getClosestWaypointIndexFromCoordinate(
                 context['ng_radar']['coordinate'], context['ng_cave']['waypoints']['items'])

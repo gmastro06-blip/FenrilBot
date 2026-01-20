@@ -6,8 +6,12 @@ import src.repositories.actionBar.extractors as actionBarExtractors
 import src.repositories.actionBar.locators as actionBarLocators
 from src.shared.typings import GrayImage
 import src.utils.core as coreUtils
-from .config import hashes, images
+from .config import ActionBarHashes, ActionBarImages, hashes as _hashes, images as _images
 from skimage import exposure
+
+
+hashes: ActionBarHashes = _hashes
+images: ActionBarImages = _images
 
 pytesseract.pytesseract.tesseract_cmd = "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
 
@@ -24,14 +28,13 @@ def getSlotCount(screenshot: GrayImage, slot: int) -> Union[int, None]:
     
     number_region_image = np.array(digits, dtype=np.uint8)
 
-    # skimage stubs sometimes type in_range as str only; cast keeps type-checkers happy.
-    stretch = exposure.rescale_intensity(
+    stretch = exposure.rescale_intensity(  # type: ignore[no-untyped-call]
         number_region_image,
         in_range=cast(Any, (50, 175)),
         out_range=cast(Any, (0, 255)),
     ).astype(np.uint8)
 
-    equalized = exposure.equalize_hist(stretch)
+    equalized = exposure.equalize_hist(stretch)  # type: ignore[no-untyped-call]
 
     equalized_image = (equalized * 255).astype(np.uint8)
 
@@ -58,8 +61,8 @@ def getSlotCountOld(screenshot: GrayImage, slot: int) -> Union[int, None]:
         if number is None:
             number = 0
             continue
-        count += number * math.pow(10, i)
-    return int(count)
+        count += number * (10 ** i)
+    return count
 
 # PERF: [0.08509680000000008, 0.00037780000000031677]
 def hasCooldownByImage(screenshot: GrayImage, cooldownImage: GrayImage) -> Union[bool, None]:

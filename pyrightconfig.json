@@ -1,5 +1,6 @@
 {
   "typeCheckingMode": "basic",
+  "reportUntypedFunctionCall": "none",
   "reportMissingTypeStubs": "none",
   "reportMissingTypeArgument": "none",
   "reportMissingTypeParameter": "none",

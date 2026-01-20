@@ -1,4 +1,7 @@
 import pathlib
+from typing import Final, TypedDict
+
+from src.shared.typings import GrayImage
 from src.utils.core import hashit
 from src.utils.image import loadFromRGBToGray
 
@@ -8,14 +11,26 @@ imagesPath = f'{currentPath}/images'
 arrowsImagesPath = f'{imagesPath}/arrows'
 cooldownsImagesPath = f'{imagesPath}/cooldowns'
 digitsImagesPath = f'{imagesPath}/digits'
-hashes = {
+
+
+class ActionBarHashes(TypedDict):
+    cooldowns: dict[int, str]
+
+
+class ActionBarImages(TypedDict):
+    arrows: dict[str, GrayImage]
+    cooldowns: dict[str, GrayImage]
+    digits: dict[int, int]
+
+
+hashes: Final[ActionBarHashes] = {
     'cooldowns': {
         hashit(loadFromRGBToGray(f'{cooldownsImagesPath}/attack.png')): 'attack',
         hashit(loadFromRGBToGray(f'{cooldownsImagesPath}/healing.png')): 'healing',
         hashit(loadFromRGBToGray(f'{cooldownsImagesPath}/support.png')): 'support'
     }
 }
-images = {
+images: Final[ActionBarImages] = {
     'arrows': {
         'left': loadFromRGBToGray(f'{arrowsImagesPath}/left.png'),
         'right': loadFromRGBToGray(f'{arrowsImagesPath}/right.png'),

@@ -3,7 +3,7 @@ from time import sleep, time
 import traceback
 import sys
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Optional, cast
 
 from src.gameplay.typings import Context as GameplayContext
 from src.gameplay.cavebot import resolveCavebotTasks, shouldAskForCavebotTasks
@@ -133,7 +133,13 @@ class PilotNGThread:
         if context['ng_cave']['enabled'] and context['ng_cave']['runToCreatures'] == True:
             context = setHandleLootMiddleware(context)          
         else:
-            context['ng_cave']['targetCreature'] = getTargetCreature(context['gameWindow']['monsters'])
+            get_target_creature = cast(
+                Callable[[list[dict[str, Any]]], Optional[dict[str, Any]]],
+                getTargetCreature,
+            )
+            context['ng_cave']['targetCreature'] = get_target_creature(
+                cast(list[dict[str, Any]], context['gameWindow']['monsters'])
+            )
         context = setWaypointIndexMiddleware(context)
         context = setMapPlayerStatusMiddleware(context)
         context = setMapStatsBarMiddleware(context)
@@ -185,6 +191,7 @@ class PilotNGThread:
                 monsters = context.get('gameWindow', {}).get('monsters') or []
                 bl_creatures = context.get('ng_battleList', {}).get('creatures')
                 bl_count = len(bl_creatures) if bl_creatures is not None else 0
+                dbg = context.get('ng_debug') if isinstance(context.get('ng_debug'), dict) else {}
                 closest = context.get('ng_cave', {}).get('closestCreature')
                 target = context.get('ng_cave', {}).get('targetCreature')
                 can_ignore = context.get('ng_targeting', {}).get('canIgnoreCreatures')
@@ -192,13 +199,7 @@ class PilotNGThread:
                 log_throttled(
                     'pilot.targeting.diag',
                     'info',
-                    (
-                        f"targeting: monsters={len(monsters)} bl={bl_count} "
-                        f"hasCreaturesToAttack={hasCreaturesToAttackAfterCheck} "
-                        f"canIgnore={can_ignore} hasIgnorable={has_ignorable} "
-                        f"closest={getattr(closest, 'get', lambda _k, _d=None: None)('name', None) if closest else None} "
-                        f"target={getattr(target, 'get', lambda _k, _d=None: None)('name', None) if target else None}"
-                    ),
+                    f"targeting: monsters={len(monsters)} bl={bl_count} blIcon={dbg.get('battleList_icon_found')} blContent={dbg.get('battleList_content_found')} blBottom={dbg.get('battleList_bottomBar_found')} hasCreaturesToAttack={hasCreaturesToAttackAfterCheck} canIgnore={can_ignore} hasIgnorable={has_ignorable} closest={getattr(closest, 'get', lambda _k, _d=None: None)('name', None) if closest else None} target={getattr(target, 'get', lambda _k, _d=None: None)('name', None) if target else None}",
                     2.0,
                 )
 

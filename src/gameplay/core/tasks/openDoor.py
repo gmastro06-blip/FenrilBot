@@ -7,7 +7,7 @@ import src.repositories.gameWindow.slot as gameWindowSlot
 from time import sleep
 
 class OpenDoorTask(BaseTask):
-    def __init__(self, waypoint: Waypoint):
+    def __init__(self: "OpenDoorTask", waypoint: Waypoint) -> None:
         super().__init__()
         self.name = 'openDoor'
         self.isRootTask = True

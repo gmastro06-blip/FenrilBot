@@ -1,11 +1,12 @@
 import src.repositories.gameWindow.core as gameWindowCore
 import src.repositories.gameWindow.slot as gameWindowSlot
+from src.shared.typings import Coordinate
 from ...typings import Context
 from .common.base import BaseTask
 from time import sleep
 
 class RightClickDirectionTask(BaseTask):
-    def __init__(self, direction: str):
+    def __init__(self: "RightClickDirectionTask", direction: str) -> None:
         super().__init__()
         self.name = 'rightClickDirection'
         self.direction = direction
@@ -21,9 +22,11 @@ class RightClickDirectionTask(BaseTask):
         if self.direction == 'east':
             clickCoord[0] = clickCoord[0] - 1
 
-        clickCoord = tuple(clickCoord)
+        clickCoordTuple: Coordinate = (int(clickCoord[0]), int(clickCoord[1]), int(clickCoord[2]))
         slot = gameWindowCore.getSlotFromCoordinate(
-            context['ng_radar']['coordinate'], clickCoord)
+            context['ng_radar']['coordinate'], clickCoordTuple)
+        if slot is None:
+            return context
         sleep(0.2)
         gameWindowSlot.rightClickSlot(slot, context['gameWindow']['coordinate'])
         sleep(0.2)

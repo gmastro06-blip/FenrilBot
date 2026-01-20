@@ -9,7 +9,7 @@ from .setNextWaypoint import SetNextWaypointTask
 from .expandBackpack import ExpandBackpackTask
 
 class DepositItemsHouseTask(VectorTask):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.name = 'depositItemsHouse'
         self.delayBeforeStart = 1

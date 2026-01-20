@@ -6,7 +6,7 @@ from time import time
 from src.utils.core import getScreenshot, getScreenshotDebugInfo, setScreenshotOutputIdx
 
 class SetNextSpellTask(BaseTask):
-    def __init__(self, spell: str):
+    def __init__(self: "SetNextSpellTask", spell: str) -> None:
         super().__init__()
         self.name = 'setNextSpell'
         self.spell = spell
@@ -20,10 +20,13 @@ class SetNextSpellTask(BaseTask):
                 setScreenshotOutputIdx(int(out_idx))
         except Exception:
             pass
-        curScreen = context['ng_screenshot'] = getScreenshot(
+        curScreen = getScreenshot(
             region=context.get('ng_capture_region'),
             absolute_region=context.get('ng_capture_absolute_region'),
         )
+        context['ng_screenshot'] = curScreen
+        if curScreen is None:
+            return context
         hasCooldown = hasCooldownByName(curScreen, self.spell)
         if hasCooldown:
             comboSpell = context['ng_comboSpells']['items'][0]

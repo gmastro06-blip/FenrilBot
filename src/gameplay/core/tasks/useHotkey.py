@@ -4,7 +4,7 @@ from .common.base import BaseTask
 
 
 class UseHotkeyTask(BaseTask):
-    def __init__(self, hotkey: str, delayAfterComplete: int = 1):
+    def __init__(self: "UseHotkeyTask", hotkey: str, delayAfterComplete: float = 1) -> None:
         super().__init__()
         self.name = 'useHotkey'
         self.delayAfterComplete = delayAfterComplete

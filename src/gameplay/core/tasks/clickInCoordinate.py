@@ -7,7 +7,7 @@ from .common.base import BaseTask
 
 
 class ClickInCoordinateTask(BaseTask):
-    def __init__(self, waypoint: Waypoint):
+    def __init__(self: "ClickInCoordinateTask", waypoint: Waypoint) -> None:
         super().__init__()
         self.name = 'clickInCoordinate'
         self.delayBeforeStart = 1
@@ -17,6 +17,8 @@ class ClickInCoordinateTask(BaseTask):
     def do(self, context: Context) -> Context:
         slot = gameWindowCore.getSlotFromCoordinate(
             context['ng_radar']['coordinate'], self.waypoint['coordinate'])
+        if slot is None:
+            return context
         gameWindowSlot.clickSlot(slot, context['gameWindow']['coordinate'])
         return context
 

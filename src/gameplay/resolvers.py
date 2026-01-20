@@ -25,13 +25,13 @@ from .core.tasks.setNextWaypoint import SetNextWaypointTask
 # TODO: add unit tests
 def resolveTasksByWaypoint(waypoint: Waypoint) -> Union[BaseTask, VectorTask]:
     if waypoint['type'] == 'depositGold':
-        return DepositGoldTask()
+        return DepositGoldTask()  # pyright: ignore[reportUntypedFunctionCall]
     elif waypoint['type'] == 'travel':
         return TravelTask(waypoint)
     elif waypoint['type'] == 'depositItems':
         return DepositItemsTask(waypoint)
     elif waypoint['type'] == 'depositItemsHouse':
-        return DepositItemsHouseTask()
+        return DepositItemsHouseTask()  # pyright: ignore[reportUntypedFunctionCall]
     elif waypoint['type'] == 'dropFlasks':
         return DropFlasksTask()
     elif waypoint['type'] == 'logout':
@@ -64,4 +64,4 @@ def resolveTasksByWaypoint(waypoint: Waypoint) -> Union[BaseTask, VectorTask]:
         return WalkToWaypointTask(waypoint['coordinate'], waypoint['ignore'], waypoint['passinho'])
 
     # Fallback: unknown waypoint type.
-    return SetNextWaypointTask()
+    return SetNextWaypointTask()  # pyright: ignore[reportUntypedFunctionCall]

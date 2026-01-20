@@ -9,7 +9,7 @@ from .common.base import BaseTask
 
 # TODO: check if something was looted or exactly count was looted
 class CollectDeadCorpseTask(BaseTask):
-    def __init__(self, creature: Any):
+    def __init__(self: "CollectDeadCorpseTask", creature: Any) -> None:
         super().__init__()
         self.name = 'collectDeadCorpse'
         self.delayBeforeStart = 0.85

@@ -10,10 +10,10 @@ from .common.base import BaseTask
 
 
 class WalkTask(BaseTask):
-    def __init__(self, context: Context, coordinate: Coordinate, passinho=False):
+    def __init__(self: "WalkTask", context: Context, coordinate: Coordinate, passinho: bool = False) -> None:
         super().__init__()
         self.name = 'walk'
-        charSpeed = getSpeed(context['ng_screenshot'])
+        charSpeed = getSpeed(context['ng_screenshot']) or 0
         tileFriction = getTileFrictionByCoordinate(coordinate)
         movementSpeed = getBreakpointTileMovementSpeed(
             charSpeed, tileFriction)
@@ -30,16 +30,17 @@ class WalkTask(BaseTask):
         return not gameplayUtils.coordinatesAreEqual(context['ng_radar']['coordinate'], context['ng_radar']['lastCoordinateVisited'])
 
     # TODO: add unit tests
-    def do(self, context: Context) -> bool:
+    def do(self, context: Context) -> Context:
         direction = getDirectionBetweenCoordinates(
             context['ng_radar']['coordinate'], self.walkpoint)
         if direction is None:
             return context
+        parent = self.parentTask
         futureDirection = None
-        if self.parentTask and len(self.parentTask.tasks) > 1:
-            if self.parentTask.currentTaskIndex + 1 < len(self.parentTask.tasks):
+        if parent is not None and len(parent.tasks) > 1:
+            if parent.currentTaskIndex + 1 < len(parent.tasks):
                 futureDirection = getDirectionBetweenCoordinates(
-                    self.walkpoint, self.parentTask.tasks[self.parentTask.currentTaskIndex + 1].walkpoint)
+                    self.walkpoint, parent.tasks[parent.currentTaskIndex + 1].walkpoint)
         if direction != futureDirection:
             if context['ng_lastPressedKey'] is not None:
                 context = releaseKeys(context)
@@ -47,13 +48,13 @@ class WalkTask(BaseTask):
                 press(direction)
             return context
         if direction != context['ng_lastPressedKey']:
-            if len(self.parentTask.tasks) > 2:
+            if parent is not None and len(parent.tasks) > 2:
                 keyDown(direction)
                 context['ng_lastPressedKey'] = direction
             else:
                 press(direction)
             return context
-        if len(self.parentTask.tasks) == 1 and context['ng_lastPressedKey'] is not None:
+        if parent is not None and len(parent.tasks) == 1 and context['ng_lastPressedKey'] is not None:
             context = releaseKeys(context)
         return context
 

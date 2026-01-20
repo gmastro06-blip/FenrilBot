@@ -1,3 +1,5 @@
+from typing import cast
+
 from src.gameplay.typings import Context
 from src.repositories.inventory.core import images
 from src.utils.core import locate
@@ -10,7 +12,7 @@ from .common.base import BaseTask
 # TODO: check if backpack is expanded on did
 # TODO: voltar terminable talvez, melhorar esse codigo
 class ExpandBackpackTask(BaseTask):
-    def __init__(self, backpack: str):
+    def __init__(self: "ExpandBackpackTask", backpack: str) -> None:
         super().__init__()
         self.name = 'expandBackpack'
         self.delayBeforeStart = 1
@@ -25,9 +27,13 @@ class ExpandBackpackTask(BaseTask):
         backpackBarPosition = locate(context['ng_screenshot'], backpackBarImage, confidence=0.8)
         if backpackBarPosition is None:
             return context
+        backpackBarPosition = cast(tuple[int, int, int, int], backpackBarPosition)
         croppedImage = context['ng_screenshot'][backpackBarPosition[1]:, backpackBarPosition[0]:]
         # TODO: locate should be done in right content position to avoid calculation in whole screen
         backpackBottomBarPosition = locate(croppedImage, images['containersBars']['backpack bottom'], confidence=0.8)
+        if backpackBottomBarPosition is None:
+            return context
+        backpackBottomBarPosition = cast(tuple[int, int, int, int], backpackBottomBarPosition)
         backpackBottomBarPositionX = backpackBottomBarPosition[0] + backpackBarPosition[0]
         backpackBottomBarPositionY = backpackBottomBarPosition[1] + backpackBarPosition[1]
         yDifference = backpackBottomBarPositionY - backpackBarPosition[1] - 1

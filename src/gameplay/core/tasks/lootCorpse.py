@@ -6,7 +6,7 @@ from .collectDeadCorpse import CollectDeadCorpseTask
 
 
 class LootCorpseTask(VectorTask):
-    def __init__(self, creature: Any):
+    def __init__(self: "LootCorpseTask", creature: Any) -> None:
         super().__init__()
         self.name = 'lootCorpse'
         self.isRootTask = True

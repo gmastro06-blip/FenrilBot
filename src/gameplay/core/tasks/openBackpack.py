@@ -7,7 +7,7 @@ from .common.base import BaseTask
 
 
 class OpenBackpackTask(BaseTask):
-    def __init__(self, backpack: str):
+    def __init__(self: "OpenBackpackTask", backpack: str) -> None:
         super().__init__()
         self.name = 'openBackpack'
         self.delayBeforeStart = 1

@@ -18,6 +18,14 @@ from src.ui.context import Context
 from src.ui.utils import genRanStr
 
 class CavebotPage(customtkinter.CTkToplevel):
+    ignoreCreaturesPage: Optional[IgnoreCreaturesPage]
+    baseModal: Optional[BaseModal]
+    refillModal: Optional[RefillModal]
+    backpackModal: Optional[BuyBackpackModal]
+    refillCheckerModal: Optional[RefillCheckerModal]
+    depositItemsModal: Optional[DepositItemsModal]
+    travelModal: Optional[TravelModal]
+
     def __init__(self, context: Context) -> None:
         super().__init__()
         self.context = context
@@ -25,7 +33,7 @@ class CavebotPage(customtkinter.CTkToplevel):
         self.title(genRanStr())
         self.resizable(False, False)
 
-        self.ignoreCreaturesPage = None
+        self.ignoreCreaturesPage: Optional[IgnoreCreaturesPage] = None
 
         bg_color = self._apply_appearance_mode(customtkinter.ThemeManager.theme["CTkFrame"]["fg_color"])
         text_color = self._apply_appearance_mode(customtkinter.ThemeManager.theme["CTkLabel"]["text_color"])
@@ -44,12 +52,12 @@ class CavebotPage(customtkinter.CTkToplevel):
         self.columnconfigure(0, weight=8)
         self.columnconfigure(1, weight=2)
         self.rowconfigure(1, weight=1)
-        self.baseModal = None
-        self.refillModal = None
-        self.backpackModal = None
-        self.refillCheckerModal = None
-        self.depositItemsModal = None
-        self.travelModal = None
+        self.baseModal: Optional[BaseModal] = None
+        self.refillModal: Optional[RefillModal] = None
+        self.backpackModal: Optional[BuyBackpackModal] = None
+        self.refillCheckerModal: Optional[RefillCheckerModal] = None
+        self.depositItemsModal: Optional[DepositItemsModal] = None
+        self.travelModal: Optional[TravelModal] = None
 
         self.tableFrame = customtkinter.CTkFrame(self)
         self.tableFrame.grid(row=0, column=0, rowspan=2, padx=10, pady=10, sticky="nsew")

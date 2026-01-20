@@ -7,7 +7,7 @@ from .common.base import BaseTask
 
 
 class OpenLockerTask(BaseTask):
-    def __init__(self):
+    def __init__(self: "OpenLockerTask") -> None:
         super().__init__()
         self.name = 'openLocker'
         self.delayAfterComplete = 1

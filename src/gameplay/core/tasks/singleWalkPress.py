@@ -10,10 +10,10 @@ from .common.base import BaseTask
 
 
 class SingleWalkPressTask(BaseTask):
-    def __init__(self, context: Context, coordinate: Coordinate):
+    def __init__(self: "SingleWalkPressTask", context: Context, coordinate: Coordinate) -> None:
         super().__init__()
         self.name = 'singleWalkPress'
-        charSpeed = getSpeed(context['ng_screenshot'])
+        charSpeed = getSpeed(context['ng_screenshot']) or 0
         tileFriction = getTileFrictionByCoordinate(coordinate)
         movementSpeed = getBreakpointTileMovementSpeed(
             charSpeed, tileFriction)
@@ -31,6 +31,8 @@ class SingleWalkPressTask(BaseTask):
     def do(self, context: Context) -> Context:
         direction = getDirectionBetweenCoordinates(
             context['ng_radar']['coordinate'], self.coordinate)
+        if direction is None:
+            return context
         press(direction)
         return context
 

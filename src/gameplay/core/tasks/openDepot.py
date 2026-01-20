@@ -8,7 +8,7 @@ from .common.base import BaseTask
 # TODO: implement shouldIgnore method and check if depot is already open
 # TODO: check if depot is opened on did
 class OpenDepotTask(BaseTask):
-    def __init__(self):
+    def __init__(self: "OpenDepotTask") -> None:
         super().__init__()
         self.name = 'openDepot'
         self.delayBeforeStart = 1
@@ -16,6 +16,8 @@ class OpenDepotTask(BaseTask):
 
     def do(self, context: Context) -> Context:
         depotPosition = coreUtils.locate(context['ng_screenshot'], images['slots']['depot'])
+        if depotPosition is None:
+            return context
         # TODO: click inside BBox
         mouse.rightClick((depotPosition[0] + 5, depotPosition[1] + 5))
         return context

@@ -9,7 +9,7 @@ from .setNextWaypoint import SetNextWaypointTask
 
 # TODO: check if gold was deposited successfully by shouldRestartAfterAllChildrensComplete
 class DepositGoldTask(VectorTask):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.name = 'depositGold'
         self.isRootTask = True
