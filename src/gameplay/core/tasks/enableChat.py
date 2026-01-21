@@ -13,6 +13,8 @@ class EnableChatTask(BaseTask):
         self.delayAfterComplete = 2
 
     def shouldIgnore(self, context: Context) -> bool:
+        if context.get('ng_screenshot') is None:
+            return False
         (_, chatIsOn) = chatCore.getChatStatus(context['ng_screenshot'])
         return chatIsOn
 

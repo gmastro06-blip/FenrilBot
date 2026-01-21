@@ -62,7 +62,30 @@ def getCreaturesNamesImages(content: GrayImage, filledSlotsCount: int) -> GrayIm
     for i in range(filledSlotsCount):
         y = 11 + (i * 22)
         creatureNameImage = content[y:y + 1, 23:138][0]
+
+        # The original implementation relied on exact pixel values (192/247),
+        # which breaks on different Tibia themes / capture gamma.
+        # We canonicalize each name row into a binary-ish mask where "text"
+        # pixels become 192 and background remains 0.
+        min_v = 255
+        max_v = 0
         for j in range(creatureNameImage.shape[0]):
-            if creatureNameImage[j] == 192 or creatureNameImage[j] == 247:
+            v = creatureNameImage[j]
+            if v < min_v:
+                min_v = v
+            if v > max_v:
+                max_v = v
+
+        for j in range(creatureNameImage.shape[0]):
+            v = creatureNameImage[j]
+            if v == 192 or v == 247:
                 creaturesNamesImages[i, j] = 192
+            elif max_v < 120:
+                # Dark theme: text is only slightly brighter than background.
+                if v >= min_v + 10:
+                    creaturesNamesImages[i, j] = 192
+            else:
+                # Light theme or high-contrast capture: keep a conservative threshold.
+                if v >= 170:
+                    creaturesNamesImages[i, j] = 192
     return creaturesNamesImages

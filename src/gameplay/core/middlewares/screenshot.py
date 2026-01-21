@@ -181,11 +181,17 @@ def setScreenshotMiddleware(context: Context) -> Context:
             diag['consecutive_black_capture'] = 0
 
         black_dump_threshold = int(os.getenv('FENRIL_DIAG_BLACK_DUMP_THRESHOLD', '12'))
-        if int(diag.get('consecutive_black_capture', 0)) >= black_dump_threshold:
+        # Dumping black frames is useful during setup, but can flood `debug/` in long runs.
+        # Default is OFF; enable with FENRIL_DUMP_BLACK_CAPTURE=1.
+        if (
+            os.getenv('FENRIL_DUMP_BLACK_CAPTURE', '0') in {'1', 'true', 'True'}
+            and int(diag.get('consecutive_black_capture', 0)) >= black_dump_threshold
+        ):
             last_dump = float(diag.get('last_black_dump_time', 0.0))
             now = time.time()
             # Avoid spamming dumps.
-            if now - last_dump >= 5.0:
+            min_interval = float(os.getenv('FENRIL_DUMP_BLACK_CAPTURE_MIN_INTERVAL_S', '60.0'))
+            if now - last_dump >= min_interval:
                 diag['last_black_dump_time'] = now
                 out_dir = pathlib.Path('debug')
                 out_dir.mkdir(parents=True, exist_ok=True)

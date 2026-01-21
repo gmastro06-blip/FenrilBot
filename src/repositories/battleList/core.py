@@ -26,9 +26,53 @@ def getBeingAttackedCreatures(content: GrayImage, filledSlotsCount: int) -> Gene
         if alreadyCalculatedBeingAttackedCreature:
             yield False
         else:
-            # detecting through corner pixels
-            isBeingAttacked = (content[creatureIndex * 22, 0] == 76 or content[contentIndex, 0] == 166) and (content[contentIndex, 19] == 76 or content[contentIndex, 19] == 166) and (
-                content[contentIndex + 19, 0] == 76 or content[contentIndex + 19, 0] == 166) and (content[contentIndex + 19, 19] == 76 or content[contentIndex + 19, 19] == 166)
+            # Detect the target frame around the 20x20 creature icon.
+            # In practice, the attack frame produces a nearly-uniform 1px border,
+            # while the regular icon border varies. Selection highlight can create
+            # a uniform *white* border, so explicitly filter that out.
+            border_sum = 0
+            border_count = 0
+            border_min = 255
+            border_max = 0
+
+            # top + bottom rows
+            y0 = contentIndex
+            y1 = contentIndex + 19
+            for x in range(20):
+                v0 = int(content[y0, x])
+                v1 = int(content[y1, x])
+                border_sum += v0 + v1
+                border_count += 2
+                if v0 < border_min:
+                    border_min = v0
+                if v0 > border_max:
+                    border_max = v0
+                if v1 < border_min:
+                    border_min = v1
+                if v1 > border_max:
+                    border_max = v1
+
+            # left + right cols (excluding corners)
+            for y in range(1, 19):
+                v0 = int(content[contentIndex + y, 0])
+                v1 = int(content[contentIndex + y, 19])
+                border_sum += v0 + v1
+                border_count += 2
+                if v0 < border_min:
+                    border_min = v0
+                if v0 > border_max:
+                    border_max = v0
+                if v1 < border_min:
+                    border_min = v1
+                if v1 > border_max:
+                    border_max = v1
+
+            border_mean = border_sum / border_count
+            border_range = border_max - border_min
+
+            # NOTE: keep this conservative: avoid highlight-only borders (255)
+            # and require a near-uniform border.
+            isBeingAttacked = (border_range <= 2) and (border_mean < 240.0) and (border_mean > 40.0)
             yield isBeingAttacked
             if isBeingAttacked:
                 alreadyCalculatedBeingAttackedCreature = True
@@ -64,13 +108,47 @@ def getFilledSlotsCount(content: GrayImage) -> int:
     filledSlotsCount = 0
     for slotIndex in range(len(content) // 22):
         y = 22 * slotIndex
-        if content[:, 23][y + 11] == 192 or content[:, 23][y + 11] == 247:
+
+        # Fast path: legacy exact-color detection (works for the original theme).
+        v0 = content[:, 23][y + 11]
+        v1 = content[:, 23][y + 10]
+        v2 = content[:, 23][y + 4]
+        v3 = content[:, 23][y + 5]
+        # Use a small tolerance to handle compression/gamma drift in test fixtures.
+        iv0 = int(v0)
+        iv1 = int(v1)
+        iv2 = int(v2)
+        iv3 = int(v3)
+        if (
+            (190 <= iv0 <= 194) or (245 <= iv0 <= 249)
+            or (190 <= iv1 <= 194) or (245 <= iv1 <= 249)
+            or (190 <= iv2 <= 194) or (245 <= iv2 <= 249)
+            or (190 <= iv3 <= 194) or (245 <= iv3 <= 249)
+        ):
             filledSlotsCount += 1
-        elif content[:, 23][y + 10] == 192 or content[:, 23][y + 10] == 247:
-            filledSlotsCount += 1
-        elif content[:, 23][y + 4] == 192 or content[:, 23][y + 4] == 247:
-            filledSlotsCount += 1
-        elif content[:, 23][y + 5] == 192 or content[:, 23][y + 5] == 247:
+            continue
+
+        # Fallback: adaptive contrast detection on the name row.
+        # Name row is at y+11 and spans columns 23:138 (115px).
+        row_y = y + 11
+        min_v = 255
+        max_v = 0
+        for x in range(23, 138):
+            v = content[row_y, x]
+            if v < min_v:
+                min_v = v
+            if v > max_v:
+                max_v = v
+
+        # If the row is nearly flat (or only slightly noisy), treat it as empty.
+        # For dark themes, names are bright, so also require a few bright pixels.
+        diff = int(max_v) - int(min_v)
+        bright = 0
+        for x in range(23, 138):
+            if int(content[row_y, x]) >= 160:
+                bright += 1
+
+        if diff >= 20 and bright >= 2:
             filledSlotsCount += 1
         else:
             break

@@ -81,6 +81,22 @@ def setRadarMiddleware(context: Context) -> Context:
             debug['last_tick_reason'] = 'radar tools not found'
             debug['floor_level'] = None
 
+        # Optional: dump immediately on radar-tools miss (useful for short test runs).
+        if os.getenv('FENRIL_DUMP_RADAR_ON_FAIL', '0') in {'1', 'true', 'True'}:
+            now = time.time()
+            min_interval = float(os.getenv('FENRIL_DUMP_RADAR_MIN_INTERVAL_S', '60.0'))
+            last_dump = float(diag.get('last_radar_dump_time', 0.0))
+            if now - last_dump >= min_interval:
+                diag['last_radar_dump_time'] = now
+                out_dir = pathlib.Path('debug')
+                out_dir.mkdir(parents=True, exist_ok=True)
+                path = out_dir / f'dual_diag_radar_tools_missing_{int(now)}.png'
+                try:
+                    cv2.imwrite(str(path), screenshot)
+                    print(f"[fenril][dual] Diagnostics: radar tools not found - dumped {path}")
+                except Exception:
+                    pass
+
         # Recovery: reset locator caches after repeated misses.
         reset_thr = int(os.getenv('FENRIL_RESET_LOCATOR_CACHE_THRESHOLD', '10'))
         if int(diag.get('consecutive_radar_tools_missing', 0)) >= reset_thr:
@@ -117,17 +133,20 @@ def setRadarMiddleware(context: Context) -> Context:
         except Exception:
             pass
 
-    # Dump frames when we keep failing to see radar/arrows to avoid silent stalls.
+    # Dump frames when we keep failing to see radar/arrows.
+    # This is helpful during setup but can spam `debug/` in long runs.
+    # Default is OFF; enable with FENRIL_DUMP_RADAR_PERSISTENT=1.
     radar_thr = int(os.getenv('FENRIL_DIAG_RADAR_MISSING_THRESHOLD', '30'))
     arrows_thr = int(os.getenv('FENRIL_DIAG_ARROWS_MISSING_THRESHOLD', '30'))
     should_dump = (
         int(diag.get('consecutive_radar_tools_missing', 0)) >= radar_thr
         or int(diag.get('consecutive_game_window_arrows_missing', 0)) >= arrows_thr
     )
-    if should_dump:
+    if should_dump and os.getenv('FENRIL_DUMP_RADAR_PERSISTENT', '0') in {'1', 'true', 'True'}:
         now = time.time()
         last_dump = float(diag.get('last_radar_dump_time', 0.0))
-        if now - last_dump >= 5.0:
+        min_interval = float(os.getenv('FENRIL_DUMP_RADAR_PERSISTENT_MIN_INTERVAL_S', '120.0'))
+        if now - last_dump >= min_interval:
             diag['last_radar_dump_time'] = now
             out_dir = pathlib.Path('debug')
             out_dir.mkdir(parents=True, exist_ok=True)

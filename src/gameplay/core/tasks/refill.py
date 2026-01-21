@@ -10,6 +10,8 @@ from .selectChatTab import SelectChatTabTask
 from .setChatOff import SetChatOffTask
 from .setNextWaypoint import SetNextWaypointTask
 from src.gameplay.core.tasks.useHotkey import UseHotkeyTask
+from src.utils.array import getNextArrayIndex
+from src.gameplay.core.waypoint import resolveGoalCoordinate
 
 class RefillTask(VectorTask):
     def __init__(self, waypoint: Waypoint):
@@ -22,8 +24,20 @@ class RefillTask(VectorTask):
 
     # TODO: add unit tests
     def onBeforeStart(self, context: Context) -> Context:
-        healthPotionsAmount = getSlotCount(context['ng_screenshot'], context['healing']['potions']['firstHealthPotion']['slot'])
-        manaPotionsAmount = getSlotCount(context['ng_screenshot'], context['healing']['potions']['firstManaPotion']['slot'])
+        screenshot = context.get('ng_screenshot') if isinstance(context, dict) else None
+        if screenshot is None:
+            # Capture isn't ready / window mismatch; avoid crashing and let cavebot continue.
+            return self.onTimeout(context)
+
+        health_slot = context.get('healing', {}).get('potions', {}).get('firstHealthPotion', {}).get('slot')
+        mana_slot = context.get('healing', {}).get('potions', {}).get('firstManaPotion', {}).get('slot')
+        if health_slot is None or mana_slot is None:
+            return self.onTimeout(context)
+
+        healthPotionsAmount = getSlotCount(screenshot, health_slot)
+        manaPotionsAmount = getSlotCount(screenshot, mana_slot)
+        if healthPotionsAmount is None or manaPotionsAmount is None:
+            return self.onTimeout(context)
 
         amountOfManaPotionsToBuy = max(
             0, self.waypoint['options']['manaPotion']['quantity'] - manaPotionsAmount)
@@ -45,4 +59,22 @@ class RefillTask(VectorTask):
             UseHotkeyTask(context['healing']['potions']['firstManaPotion']['hotkey'], delayAfterComplete=1).setParentTask(self).setRootTask(self),
             SetNextWaypointTask().setParentTask(self).setRootTask(self),
         ]
+        return context
+
+    def onTimeout(self, context: Context) -> Context:
+        try:
+            items = context.get('ng_cave', {}).get('waypoints', {}).get('items')
+            current_idx = context.get('ng_cave', {}).get('waypoints', {}).get('currentIndex')
+            coord = context.get('ng_radar', {}).get('coordinate')
+            if not items or current_idx is None:
+                return context
+            next_idx = getNextArrayIndex(items, current_idx)
+            context['ng_cave']['waypoints']['currentIndex'] = next_idx
+            if coord is not None:
+                current_wp = items[next_idx]
+                context['ng_cave']['waypoints']['state'] = resolveGoalCoordinate(coord, current_wp)
+            if isinstance(context.get('ng_debug'), dict):
+                context['ng_debug']['last_tick_reason'] = 'refill timeout (skipping)'
+        except Exception:
+            return context
         return context

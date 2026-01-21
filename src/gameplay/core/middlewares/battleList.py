@@ -1,5 +1,9 @@
 import numpy as np
 import os
+import pathlib
+from datetime import datetime
+
+import cv2
 
 from src.repositories.battleList.core import getCreatures, isAttackingSomeCreature
 from src.repositories.battleList.extractors import getContent
@@ -29,6 +33,44 @@ def setBattleListMiddleware(context: Context) -> Context:
             'Battle list detected but has 0 entries. Check Tibia battle list filters (Players/NPCs/Monsters) and ensure the list is visible in the capture.',
             10.0,
         )
+
+        # Optional: dump images to help debug why parsing is empty.
+        if os.getenv('FENRIL_DUMP_BATTLELIST_ON_EMPTY', '0') in {'1', 'true', 'True'}:
+            dbg = context.get('ng_debug')
+            if not isinstance(dbg, dict):
+                dbg = {}
+                context['ng_debug'] = dbg
+
+            # Throttle dumps to avoid flooding the debug folder.
+            now_s = float(datetime.now().timestamp())
+            last_dump_s = dbg.get('battleList_empty_last_dump_s')
+            # Default interval is intentionally high to avoid flooding `debug/`.
+            min_interval_s = float(os.getenv('FENRIL_DUMP_BATTLELIST_MIN_INTERVAL_S', '120'))
+            if not isinstance(last_dump_s, (int, float)) or (now_s - float(last_dump_s)) >= min_interval_s:
+                dbg['battleList_empty_last_dump_s'] = now_s
+                try:
+                    debug_dir = pathlib.Path('debug')
+                    debug_dir.mkdir(parents=True, exist_ok=True)
+                    ts = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+
+                    full_path = debug_dir / f'battlelist_empty_{ts}_full.png'
+                    content_path = debug_dir / f'battlelist_empty_{ts}_content.png'
+
+                    cv2.imwrite(str(full_path), np.ascontiguousarray(screenshot))
+                    cv2.imwrite(str(content_path), np.ascontiguousarray(content))
+
+                    # Also dump the raw list crop (icon->bottom), if we can reproduce it.
+                    icon_pos = getBattleListIconPosition(screenshot)
+                    if icon_pos is not None:
+                        raw_list = screenshot[
+                            icon_pos[1] + icon_pos[3] + 1:,
+                            icon_pos[0] - 1:icon_pos[0] - 1 + 156,
+                        ]
+                        raw_path = debug_dir / f'battlelist_empty_{ts}_raw.png'
+                        cv2.imwrite(str(raw_path), np.ascontiguousarray(raw_list))
+                except Exception:
+                    # Never let debug dumping break the bot loop.
+                    pass
 
     # Extra diagnostics: when the bot never attacks, the root cause is often that
     # the capture does not include the battle list (or it can't be matched).

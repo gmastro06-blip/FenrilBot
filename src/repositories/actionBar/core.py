@@ -1,17 +1,48 @@
 import pytesseract
 import math
 import numpy as np
-from typing import Any, Union, cast
+from typing import Union
 import src.repositories.actionBar.extractors as actionBarExtractors
 import src.repositories.actionBar.locators as actionBarLocators
 from src.shared.typings import GrayImage
 import src.utils.core as coreUtils
 from .config import ActionBarHashes, ActionBarImages, hashes as _hashes, images as _images
-from skimage import exposure
 
 
 hashes: ActionBarHashes = _hashes
 images: ActionBarImages = _images
+
+
+def _rescale_intensity_u8(
+    image: np.ndarray,
+    in_range: tuple[int, int] = (50, 175),
+    out_range: tuple[int, int] = (0, 255),
+) -> np.ndarray:
+    image_u8 = image.astype(np.uint8, copy=False)
+    in_min, in_max = in_range
+    out_min, out_max = out_range
+
+    if in_max <= in_min:
+        return image_u8.copy()
+
+    scaled = (image_u8.astype(np.float32) - float(in_min)) * (float(out_max - out_min) / float(in_max - in_min)) + float(out_min)
+    return np.clip(scaled, out_min, out_max).astype(np.uint8)
+
+
+def _equalize_hist_u8(image: np.ndarray) -> np.ndarray:
+    image_u8 = image.astype(np.uint8, copy=False)
+    hist = np.bincount(image_u8.ravel(), minlength=256)
+    cdf = hist.cumsum()
+    nonzero = cdf[cdf > 0]
+    if nonzero.size == 0:
+        return image_u8.copy()
+    cdf_min = int(nonzero[0])
+    cdf_max = int(nonzero[-1])
+    if cdf_max == cdf_min:
+        return image_u8.copy()
+
+    lut = np.floor((cdf - cdf_min) * 255.0 / float(cdf_max - cdf_min)).clip(0, 255).astype(np.uint8)
+    return lut[image_u8]
 
 pytesseract.pytesseract.tesseract_cmd = "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
 
@@ -28,15 +59,8 @@ def getSlotCount(screenshot: GrayImage, slot: int) -> Union[int, None]:
     
     number_region_image = np.array(digits, dtype=np.uint8)
 
-    stretch = exposure.rescale_intensity(  # pyright: ignore[reportUntypedFunctionCall]
-        number_region_image,
-        in_range=cast(Any, (50, 175)),
-        out_range=cast(Any, (0, 255)),
-    ).astype(np.uint8)
-
-    equalized = exposure.equalize_hist(stretch)  # pyright: ignore[reportUntypedFunctionCall]
-
-    equalized_image = (equalized * 255).astype(np.uint8)
+    stretch = _rescale_intensity_u8(number_region_image, in_range=(50, 175), out_range=(0, 255))
+    equalized_image = _equalize_hist_u8(stretch)
 
     count = pytesseract.image_to_string(equalized_image, config='--psm 10 --oem 3 -c tessedit_char_whitelist=0123456789')
 

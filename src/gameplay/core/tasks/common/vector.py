@@ -3,8 +3,8 @@ from .base import BaseTask
 
 
 class VectorTask(BaseTask):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, name: str = 'vectorTask') -> None:
+        super().__init__(name=name)
         self.currentTaskIndex = 0
         self.tasks: list[BaseTask] = []
 

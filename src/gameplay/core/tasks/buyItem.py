@@ -1,3 +1,4 @@
+import os
 import src.repositories.refill.core as refillCore
 from src.gameplay.typings import Context
 from .common.base import BaseTask
@@ -11,6 +12,8 @@ class BuyItemTask(BaseTask):
         self.name = 'buyItem'
         self.delayBeforeStart = 1
         self.delayAfterComplete = 1
+        self.delayOfTimeout = float(os.getenv('FENRIL_BUY_ITEM_TIMEOUT', '25'))
+        self.shouldTimeoutTreeWhenTimeout = True
         self.itemName = itemName
         self.itemQuantity = itemQuantity
         self.ignore = ignore
@@ -22,6 +25,8 @@ class BuyItemTask(BaseTask):
         return self.itemQuantity <= 0
 
     def do(self, context: Context) -> Context:
+        if context.get('ng_screenshot') is None:
+            return context
         # TODO: split into multiple tasks
         refillCore.buyItem(context['ng_screenshot'],
                         self.itemName, self.itemQuantity)

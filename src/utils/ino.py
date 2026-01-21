@@ -10,6 +10,15 @@ _arduinoSerial = None
 _arduinoAvailable = None
 
 
+def _is_clickish_command(command: str) -> bool:
+    c = command.strip()
+    if c in {"leftClick", "rightClick", "dragStart", "dragEnd"}:
+        return True
+    if c.startswith("scroll,"):
+        return True
+    return False
+
+
 def _getArduinoPort() -> str:
     return os.getenv("FENRIL_ARDUINO_PORT", "COM33")
 
@@ -32,6 +41,13 @@ def _ensureArduinoSerial() -> Optional[serial.Serial]:
 
 
 def sendCommandArduino(command: str) -> bool:
+    if os.getenv('FENRIL_DISABLE_ARDUINO', '0') in {'1', 'true', 'True'}:
+        return False
+
+    # Some Arduino firmwares apply smoothing/delays that make clicks appear to "not happen".
+    # Allow bypassing Arduino for click-like commands while still using Arduino for moveTo.
+    if os.getenv('FENRIL_DISABLE_ARDUINO_CLICKS', '0') in {'1', 'true', 'True'} and _is_clickish_command(command):
+        return False
     arduinoSerial = _ensureArduinoSerial()
     if arduinoSerial is None:
         return False

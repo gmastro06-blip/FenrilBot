@@ -1,5 +1,8 @@
 from typing import Optional, Tuple
 
+import os
+import time
+
 import pyautogui
 from src.shared.typings import XYCoordinate
 from .ino import sendCommandArduino
@@ -7,6 +10,28 @@ from .ino import sendCommandArduino
 
 _capture_rect: Optional[Tuple[int, int, int, int]] = None
 _action_rect: Optional[Tuple[int, int, int, int]] = None
+
+_last_click_diag_time: float = 0.0
+_last_click_backend: Optional[str] = None
+
+
+def _click_diag(msg: str) -> None:
+    global _last_click_diag_time
+    if os.getenv('FENRIL_INPUT_DIAG', '0') not in {'1', 'true', 'True'}:
+        return
+    now = time.time()
+    if now - _last_click_diag_time < 0.5:
+        return
+    _last_click_diag_time = now
+    try:
+        print(msg)
+    except Exception:
+        pass
+
+
+def get_last_click_backend() -> Optional[str]:
+    """Return the backend used by the last click: 'arduino' or 'pyautogui'."""
+    return _last_click_backend
 
 
 def set_window_transform(
@@ -44,6 +69,16 @@ def _transform_capture_to_action(coord: XYCoordinate) -> XYCoordinate:
     ay = act_top + (y * act_h / cap_h)
     return (int(round(ax)), int(round(ay)))
 
+
+def transform_capture_to_action(coord: XYCoordinate) -> XYCoordinate:
+    """Public wrapper used for diagnostics/logging."""
+    return _transform_capture_to_action(coord)
+
+
+def get_window_transform() -> tuple[Optional[Tuple[int, int, int, int]], Optional[Tuple[int, int, int, int]]]:
+    """Return (capture_rect, action_rect) currently used for coordinate transform."""
+    return (_capture_rect, _action_rect)
+
 def drag(x1y1: XYCoordinate, x2y2: XYCoordinate) -> None:
     x1y1 = _transform_capture_to_action(x1y1)
     x2y2 = _transform_capture_to_action(x2y2)
@@ -57,15 +92,35 @@ def drag(x1y1: XYCoordinate, x2y2: XYCoordinate) -> None:
     pyautogui.dragTo(x2y2[0], x2y2[1], button="left")
 
 def leftClick(windowCoordinate: Optional[XYCoordinate] = None) -> None:
+    global _last_click_backend
+    disable_arduino_clicks = os.getenv('FENRIL_DISABLE_ARDUINO_CLICKS', '0') in {'1', 'true', 'True'}
     if windowCoordinate is None:
-        if not sendCommandArduino("leftClick"):
+        used_arduino = sendCommandArduino("leftClick")
+        if not used_arduino:
             pyautogui.leftClick()
+        _last_click_backend = 'arduino' if used_arduino else 'pyautogui'
+        _click_diag(f"[fenril][input] leftClick backend={'arduino' if used_arduino else 'pyautogui'} coord=None")
         return
     windowCoordinate = _transform_capture_to_action(windowCoordinate)
+
+    # If we are forcing pyautogui clicks, don't issue Arduino move commands either.
+    # Some firmwares smooth movement and can cause the cursor to drift during the click.
+    if disable_arduino_clicks:
+        pyautogui.leftClick(windowCoordinate[0], windowCoordinate[1])
+        _last_click_backend = 'pyautogui'
+        _click_diag(f"[fenril][input] leftClick backend=pyautogui coord={windowCoordinate}")
+        return
+
     if sendCommandArduino(f"moveTo,{int(windowCoordinate[0])},{int(windowCoordinate[1])}"):
-        sendCommandArduino("leftClick")
+        used_arduino = sendCommandArduino("leftClick")
+        _last_click_backend = 'arduino' if used_arduino else 'pyautogui'
+        _click_diag(f"[fenril][input] leftClick backend={'arduino' if used_arduino else 'pyautogui'} coord={windowCoordinate}")
+        if not used_arduino:
+            pyautogui.leftClick(windowCoordinate[0], windowCoordinate[1])
         return
     pyautogui.leftClick(windowCoordinate[0], windowCoordinate[1])
+    _last_click_backend = 'pyautogui'
+    _click_diag(f"[fenril][input] leftClick backend=pyautogui coord={windowCoordinate}")
 
 def moveTo(windowCoordinate: XYCoordinate) -> None:
     windowCoordinate = _transform_capture_to_action(windowCoordinate)
@@ -73,15 +128,33 @@ def moveTo(windowCoordinate: XYCoordinate) -> None:
         pyautogui.moveTo(windowCoordinate[0], windowCoordinate[1])
 
 def rightClick(windowCoordinate: Optional[XYCoordinate] = None) -> None:
+    global _last_click_backend
+    disable_arduino_clicks = os.getenv('FENRIL_DISABLE_ARDUINO_CLICKS', '0') in {'1', 'true', 'True'}
     if windowCoordinate is None:
-        if not sendCommandArduino("rightClick"):
+        used_arduino = sendCommandArduino("rightClick")
+        if not used_arduino:
             pyautogui.rightClick()
+        _last_click_backend = 'arduino' if used_arduino else 'pyautogui'
+        _click_diag(f"[fenril][input] rightClick backend={'arduino' if used_arduino else 'pyautogui'} coord=None")
         return
     windowCoordinate = _transform_capture_to_action(windowCoordinate)
+
+    if disable_arduino_clicks:
+        pyautogui.rightClick(windowCoordinate[0], windowCoordinate[1])
+        _last_click_backend = 'pyautogui'
+        _click_diag(f"[fenril][input] rightClick backend=pyautogui coord={windowCoordinate}")
+        return
+
     if sendCommandArduino(f"moveTo,{int(windowCoordinate[0])},{int(windowCoordinate[1])}"):
-        sendCommandArduino("rightClick")
+        used_arduino = sendCommandArduino("rightClick")
+        _last_click_backend = 'arduino' if used_arduino else 'pyautogui'
+        _click_diag(f"[fenril][input] rightClick backend={'arduino' if used_arduino else 'pyautogui'} coord={windowCoordinate}")
+        if not used_arduino:
+            pyautogui.rightClick(windowCoordinate[0], windowCoordinate[1])
         return
     pyautogui.rightClick(windowCoordinate[0], windowCoordinate[1])
+    _last_click_backend = 'pyautogui'
+    _click_diag(f"[fenril][input] rightClick backend=pyautogui coord={windowCoordinate}")
 
 def scroll(clicks: int) -> None:
     curX, curY = pyautogui.position()

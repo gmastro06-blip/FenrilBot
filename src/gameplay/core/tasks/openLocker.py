@@ -16,7 +16,10 @@ class OpenLockerTask(BaseTask):
         self.shouldTimeoutTreeWhenTimeout = True
 
     def shouldIgnore(self, context: Context) -> bool:
-        return inventoryCore.isContainerOpen(context['ng_screenshot'], 'locker')
+        screenshot = context.get('ng_screenshot') if isinstance(context, dict) else None
+        if screenshot is None:
+            return False
+        return inventoryCore.isContainerOpen(screenshot, 'locker')
 
     def do(self, context: Context) -> Context:
         current_coord = context.get('ng_radar', {}).get('coordinate')

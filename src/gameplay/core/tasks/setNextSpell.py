@@ -3,7 +3,7 @@ from .common.base import BaseTask
 from src.repositories.actionBar.core import hasCooldownByName
 from src.utils.array import getNextArrayIndex
 from src.shared.typings import GrayImage
-from typing import cast
+from typing import Optional
 from time import time
 from src.utils.core import getScreenshot, getScreenshotDebugInfo, setScreenshotOutputIdx
 
@@ -22,15 +22,15 @@ class SetNextSpellTask(BaseTask):
                 setScreenshotOutputIdx(int(out_idx))
         except Exception:
             pass
-        curScreen = getScreenshot(
+        curScreenOpt: Optional[GrayImage] = getScreenshot(
             region=context.get('ng_capture_region'),
             absolute_region=context.get('ng_capture_absolute_region'),
         )
-        context['ng_screenshot'] = curScreen
-        if curScreen is None:
+        context['ng_screenshot'] = curScreenOpt
+        if curScreenOpt is None:
             return context
-        screen = cast(GrayImage, curScreen)
-        hasCooldown = hasCooldownByName(screen, self.spell)
+        curScreen: GrayImage = curScreenOpt
+        hasCooldown = hasCooldownByName(curScreen, self.spell)
         if hasCooldown:
             comboSpell = context['ng_comboSpells']['items'][0]
             if comboSpell['enabled'] == False:

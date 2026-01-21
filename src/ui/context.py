@@ -71,6 +71,12 @@ class Context:
                     'poison': False,
                     'poison_hotkey': 'g'
                 },
+                'manual_auto_attack': {
+                    'enabled': False,
+                    'method': 'hotkey',
+                    'hotkey': 'pageup',
+                    'interval_s': 0.70,
+                },
                 'ignorable_creatures': [],
                 'healing': {
                     'highPriority': {
@@ -318,6 +324,54 @@ class Context:
     def setRopeHotkey(self, hotkey: str) -> None:
         self.context['general_hotkeys']['rope_hotkey'] = hotkey
         self.enabledProfile['config']['general_hotkeys']['rope_hotkey'] = hotkey
+        self.db.update(self.enabledProfile)
+
+    def setManualAutoAttackEnabled(self, enabled: bool) -> None:
+        if 'manual_auto_attack' not in self.context or not isinstance(self.context.get('manual_auto_attack'), dict):
+            self.context['manual_auto_attack'] = {
+                'enabled': False,
+                'method': 'hotkey',
+                'hotkey': 'pageup',
+                'interval_s': 0.70,
+            }
+        self.context['manual_auto_attack']['enabled'] = enabled
+        self.enabledProfile['config'].setdefault('manual_auto_attack', {})
+        self.enabledProfile['config']['manual_auto_attack']['enabled'] = enabled
+        self.db.update(self.enabledProfile)
+
+    def setManualAutoAttackHotkey(self, hotkey: str) -> None:
+        if 'manual_auto_attack' not in self.context or not isinstance(self.context.get('manual_auto_attack'), dict):
+            self.context['manual_auto_attack'] = {
+                'enabled': False,
+                'method': 'hotkey',
+                'hotkey': 'pageup',
+                'interval_s': 0.70,
+            }
+        self.context['manual_auto_attack']['hotkey'] = hotkey
+        self.enabledProfile['config'].setdefault('manual_auto_attack', {})
+        self.enabledProfile['config']['manual_auto_attack']['hotkey'] = hotkey
+        self.db.update(self.enabledProfile)
+
+    def setManualAutoAttackInterval(self, interval_s: float) -> None:
+        if 'manual_auto_attack' not in self.context or not isinstance(self.context.get('manual_auto_attack'), dict):
+            self.context['manual_auto_attack'] = {
+                'enabled': False,
+                'method': 'hotkey',
+                'hotkey': 'pageup',
+                'interval_s': 0.70,
+            }
+        # Keep sane bounds.
+        try:
+            interval_s = float(interval_s)
+        except Exception:
+            interval_s = 0.70
+        if interval_s < 0.10:
+            interval_s = 0.10
+        if interval_s > 5.0:
+            interval_s = 5.0
+        self.context['manual_auto_attack']['interval_s'] = interval_s
+        self.enabledProfile['config'].setdefault('manual_auto_attack', {})
+        self.enabledProfile['config']['manual_auto_attack']['interval_s'] = interval_s
         self.db.update(self.enabledProfile)
 
     def setHotkeyHealingHighPriorityByKey(self, key: str, hotkey: str) -> None:

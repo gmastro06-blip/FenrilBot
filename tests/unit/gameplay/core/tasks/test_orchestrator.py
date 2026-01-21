@@ -109,6 +109,29 @@ def test_should_do_task_when_task_has_delayOfTimeout(mocker):
     assert tasksOrchestrator.rootTask.statusReason == 'timeout'
 
 
+def test_should_timeout_non_terminable_task_and_bubble_to_parent(mocker):
+    vectorTask = VectorTask(name='vectorTask')
+    loopingTask = BaseTask(name='loopingTask', delayOfTimeout=0.2, shouldTimeoutTreeWhenTimeout=True)
+    loopingTask.terminable = False
+    mocker.patch.object(loopingTask, 'do', return_value=context)
+    mocker.patch.object(loopingTask, 'ping', return_value=context)
+    vectorTask.tasks.append(loopingTask.setParentTask(vectorTask).setRootTask(vectorTask))
+
+    tasksOrchestrator = TasksOrchestrator()
+    tasksOrchestrator.setRootTask(context, vectorTask)
+
+    tasksOrchestrator.do(context)
+    assert tasksOrchestrator.rootTask.status == 'running'
+    assert loopingTask.status == 'running'
+
+    sleep(1)
+    tasksOrchestrator.do(context)
+    assert loopingTask.status == 'completed'
+    assert loopingTask.statusReason == 'timeout'
+    assert tasksOrchestrator.rootTask.status == 'completed'
+    assert tasksOrchestrator.rootTask.statusReason == 'timeout'
+
+
 def test_should_do_task_when_task_is_manuallyTerminable(mocker):
     baseTask = BaseTask(name='currentTask', manuallyTerminable=True)
     tasksOrchestrator = TasksOrchestrator()

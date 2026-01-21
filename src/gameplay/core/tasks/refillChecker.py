@@ -16,6 +16,8 @@ class RefillCheckerTask(BaseTask):
 
     # TODO: add unit tests
     def shouldIgnore(self, context: Context) -> bool:
+        if context.get('ng_screenshot') is None:
+            return False
         quantityOfHealthPotions = getSlotCount(context['ng_screenshot'], context['healing']['potions']['firstHealthPotion']['slot'])
         if quantityOfHealthPotions is None:
             return False
@@ -38,7 +40,8 @@ class RefillCheckerTask(BaseTask):
         labelIndexes = [index for index, waypoint in enumerate(
             context['ng_cave']['waypoints']['items']) if waypoint['label'] == self.waypoint['options']['waypointLabelToRedirect']]
         if len(labelIndexes) == 0:
-            # TODO: raise error
+            if isinstance(context.get('ng_debug'), dict):
+                context['ng_debug']['last_tick_reason'] = f"refillChecker: label not found ({self.waypoint['options']['waypointLabelToRedirect']!r})"
             return context
         context['ng_cave']['waypoints']['currentIndex'] = labelIndexes[0]
         context['ng_cave']['waypoints']['state'] = None

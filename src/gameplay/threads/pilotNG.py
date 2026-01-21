@@ -28,7 +28,9 @@ from src.gameplay.healing.observers.healingByMana import healingByMana
 from src.gameplay.healing.observers.swapAmulet import swapAmulet
 from src.gameplay.healing.observers.swapRing import swapRing
 from src.gameplay.targeting import hasCreaturesToAttack
+from src.repositories.battleList import extractors as battlelist_extractors
 from src.repositories.gameWindow.creatures import getClosestCreature, getTargetCreature
+from src.gameplay.core.tasks.attackClosestCreature import AttackClosestCreatureTask
 
 from src.utils.console_log import log, log_throttled
 
@@ -91,6 +93,14 @@ class PilotNGThread:
                     f"way={self.context.context.get('way')} coord={coord} "
                     f"task={task_name} root={root_name} reason={reason}"
                 )
+
+                if os.getenv('FENRIL_WINDOW_DIAG', '0') in {'1', 'true', 'True'}:
+                    status_msg += (
+                        f" action_title={dbg.get('action_window_title')!r}"
+                        f" capture_title={dbg.get('capture_window_title')!r}"
+                        f" cap_rect={self.context.context.get('ng_capture_rect')}"
+                        f" act_rect={self.context.context.get('ng_action_rect')}"
+                    )
                 log_throttled('pilot.status', 'info', status_msg, interval)
                 if reason != self._last_reason and reason is not None:
                     self._last_reason = reason
@@ -148,18 +158,141 @@ class PilotNGThread:
 
     def handleGameplayTasks(self, context: GameplayContext) -> GameplayContext:
         # TODO: func to check if coord is none
+        # If we temporarily modified cavebot behavior due to missing radar,
+        # restore it as soon as radar comes back.
+        allow_attack = os.getenv('FENRIL_ALLOW_ATTACK_WITHOUT_COORD', '0') in {'1', 'true', 'True'}
+        if allow_attack and context.get('ng_radar', {}).get('coordinate') is not None:
+            diag = context.get('ng_diag') if isinstance(context.get('ng_diag'), dict) else None
+            if isinstance(diag, dict) and diag.get('forced_runToCreatures') is True:
+                saved = diag.get('saved_runToCreatures')
+                if isinstance(context.get('ng_cave'), dict):
+                    if isinstance(saved, bool):
+                        context['ng_cave']['runToCreatures'] = saved
+                    diag['forced_runToCreatures'] = False
+
         if context['ng_radar']['coordinate'] is None:
-            if 'ng_debug' in context and isinstance(context['ng_debug'], dict):
-                # Preserve a more specific reason from middlewares (e.g. "radar tools not found").
-                prev = context['ng_debug'].get('last_tick_reason')
-                if prev in (None, 'running', 'no coord'):
-                    context['ng_debug']['last_tick_reason'] = 'no coord'
+            if not allow_attack:
+                if 'ng_debug' in context and isinstance(context['ng_debug'], dict):
+                    # Preserve a more specific reason from middlewares (e.g. "radar tools not found").
+                    prev = context['ng_debug'].get('last_tick_reason')
+                    if prev in (None, 'running', 'no coord'):
+                        context['ng_debug']['last_tick_reason'] = 'no coord'
+                return context
+
+            # Attack-only fallback: allow targeting/clicking even when radar is missing.
+            # This is useful for stationary hunting or when minimap/radar templates are hidden.
+            try:
+                if isinstance(context.get('ng_cave'), dict):
+                    diag = context.get('ng_diag') if isinstance(context.get('ng_diag'), dict) else None
+                    if isinstance(diag, dict) and diag.get('forced_runToCreatures') is not True:
+                        diag['saved_runToCreatures'] = bool(context['ng_cave'].get('runToCreatures', True))
+                        diag['forced_runToCreatures'] = True
+                    context['ng_cave']['runToCreatures'] = False
+            except Exception:
+                pass
+
+            hasCreaturesToAttackAfterCheck = hasCreaturesToAttack(context)
+
+            # Manual auto-attack does not require radar. If enabled, keep running the attack task tree
+            # even when detection is empty so PageUp/other hotkeys keep firing.
+            manual_cfg = context.get('manual_auto_attack') if isinstance(context, dict) else None
+            manual_enabled_cfg = isinstance(manual_cfg, dict) and bool(manual_cfg.get('enabled', False))
+            manual_enabled_env = os.getenv('FENRIL_MANUAL_AUTO_ATTACK', '0') in {'1', 'true', 'True'}
+            if manual_enabled_cfg or manual_enabled_env:
+                hasCreaturesToAttackAfterCheck = True
+            if hasCreaturesToAttackAfterCheck:
+                context['way'] = 'ng_cave'
+                # In manual mode, schedule attackClosestCreature directly to keep hotkey loop active.
+                if manual_enabled_cfg or manual_enabled_env:
+                    try:
+                        currentTask = context['ng_tasksOrchestrator'].getCurrentTask(context)
+                    except Exception:
+                        currentTask = None
+                    currentRootTask = currentTask.rootTask if currentTask is not None else None
+                    if currentRootTask is None or getattr(currentRootTask, 'name', None) != 'attackClosestCreature':
+                        context['ng_tasksOrchestrator'].setRootTask(context, AttackClosestCreatureTask())
+                else:
+                    if shouldAskForCavebotTasks(context):
+                        currentTask = context['ng_tasksOrchestrator'].getCurrentTask(context)
+                        currentRootTask = currentTask.rootTask if currentTask is not None else None
+                        isTryingToAttackClosestCreature = currentRootTask is not None and (
+                            currentRootTask.name == 'attackClosestCreature')
+                        if not isTryingToAttackClosestCreature:
+                            context = resolveCavebotTasks(context)
+                if 'ng_debug' in context and isinstance(context['ng_debug'], dict):
+                    prev = context['ng_debug'].get('last_tick_reason')
+                    if prev in (None, 'running', 'no coord'):
+                        context['ng_debug']['last_tick_reason'] = 'no coord (attack fallback)'
+            else:
+                if 'ng_debug' in context and isinstance(context['ng_debug'], dict):
+                    prev = context['ng_debug'].get('last_tick_reason')
+                    if prev in (None, 'running', 'no coord'):
+                        context['ng_debug']['last_tick_reason'] = 'no coord (attack fallback idle)'
+
+            try:
+                context['gameWindow']['previousMonsters'] = context['gameWindow']['monsters']
+            except Exception:
+                pass
             return context
         if any(coord is None for coord in context['ng_radar']['coordinate']):
             if 'ng_debug' in context and isinstance(context['ng_debug'], dict):
                 prev = context['ng_debug'].get('last_tick_reason')
                 if prev in (None, 'running', 'partial coord'):
                     context['ng_debug']['last_tick_reason'] = 'partial coord'
+            return context
+
+        # Attack-only mode: never follow waypoints; only try to acquire/keep a target.
+        # This is intended for stationary hunting setups and supervised runs.
+        if os.getenv('FENRIL_ATTACK_ONLY', '0') in {'1', 'true', 'True'}:
+            try:
+                context['ng_cave']['closestCreature'] = getClosestCreature(
+                    context['gameWindow']['monsters'], context['ng_radar']['coordinate'])
+            except Exception:
+                pass
+
+            should_attack = hasCreaturesToAttack(context)
+
+            # If manual auto-attack is enabled, always schedule the attack task tree so
+            # the hotkey/cursor-click loop can run even when detection returns 0.
+            manual_cfg = context.get('manual_auto_attack') if isinstance(context, dict) else None
+            manual_enabled_cfg = isinstance(manual_cfg, dict) and bool(manual_cfg.get('enabled', False))
+            manual_enabled_env = os.getenv('FENRIL_MANUAL_AUTO_ATTACK', '0') in {'1', 'true', 'True'}
+            if manual_enabled_cfg or manual_enabled_env:
+                should_attack = True
+            if not should_attack and os.getenv('FENRIL_ATTACK_FROM_BATTLELIST', '0') in {'1', 'true', 'True'}:
+                try:
+                    if context.get('ng_screenshot') is not None:
+                        battle_click = battlelist_extractors.getCreatureClickCoordinate(context['ng_screenshot'], index=0)
+                        if battle_click is not None:
+                            should_attack = True
+                except Exception:
+                    pass
+
+            if should_attack:
+                context['way'] = 'ng_cave'
+                # In attack-only/manual modes we want to schedule the attack task tree even when
+                # detection is flaky (bl=0, monsters=0). Avoid resolveCavebotTasks() gating.
+                try:
+                    currentTask = context['ng_tasksOrchestrator'].getCurrentTask(context)
+                except Exception:
+                    currentTask = None
+                currentRootTask = currentTask.rootTask if currentTask is not None else None
+                if currentRootTask is None or getattr(currentRootTask, 'name', None) != 'attackClosestCreature':
+                    context['ng_tasksOrchestrator'].setRootTask(context, AttackClosestCreatureTask())
+                if 'ng_debug' in context and isinstance(context['ng_debug'], dict):
+                    prev = context['ng_debug'].get('last_tick_reason')
+                    if prev in (None, 'running', 'attack-only'):
+                        context['ng_debug']['last_tick_reason'] = 'attack-only'
+            else:
+                if 'ng_debug' in context and isinstance(context['ng_debug'], dict):
+                    prev = context['ng_debug'].get('last_tick_reason')
+                    if prev in (None, 'running', 'attack-only idle'):
+                        context['ng_debug']['last_tick_reason'] = 'attack-only idle'
+
+            try:
+                context['gameWindow']['previousMonsters'] = context['gameWindow']['monsters']
+            except Exception:
+                pass
             return context
         if not context.get('ng_cave', {}).get('waypoints', {}).get('items'):
             if 'ng_debug' in context:
@@ -194,12 +327,13 @@ class PilotNGThread:
                 dbg = context.get('ng_debug') if isinstance(context.get('ng_debug'), dict) else {}
                 closest = context.get('ng_cave', {}).get('closestCreature')
                 target = context.get('ng_cave', {}).get('targetCreature')
+                attacking = bool(context.get('ng_cave', {}).get('isAttackingSomeCreature', False))
                 can_ignore = context.get('ng_targeting', {}).get('canIgnoreCreatures')
                 has_ignorable = context.get('ng_targeting', {}).get('hasIgnorableCreatures')
                 log_throttled(
                     'pilot.targeting.diag',
                     'info',
-                    f"targeting: monsters={len(monsters)} bl={bl_count} blIcon={dbg.get('battleList_icon_found')} blContent={dbg.get('battleList_content_found')} blBottom={dbg.get('battleList_bottomBar_found')} hasCreaturesToAttack={hasCreaturesToAttackAfterCheck} canIgnore={can_ignore} hasIgnorable={has_ignorable} closest={getattr(closest, 'get', lambda _k, _d=None: None)('name', None) if closest else None} target={getattr(target, 'get', lambda _k, _d=None: None)('name', None) if target else None}",
+                    f"targeting: monsters={len(monsters)} bl={bl_count} blIcon={dbg.get('battleList_icon_found')} blContent={dbg.get('battleList_content_found')} blBottom={dbg.get('battleList_bottomBar_found')} hasCreaturesToAttack={hasCreaturesToAttackAfterCheck} attacking={attacking} canIgnore={can_ignore} hasIgnorable={has_ignorable} closest={getattr(closest, 'get', lambda _k, _d=None: None)('name', None) if closest else None} target={getattr(target, 'get', lambda _k, _d=None: None)('name', None) if target else None}",
                     2.0,
                 )
 
@@ -207,7 +341,14 @@ class PilotNGThread:
                 if context['ng_cave']['closestCreature'] is not None:
                     context['way'] = 'ng_cave'
                 else:
-                    context['way'] = 'waypoint'
+                    # If battle list has entries and the user enabled battle list
+                    # fallback, treat it as a cavebot (attack) situation.
+                    bl_creatures = context.get('ng_battleList', {}).get('creatures')
+                    bl_count = len(bl_creatures) if bl_creatures is not None else 0
+                    if bl_count > 0 and os.getenv('FENRIL_ATTACK_FROM_BATTLELIST', '0') in {'1', 'true', 'True'}:
+                        context['way'] = 'ng_cave'
+                    else:
+                        context['way'] = 'waypoint'
             else:
                 context['way'] = 'waypoint'
             if hasCreaturesToAttackAfterCheck and shouldAskForCavebotTasks(context):

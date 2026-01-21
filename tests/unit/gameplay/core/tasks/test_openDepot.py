@@ -17,4 +17,5 @@ def test_should_do(mocker):
     rightClickSpy = mocker.patch('src.utils.mouse.rightClick')
     assert task.do(context) == context
     locateSpy.assert_called_once_with(context['ng_screenshot'], images['slots']['depot'])
-    rightClickSpy.assert_called_once_with((depotPosition[0] + 5, depotPosition[1] + 5))
+    # OpenDepotTask clicks near the bbox center (minimum 1px) for robustness.
+    rightClickSpy.assert_called_once_with((depotPosition[0] + 1, depotPosition[1] + 1))

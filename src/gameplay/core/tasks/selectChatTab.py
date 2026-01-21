@@ -14,14 +14,25 @@ class SelectChatTabTask(BaseTask):
 
     # TODO: add unit tests
     def shouldIgnore(self, context: Context) -> bool:
-        tab = context['ng_chat']['tabs'].get(self.tabName)
+        tabs = context.get('ng_chat', {}).get('tabs') if isinstance(context, dict) else None
+        if not isinstance(tabs, dict):
+            return False
+        tab = tabs.get(self.tabName)
         if tab is None:
             return False
         return tab['isSelected']
 
     # TODO: add unit tests
     def do(self, context: Context) -> Context:
-        tabPosition = context['ng_chat']['tabs'][self.tabName]['position']
+        tabs = context.get('ng_chat', {}).get('tabs') if isinstance(context, dict) else None
+        if not isinstance(tabs, dict):
+            return context
+        tab = tabs.get(self.tabName)
+        if not isinstance(tab, dict):
+            return context
+        tabPosition = tab.get('position')
+        if not isinstance(tabPosition, (list, tuple)) or len(tabPosition) < 2:
+            return context
         # TODO: implement random click in BBox
         leftClick((tabPosition[0] + 10, tabPosition[1] + 5))
         return context

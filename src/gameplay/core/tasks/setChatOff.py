@@ -1,7 +1,6 @@
 from src.gameplay.typings import Context
 from src.repositories.chat.core import getChatStatus
 import src.utils.keyboard as keyboard
-from ...typings import Context
 from .common.base import BaseTask
 
 
@@ -15,6 +14,8 @@ class SetChatOffTask(BaseTask):
 
     # TODO: add unit tests
     def shouldIgnore(self, context: Context) -> bool:
+        if context.get('ng_screenshot') is None:
+            return False
         (_, chatIsOn) = getChatStatus(context['ng_screenshot'])
         return not chatIsOn
 

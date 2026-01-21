@@ -39,15 +39,15 @@ def test_should_do(mocker):
     keyDownSpy.assert_called_once_with('shift')
     assert rightClickSlotSpy.call_count == 9
     rightClickSlotSpy.assert_has_calls([
-        mocker.call([6, 4], context['gameWindow']['coordinate']),
-        mocker.call([7, 4], context['gameWindow']['coordinate']),
-        mocker.call([8, 4], context['gameWindow']['coordinate']),
-        mocker.call([6, 5], context['gameWindow']['coordinate']),
-        mocker.call([7, 5], context['gameWindow']['coordinate']),
-        mocker.call([8, 5], context['gameWindow']['coordinate']),
-        mocker.call([6, 6], context['gameWindow']['coordinate']),
-        mocker.call([7, 6], context['gameWindow']['coordinate']),
-        mocker.call([8, 6], context['gameWindow']['coordinate']),
+        mocker.call((6, 4), context['gameWindow']['coordinate']),
+        mocker.call((7, 4), context['gameWindow']['coordinate']),
+        mocker.call((8, 4), context['gameWindow']['coordinate']),
+        mocker.call((6, 5), context['gameWindow']['coordinate']),
+        mocker.call((7, 5), context['gameWindow']['coordinate']),
+        mocker.call((8, 5), context['gameWindow']['coordinate']),
+        mocker.call((6, 6), context['gameWindow']['coordinate']),
+        mocker.call((7, 6), context['gameWindow']['coordinate']),
+        mocker.call((8, 6), context['gameWindow']['coordinate']),
     ])
     keyUpSpy.assert_called_once_with('shift')
 

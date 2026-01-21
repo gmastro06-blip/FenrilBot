@@ -1,4 +1,5 @@
 from typing import Union
+import os
 from src.shared.typings import BBox, GrayImage
 from src.utils.core import locate
 from src.utils.mouse import moveTo, scroll
@@ -11,15 +12,21 @@ class ScrollToItemTask(BaseTask):
         super().__init__()
         self.name = 'scrollToItem'
         self.terminable = False
+        self.delayOfTimeout = float(os.getenv('FENRIL_SCROLL_TO_ITEM_TIMEOUT', '20'))
+        self.shouldTimeoutTreeWhenTimeout = True
         self.containerImage = containerImage
         self.itemImage = itemImage
 
     # TODO: add unit tests
     def shouldIgnore(self, context: Context) -> bool:
+        if context.get('ng_screenshot') is None:
+            return False
         return self.getItemPosition(context['ng_screenshot']) is not None
 
     # TODO: add unit tests
     def do(self, context: Context) -> Context:
+        if context.get('ng_screenshot') is None:
+            return context
         containerPosition = locate(context['ng_screenshot'], self.containerImage, confidence=0.8)
         if containerPosition is None:
             return context
@@ -29,6 +36,8 @@ class ScrollToItemTask(BaseTask):
 
     # TODO: add unit tests
     def ping(self, context: Context) -> Context:
+        if context.get('ng_screenshot') is None:
+            return context
         itemPosition = self.getItemPosition(context['ng_screenshot'])
         if itemPosition is not None:
             self.terminable = True

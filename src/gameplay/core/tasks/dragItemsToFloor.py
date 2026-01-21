@@ -1,4 +1,5 @@
 import time
+import os
 from src.gameplay.typings import Context
 from src.repositories.inventory.core import images
 from src.shared.typings import GrayImage
@@ -14,10 +15,14 @@ class DragItemsToFloorTask(BaseTask):
         super().__init__()
         self.name = 'dragItemsToFloor'
         self.terminable = False
+        self.delayOfTimeout = float(os.getenv('FENRIL_DRAG_ITEMS_TO_FLOOR_TIMEOUT', '25'))
+        self.shouldTimeoutTreeWhenTimeout = True
         self.containerBarImage = containerBarImage
 
     # TODO: add unit tests
     def do(self, context: Context) -> Context:
+        if context.get('ng_screenshot') is None:
+            return context
         containerBarPosition = locate(context['ng_screenshot'], self.containerBarImage, confidence=0.8)
         if containerBarPosition is None:
             return context

@@ -25,4 +25,4 @@ def test_should_do(mocker):
                     [backpack], confidence=0.8),
         mocker.call(context['ng_screenshot'], images['slots']['stash'])
     ])
-    dragSpy.assert_called_once_with((0, 0), (0, 0))
+    dragSpy.assert_called_once_with((2, 2), (2, 2))

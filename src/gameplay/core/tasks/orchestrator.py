@@ -1,4 +1,12 @@
 from time import time
+import json
+import os
+import pathlib
+from datetime import datetime
+from typing import Any
+
+import cv2
+import numpy as np
 from typing import Optional
 
 from src.gameplay.typings import Context
@@ -110,7 +118,18 @@ class TasksOrchestrator:
                 currentTask.status = 'awaitingDelayBeforeStart'
             return context
         elif currentTask is not None and currentTask.status == 'running':
+            # IMPORTANT: even "non-terminable" tasks must be able to timeout.
+            # Otherwise tasks like drag/scroll loops can stall the entire bot forever.
             if not currentTask.terminable:
+                if self.didTaskTimedout(currentTask):
+                    self._maybe_dump_timeout(context, currentTask)
+                    context = currentTask.onTimeout(context)
+                    currentTask.statusReason = 'timeout'
+                    return self.markCurrentTaskAsFinished(
+                        currentTask,
+                        context,
+                        shouldTimeoutTreeWhenTimeout=currentTask.shouldTimeoutTreeWhenTimeout,
+                    )
                 context = currentTask.ping(context)
                 return currentTask.do(context)
             if currentTask.shouldRestart(context):
@@ -118,6 +137,7 @@ class TasksOrchestrator:
                 return context
             else:
                 if self.didTaskTimedout(currentTask):
+                    self._maybe_dump_timeout(context, currentTask)
                     context = currentTask.onTimeout(context)
                     currentTask.statusReason = 'timeout'
                     return self.markCurrentTaskAsFinished(currentTask, context, shouldTimeoutTreeWhenTimeout=currentTask.shouldTimeoutTreeWhenTimeout)
@@ -133,6 +153,70 @@ class TasksOrchestrator:
         if currentTask is not None and currentTask.status == 'awaitingDelayToComplete' and self.didPassedEnoughDelayAfterTaskComplete(currentTask):
             return self.markCurrentTaskAsFinished(currentTask, context)
         return context
+
+    def _maybe_dump_timeout(self, context: Context, task: BaseTask) -> None:
+        if os.getenv('FENRIL_DUMP_TASK_ON_TIMEOUT', '0') not in {'1', 'true', 'True'}:
+            return
+        screenshot = context.get('ng_screenshot') if isinstance(context, dict) else None
+        if screenshot is None:
+            return
+        try:
+            debug_dir = pathlib.Path('debug')
+            debug_dir.mkdir(parents=True, exist_ok=True)
+            ts = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+            name = getattr(task, 'name', 'unknown')
+
+            img_path = debug_dir / f'task_timeout_{name}_{ts}.png'
+            meta_path = debug_dir / f'task_timeout_{name}_{ts}.json'
+
+            cv2.imwrite(str(img_path), np.ascontiguousarray(screenshot))
+
+            meta: dict[str, Any] = {
+                'task': {
+                    'name': name,
+                    'status': getattr(task, 'status', None),
+                    'statusReason': getattr(task, 'statusReason', None),
+                    'startedAt': getattr(task, 'startedAt', None),
+                    'delayOfTimeout': getattr(task, 'delayOfTimeout', None),
+                    'retryCount': getattr(task, 'retryCount', None),
+                    'terminable': getattr(task, 'terminable', None),
+                    'rootTask': getattr(getattr(task, 'rootTask', None), 'name', None),
+                    'parentTask': getattr(getattr(task, 'parentTask', None), 'name', None),
+                },
+                'window': {
+                    'action_title': context.get('ng_window', {}).get('action_title'),
+                    'capture_title': context.get('ng_window', {}).get('capture_title'),
+                    'capture_rect': context.get('ng_capture_rect'),
+                    'action_rect': context.get('ng_action_rect'),
+                },
+                'waypoints': {
+                    'currentIndex': context.get('ng_cave', {}).get('waypoints', {}).get('currentIndex'),
+                    'currentType': None,
+                },
+                'radar': {
+                    'coordinate': context.get('ng_radar', {}).get('coordinate'),
+                },
+                'battleList': {
+                    'count': None,
+                },
+            }
+            try:
+                items = context.get('ng_cave', {}).get('waypoints', {}).get('items')
+                idx = context.get('ng_cave', {}).get('waypoints', {}).get('currentIndex')
+                if isinstance(items, list) and isinstance(idx, int) and 0 <= idx < len(items):
+                    meta['waypoints']['currentType'] = items[idx].get('type')
+            except Exception:
+                pass
+            try:
+                creatures = context.get('ng_battleList', {}).get('creatures')
+                meta['battleList']['count'] = len(creatures) if creatures is not None else None
+            except Exception:
+                pass
+
+            meta_path.write_text(json.dumps(meta, indent=2), encoding='utf-8')
+        except Exception:
+            # Never let diagnostics break the main loop.
+            return
 
     # TODO: add unit tests
     def markCurrentTaskAsFinished(self, task: BaseTask, context: Context, disableManualTermination: bool = False, shouldTimeoutTreeWhenTimeout: bool = False) -> Context:

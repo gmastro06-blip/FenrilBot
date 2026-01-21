@@ -1,4 +1,5 @@
 import numpy as np
+import os
 from scipy.spatial import distance
 from typing import Any, Dict, Optional, cast
 
@@ -19,6 +20,8 @@ class GoToFreeDepotTask(VectorTask):
         self.isRootTask = True
         self.closestFreeDepotCoordinate: Optional[Coordinate] = None
         self.terminable = False
+        self.delayOfTimeout = float(os.getenv('FENRIL_GO_TO_FREE_DEPOT_TIMEOUT', '120'))
+        self.shouldTimeoutTreeWhenTimeout = True
         self.waypoint = waypoint
         self.state = 'findingVisibleCoordinates'
         self.visitedOrBusyCoordinates: Dict[Coordinate, bool] = {}

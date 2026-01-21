@@ -199,6 +199,68 @@ class ConfigPage(customtkinter.CTkToplevel):
         self.saveConfigFrame.columnconfigure(0, weight=1)
         self.saveConfigFrame.columnconfigure(1, weight=1)
 
+        # Manual auto-attack (next target) configuration
+        self.manualAttackFrame = customtkinter.CTkFrame(self)
+        self.manualAttackFrame.grid(column=0, row=3, columnspan=2, padx=10, pady=10, sticky='nsew')
+        self.manualAttackFrame.columnconfigure(0, weight=1)
+        self.manualAttackFrame.columnconfigure(1, weight=1)
+        self.manualAttackFrame.columnconfigure(2, weight=1)
+
+        self.manualAttackEnabledVar = tk.BooleanVar()
+        try:
+            self.manualAttackEnabledVar.set(bool(self.context.context.get('manual_auto_attack', {}).get('enabled', False)))
+        except Exception:
+            self.manualAttackEnabledVar.set(False)
+
+        self.manualAttackEnabledCheck = customtkinter.CTkCheckBox(
+            self.manualAttackFrame,
+            text='Manual Auto-Attack (Hotkey)',
+            variable=self.manualAttackEnabledVar,
+            command=self.onToggleManualAutoAttack,
+            hover_color="#870125",
+            fg_color='#C20034'
+        )
+        self.manualAttackEnabledCheck.grid(column=0, row=0, padx=10, pady=10, sticky='w')
+
+        self.manualAttackHotkeyLabel = customtkinter.CTkLabel(self.manualAttackFrame, text='Next Target Hotkey:')
+        self.manualAttackHotkeyLabel.grid(column=0, row=1, padx=10, pady=10, sticky='w')
+
+        self.manualAttackHotkeyVar = tk.StringVar()
+        try:
+            self.manualAttackHotkeyVar.set(str(self.context.context.get('manual_auto_attack', {}).get('hotkey', 'pageup')))
+        except Exception:
+            self.manualAttackHotkeyVar.set('pageup')
+        self.manualAttackHotkeyEntry = customtkinter.CTkEntry(self.manualAttackFrame, textvariable=self.manualAttackHotkeyVar)
+        self.manualAttackHotkeyEntry.bind('<Key>', self.onChangeManualAutoAttackHotkey)
+        self.manualAttackHotkeyEntry.grid(column=1, row=1, padx=10, pady=10, sticky='ew')
+
+        self.manualAttackIntervalLabel = customtkinter.CTkLabel(self.manualAttackFrame, text='Interval (s):')
+        self.manualAttackIntervalLabel.grid(column=0, row=2, padx=10, pady=(10, 0), sticky='w')
+
+        self.manualAttackIntervalValueLabel = customtkinter.CTkLabel(self.manualAttackFrame, text='')
+        self.manualAttackIntervalValueLabel.grid(column=2, row=2, padx=10, pady=(10, 0), sticky='e')
+
+        self.manualAttackIntervalVar = tk.DoubleVar()
+        try:
+            self.manualAttackIntervalVar.set(float(self.context.context.get('manual_auto_attack', {}).get('interval_s', 0.70)))
+        except Exception:
+            self.manualAttackIntervalVar.set(0.70)
+
+        self.manualAttackIntervalSlider = customtkinter.CTkSlider(
+            self.manualAttackFrame,
+            from_=0.10,
+            to=2.00,
+            number_of_steps=190,
+            variable=self.manualAttackIntervalVar,
+            command=self.onChangeManualAutoAttackInterval,
+            fg_color="#333333",
+            progress_color="#C20034",
+            button_color="#C20034",
+            button_hover_color="#870125",
+        )
+        self.manualAttackIntervalSlider.grid(column=1, row=2, padx=10, pady=(10, 0), sticky='ew')
+        self._updateManualAutoAttackIntervalLabel()
+
     def getGameWindows(self) -> List[str]:
         def enum_windows_callback(hwnd: int, results: List[str]) -> None:
             if win32gui.IsWindowVisible(hwnd):
@@ -260,6 +322,39 @@ class ConfigPage(customtkinter.CTkToplevel):
         else:
             self.context.setAutoHurHotkey(key_pressed)
             self.autoHurHotkeyEntryVar.set(key_pressed)
+
+    def onToggleManualAutoAttack(self) -> None:
+        enabled = bool(self.manualAttackEnabledVar.get())
+        self.context.setManualAutoAttackEnabled(enabled)
+
+    def onChangeManualAutoAttackHotkey(self, event: Any) -> None:
+        key = event.char
+        key_pressed = event.keysym
+        if key == '\b':
+            return
+
+        # Normalize to a string that pyautogui understands (e.g. pageup, pagedown, f1, a, 1)
+        if re.match(r'^F[1-9]|1[0-2]$', key) or re.match(r'^[0-9]$', key) or re.match(r'^[a-z]$', key):
+            self.manualAttackHotkeyEntry.delete(0, tk.END)
+            self.context.setManualAutoAttackHotkey(key)
+        else:
+            self.context.setManualAutoAttackHotkey(key_pressed)
+            self.manualAttackHotkeyVar.set(key_pressed)
+
+    def _updateManualAutoAttackIntervalLabel(self) -> None:
+        try:
+            v = float(self.manualAttackIntervalVar.get())
+        except Exception:
+            v = 0.70
+        self.manualAttackIntervalValueLabel.configure(text=f"{v:.2f}")
+
+    def onChangeManualAutoAttackInterval(self, _: Any = None) -> None:
+        try:
+            v = float(self.manualAttackIntervalVar.get())
+        except Exception:
+            v = 0.70
+        self._updateManualAutoAttackIntervalLabel()
+        self.context.setManualAutoAttackInterval(v)
 
     def onChangePoisonHotkey(self, event: Any) -> None:
         key = event.char
