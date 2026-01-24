@@ -1,4 +1,3 @@
-import os
 import re
 import time
 from typing import Optional
@@ -7,14 +6,15 @@ import pygetwindow as gw
 import win32gui
 
 from src.gameplay.typings import Context
+from src.utils.runtime_settings import get_bool, get_str
 
 
 _last_window_warn_time: float = 0.0
 
 
-def _warn_throttled(msg: str) -> None:
+def _warn_throttled(context: Context, msg: str) -> None:
     global _last_window_warn_time
-    if os.getenv('FENRIL_WARN_ON_WINDOW_MISS', '0') == '0':
+    if not get_bool(context, 'ng_runtime.warn_on_window_miss', env_var='FENRIL_WARN_ON_WINDOW_MISS', default=False):
         return
     now = time.time()
     if now - _last_window_warn_time < 5.0:
@@ -100,8 +100,8 @@ def setTibiaWindowMiddleware(context: Context) -> Context:
     # - capture_window: where we read pixels (e.g., OBS projector)
     # - action_window: where we send mouse/keyboard (Tibia)
     # Keep context['window'] pointing at action_window for backward compatibility.
-    action_title = os.getenv('FENRIL_ACTION_WINDOW_TITLE')
-    capture_title = os.getenv('FENRIL_CAPTURE_WINDOW_TITLE')
+    action_title = get_str(context, 'ng_runtime.action_window_title', env_var='FENRIL_ACTION_WINDOW_TITLE', default='').strip() or None
+    capture_title = get_str(context, 'ng_runtime.capture_window_title', env_var='FENRIL_CAPTURE_WINDOW_TITLE', default='').strip() or None
 
     action_exact_requested = bool(action_title)
     capture_exact_requested = bool(capture_title)
@@ -118,7 +118,7 @@ def setTibiaWindowMiddleware(context: Context) -> Context:
             action_window = _resolve_window_fuzzy_title(action_title)
             action_exact_found = action_window is not None
             if action_exact_requested and not action_exact_found:
-                _warn_throttled(f"[fenril][dual] WARN: action window title not found: {action_title!r} (falling back to Tibia regex)")
+                _warn_throttled(context, f"[fenril][dual] WARN: action window title not found: {action_title!r} (falling back to Tibia regex)")
         if action_window is None:
             action_window = _resolve_first_tibia_window()
 
@@ -129,7 +129,7 @@ def setTibiaWindowMiddleware(context: Context) -> Context:
             capture_window = _resolve_window_fuzzy_title(capture_title)
             capture_exact_found = capture_window is not None
             if capture_exact_requested and not capture_exact_found:
-                _warn_throttled(f"[fenril][dual] WARN: capture window title not found: {capture_title!r} (falling back to action window)")
+                _warn_throttled(context, f"[fenril][dual] WARN: capture window title not found: {capture_title!r} (falling back to action window)")
         if capture_window is None and not capture_title:
             capture_window = _resolve_default_capture_window()
         if capture_window is None:

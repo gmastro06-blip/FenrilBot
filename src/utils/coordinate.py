@@ -1,6 +1,5 @@
 from numba import njit
 import numpy as np
-from scipy.spatial import distance
 from typing import Any, Union
 from src.shared.typings import Coordinate, CoordinateList, XYCoordinate
 
@@ -39,12 +38,15 @@ def getAvailableAroundCoordinates(coordinate: Coordinate, walkableFloorSqms: np.
 
 
 def getClosestCoordinate(coordinate: Coordinate, coordinates: Any) -> Coordinate:
-    coordinateWithoutFloor = (coordinate[0], coordinate[1])
-    coordinatesWithoutFloor = [(x[0], x[1]) for x in coordinates]
-    distancesOfCoordinates = distance.cdist(
-        [coordinateWithoutFloor], coordinatesWithoutFloor)[0]
-    closestCoordinateIndex = np.argsort(distancesOfCoordinates)[0]
-    return coordinates[closestCoordinateIndex]
+    if coordinates is None or len(coordinates) == 0:
+        return coordinate
+
+    target_xy = np.array([coordinate[0], coordinate[1]], dtype=np.int64)
+    coords_xy = np.array([(int(c[0]), int(c[1])) for c in coordinates], dtype=np.int64)
+    diffs = coords_xy - target_xy
+    dist2 = (diffs[:, 0] * diffs[:, 0]) + (diffs[:, 1] * diffs[:, 1])
+    closest_index = int(np.argmin(dist2))
+    return coordinates[closest_index]
 
 
 def getCoordinateFromPixel(pixel: XYCoordinate) -> XYCoordinate:

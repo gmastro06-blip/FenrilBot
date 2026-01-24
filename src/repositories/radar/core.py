@@ -1,6 +1,6 @@
+import math
 from numba import njit
 import numpy as np
-from scipy.spatial import distance
 from typing import Any, Dict, Optional, Union
 from src.shared.typings import Coordinate, GrayImage, GrayPixel, WaypointList
 from src.utils.core import hashit, locate
@@ -111,12 +111,13 @@ def getFloorLevel(screenshot: GrayImage) -> Optional[FloorLevel]:
 # TODO: add perf
 def getClosestWaypointIndexFromCoordinate(coordinate: Coordinate, waypoints: WaypointList) -> Union[int, None]:
     closestWaypointIndex = None
-    closestWaypointDistance = 9999
+    closestWaypointDistance: float = 9999.0
     for waypointIndex, waypoint in enumerate(waypoints):
         if waypoint['coordinate'][2] != coordinate[2]:
             continue
-        waypointDistance = distance.cdist(
-            [(waypoint['coordinate'][0], waypoint['coordinate'][1])], [(coordinate[0], coordinate[1])]).flatten()[0]
+        dx = float(waypoint['coordinate'][0]) - float(coordinate[0])
+        dy = float(waypoint['coordinate'][1]) - float(coordinate[1])
+        waypointDistance = math.hypot(dx, dy)
         if waypointDistance < closestWaypointDistance:
             closestWaypointIndex = waypointIndex
             closestWaypointDistance = waypointDistance
@@ -155,14 +156,9 @@ def getTileFrictionByCoordinate(coordinate: Coordinate) -> TileFriction:
 # TODO: add unit tests
 # TODO: add perf
 def isCloseToCoordinate(currentCoordinate: Coordinate, possibleCloseCoordinate: Coordinate, distanceTolerance: int = 10) -> bool:
-    (xOfCurrentCoordinate, yOfCurrentCoordinate, _) = currentCoordinate
-    XYOfCurrentCoordinate = (xOfCurrentCoordinate, yOfCurrentCoordinate)
-    (xOfPossibleCloseCoordinate, yOfPossibleCloseCoordinate, _) = possibleCloseCoordinate
-    XYOfPossibleCloseCoordinate = (
-        xOfPossibleCloseCoordinate, yOfPossibleCloseCoordinate)
-    euclideanDistance = distance.cdist(
-        [XYOfCurrentCoordinate], [XYOfPossibleCloseCoordinate])
-    return euclideanDistance <= distanceTolerance
+    dx = float(possibleCloseCoordinate[0]) - float(currentCoordinate[0])
+    dy = float(possibleCloseCoordinate[1]) - float(currentCoordinate[1])
+    return math.hypot(dx, dy) <= distanceTolerance
 
 
 # TODO: add unit tests

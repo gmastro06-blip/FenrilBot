@@ -8,6 +8,7 @@ from .common.base import BaseTask
 from src.repositories.battleList import extractors as battlelist_extractors
 from src.shared.typings import XYCoordinate
 from src.utils.console_log import log_throttled
+from src.utils.runtime_settings import get_bool
 
 class ClickInClosestCreatureTask(BaseTask):
     def __init__(self) -> None:
@@ -38,7 +39,11 @@ class ClickInClosestCreatureTask(BaseTask):
 
         # By default, manual auto-attack runs regardless of current attacking state
         # (useful for "next target" cycling). You can restrict it if desired.
-        only_when_not_attacking = os.getenv('FENRIL_MANUAL_AUTO_ATTACK_ONLY_WHEN_NOT_ATTACKING', '0') in {'1', 'true', 'True'}
+        only_when_not_attacking = False
+        if isinstance(manual_cfg, dict) and manual_cfg.get('only_when_not_attacking') is not None:
+            only_when_not_attacking = bool(manual_cfg.get('only_when_not_attacking'))
+        else:
+            only_when_not_attacking = os.getenv('FENRIL_MANUAL_AUTO_ATTACK_ONLY_WHEN_NOT_ATTACKING', '0') in {'1', 'true', 'True'}
         attacking = bool(context.get('ng_cave', {}).get('isAttackingSomeCreature', False))
         if only_when_not_attacking and attacking:
             return False
@@ -74,8 +79,21 @@ class ClickInClosestCreatureTask(BaseTask):
         if method in {'click', 'cursor', 'cursor_click'}:
             # Click at current cursor position.
             # NOTE: this intentionally does not move the mouse.
-            modifier = os.getenv('FENRIL_MANUAL_AUTO_ATTACK_CLICK_MODIFIER', 'none')
-            button = os.getenv('FENRIL_MANUAL_AUTO_ATTACK_CLICK_BUTTON', 'left')
+            modifier = None
+            button = None
+            if isinstance(manual_cfg, dict):
+                try:
+                    modifier = str(manual_cfg.get('click_modifier', '')).strip().lower() or None
+                except Exception:
+                    modifier = None
+                try:
+                    button = str(manual_cfg.get('click_button', '')).strip().lower() or None
+                except Exception:
+                    button = None
+            if not modifier:
+                modifier = os.getenv('FENRIL_MANUAL_AUTO_ATTACK_CLICK_MODIFIER', 'none')
+            if not button:
+                button = os.getenv('FENRIL_MANUAL_AUTO_ATTACK_CLICK_BUTTON', 'left')
             self._with_modifier_click(
                 (0, 0),
                 modifier=modifier,
@@ -100,22 +118,45 @@ class ClickInClosestCreatureTask(BaseTask):
             # Default to Tibia next-target hotkey for manual cycling.
             hotkey = os.getenv('FENRIL_ATTACK_HOTKEY', 'pageup').strip().lower()
 
-        focus_raw = os.getenv('FENRIL_FOCUS_ACTION_WINDOW_BEFORE_MANUAL_HOTKEY')
-        if focus_raw is None:
-            focus_raw = os.getenv('FENRIL_FOCUS_ACTION_WINDOW_BEFORE_ATTACK_CLICK', '0')
-        focus_enabled = focus_raw not in {'0', 'false', 'False'}
+        focus_enabled = False
+        if isinstance(manual_cfg, dict) and manual_cfg.get('focus_before') is not None:
+            focus_enabled = bool(manual_cfg.get('focus_before'))
+        else:
+            focus_raw = os.getenv('FENRIL_FOCUS_ACTION_WINDOW_BEFORE_MANUAL_HOTKEY')
+            if focus_raw is None:
+                focus_raw = os.getenv('FENRIL_FOCUS_ACTION_WINDOW_BEFORE_ATTACK_CLICK', '0')
+            focus_enabled = focus_raw not in {'0', 'false', 'False'}
         if focus_enabled:
             self._focus_action_window(context)
             try:
-                time.sleep(float(os.getenv('FENRIL_MANUAL_AUTO_ATTACK_PRE_DELAY_S', '0.02')))
+                pre_delay_s = None
+                if isinstance(manual_cfg, dict) and manual_cfg.get('pre_delay_s') is not None:
+                    try:
+                        raw_pre = manual_cfg.get('pre_delay_s')
+                        if raw_pre is not None:
+                            pre_delay_s = float(raw_pre)
+                    except Exception:
+                        pre_delay_s = None
+                if pre_delay_s is None:
+                    pre_delay_s = float(os.getenv('FENRIL_MANUAL_AUTO_ATTACK_PRE_DELAY_S', '0.02'))
+                time.sleep(pre_delay_s)
             except Exception:
                 pass
 
         # Optional extra reliability: repeat the key press a few times.
-        try:
-            repeats = int(os.getenv('FENRIL_MANUAL_AUTO_ATTACK_KEY_REPEAT', '1'))
-        except Exception:
-            repeats = 1
+        repeats = None
+        if isinstance(manual_cfg, dict) and manual_cfg.get('key_repeat') is not None:
+            try:
+                raw_repeats = manual_cfg.get('key_repeat')
+                if raw_repeats is not None:
+                    repeats = int(raw_repeats)
+            except Exception:
+                repeats = None
+        if repeats is None:
+            try:
+                repeats = int(os.getenv('FENRIL_MANUAL_AUTO_ATTACK_KEY_REPEAT', '1'))
+            except Exception:
+                repeats = 1
         if repeats < 1:
             repeats = 1
         if repeats > 3:
@@ -141,8 +182,13 @@ class ClickInClosestCreatureTask(BaseTask):
 
     def _focus_action_window(self, context: Context) -> bool:
         # Default OFF to avoid stealing focus; enable explicitly when needed.
-        if os.getenv('FENRIL_FOCUS_ACTION_WINDOW_BEFORE_ATTACK_CLICK', '0') in {'0', 'false', 'False'}:
-            return False
+        manual_cfg = context.get('manual_auto_attack') if isinstance(context, dict) else None
+        if isinstance(manual_cfg, dict) and manual_cfg.get('focus_before') is not None:
+            if not bool(manual_cfg.get('focus_before')):
+                return False
+        else:
+            if os.getenv('FENRIL_FOCUS_ACTION_WINDOW_BEFORE_ATTACK_CLICK', '0') in {'0', 'false', 'False'}:
+                return False
 
         win = context.get('action_window') or context.get('window')
         if win is None:
@@ -182,8 +228,21 @@ class ClickInClosestCreatureTask(BaseTask):
             pass
 
         if focused:
+            delay_s = None
+            if isinstance(manual_cfg, dict) and manual_cfg.get('focus_after_s') is not None:
+                try:
+                    raw_focus_after = manual_cfg.get('focus_after_s')
+                    if raw_focus_after is not None:
+                        delay_s = float(raw_focus_after)
+                except Exception:
+                    delay_s = None
+            if delay_s is None:
+                try:
+                    delay_s = float(os.getenv('FENRIL_FOCUS_AFTER_S', '0.05'))
+                except Exception:
+                    delay_s = 0.05
             try:
-                time.sleep(float(os.getenv('FENRIL_FOCUS_AFTER_S', '0.05')))
+                time.sleep(delay_s)
             except Exception:
                 time.sleep(0.05)
         return focused
@@ -277,7 +336,7 @@ class ClickInClosestCreatureTask(BaseTask):
     def did(self, context: Context) -> bool:
         # In battle-list fallback mode, battle list "attacking" detection can be flaky.
         # If we don't have an actual on-screen targetCreature yet, keep trying clicks.
-        if os.getenv('FENRIL_ATTACK_FROM_BATTLELIST', '0') in {'1', 'true', 'True'}:
+        if get_bool(context, 'ng_runtime.attack_from_battlelist', env_var='FENRIL_ATTACK_FROM_BATTLELIST', default=False):
             if context.get('ng_cave', {}).get('targetCreature') is None:
                 bl_creatures = context.get('ng_battleList', {}).get('creatures')
                 if bl_creatures is not None and len(bl_creatures) > 0:
@@ -298,7 +357,7 @@ class ClickInClosestCreatureTask(BaseTask):
         attacking = bool(ng_cave.get('isAttackingSomeCreature', False))
 
         battle_click = None
-        if os.getenv('FENRIL_ATTACK_FROM_BATTLELIST', '0') in {'1', 'true', 'True'} and context.get('ng_screenshot') is not None:
+        if get_bool(context, 'ng_runtime.attack_from_battlelist', env_var='FENRIL_ATTACK_FROM_BATTLELIST', default=False) and context.get('ng_screenshot') is not None:
             # If we can locate the battle list click coordinate and we still don't have an on-screen
             # targetCreature, treat "attacking" as untrusted and keep trying to acquire a target.
             if ng_cave.get('targetCreature') is None:

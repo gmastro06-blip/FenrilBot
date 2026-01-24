@@ -10,6 +10,7 @@ from src.repositories.battleList.extractors import getContent
 from src.repositories.battleList.locators import getBattleListIconPosition, getContainerBottomBarPosition
 from src.repositories.battleList.typings import Creature
 from src.utils.console_log import log_throttled
+from src.utils.runtime_settings import get_bool
 from ...typings import Context
 
 
@@ -74,7 +75,7 @@ def setBattleListMiddleware(context: Context) -> Context:
 
     # Extra diagnostics: when the bot never attacks, the root cause is often that
     # the capture does not include the battle list (or it can't be matched).
-    if os.getenv('FENRIL_TARGETING_DIAG', '0') in {'1', 'true', 'True'}:
+    if get_bool(context, 'ng_runtime.targeting_diag', env_var='FENRIL_TARGETING_DIAG', default=False):
         dbg = context.get('ng_debug')
         if not isinstance(dbg, dict):
             dbg = {}

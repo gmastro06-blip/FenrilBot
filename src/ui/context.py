@@ -76,6 +76,27 @@ class Context:
                     'method': 'hotkey',
                     'hotkey': 'pageup',
                     'interval_s': 0.70,
+                    'only_when_not_attacking': False,
+                    'key_repeat': 1,
+                    'pre_delay_s': 0.02,
+                    'click_modifier': 'none',
+                    'click_button': 'left',
+                    'focus_before': False,
+                    'focus_after_s': 0.05,
+                },
+                'ng_runtime': {
+                    'attack_from_battlelist': False,
+                    'targeting_diag': False,
+                    'window_diag': False,
+                    'dump_task_on_timeout': False,
+                    'status_log_interval_s': 2.0,
+                    'loot_modifier': 'shift',
+                    'attack_only': False,
+                    'allow_attack_without_coord': False,
+                    'warn_on_window_miss': False,
+                    'action_window_title': '',
+                    'capture_window_title': '',
+                    'start_paused': True,
                 },
                 'ignorable_creatures': [],
                 'healing': {
@@ -186,12 +207,98 @@ class Context:
         self.enabledProfile['config']['auto_hur'] = self.context['auto_hur']
         self.enabledProfile['config']['alert'] = self.context['alert']
         self.enabledProfile['config']['clear_stats'] = self.context['clear_stats']
+        self.enabledProfile['config']['manual_auto_attack'] = self.context.get('manual_auto_attack', {})
+        self.enabledProfile['config']['ng_runtime'] = self.context.get('ng_runtime', {})
         self.enabledProfile['config']['ng_comboSpells']['enabled'] = self.context['ng_comboSpells']['enabled']
         self.enabledProfile['config']['ng_comboSpells']['items'] = []
         for comboSpellsItem in self.context['ng_comboSpells']['items']:
             comboSpellsItem['currentSpellIndex'] = 0
             self.enabledProfile['config']['ng_comboSpells']['items'].append(comboSpellsItem)
         self.enabledProfile['config']['healing'] = self.context['healing']
+        self.db.update(self.enabledProfile)
+
+    def _ensureManualAutoAttackConfig(self) -> None:
+        if 'manual_auto_attack' not in self.context or not isinstance(self.context.get('manual_auto_attack'), dict):
+            self.context['manual_auto_attack'] = {}
+        self.context['manual_auto_attack'].setdefault('enabled', False)
+        self.context['manual_auto_attack'].setdefault('method', 'hotkey')
+        self.context['manual_auto_attack'].setdefault('hotkey', 'pageup')
+        self.context['manual_auto_attack'].setdefault('interval_s', 0.70)
+        self.context['manual_auto_attack'].setdefault('only_when_not_attacking', False)
+        self.context['manual_auto_attack'].setdefault('key_repeat', 1)
+        self.context['manual_auto_attack'].setdefault('pre_delay_s', 0.02)
+        self.context['manual_auto_attack'].setdefault('click_modifier', 'none')
+        self.context['manual_auto_attack'].setdefault('click_button', 'left')
+        self.context['manual_auto_attack'].setdefault('focus_before', False)
+        self.context['manual_auto_attack'].setdefault('focus_after_s', 0.05)
+
+        # Also ensure persisted profile config has defaults, so partial saves don't
+        # drop keys (load merges defaults, but this keeps file.json tidy).
+        try:
+            if getattr(self, 'enabledProfile', None) is not None and isinstance(self.enabledProfile.get('config'), dict):
+                self.enabledProfile['config'].setdefault('manual_auto_attack', {})
+                prof = self.enabledProfile['config'].get('manual_auto_attack')
+                if not isinstance(prof, dict):
+                    self.enabledProfile['config']['manual_auto_attack'] = {}
+                    prof = self.enabledProfile['config']['manual_auto_attack']
+                prof.setdefault('enabled', False)
+                prof.setdefault('method', 'hotkey')
+                prof.setdefault('hotkey', 'pageup')
+                prof.setdefault('interval_s', 0.70)
+                prof.setdefault('only_when_not_attacking', False)
+                prof.setdefault('key_repeat', 1)
+                prof.setdefault('pre_delay_s', 0.02)
+                prof.setdefault('click_modifier', 'none')
+                prof.setdefault('click_button', 'left')
+                prof.setdefault('focus_before', False)
+                prof.setdefault('focus_after_s', 0.05)
+        except Exception:
+            pass
+
+    def _ensureNgRuntimeConfig(self) -> None:
+        if 'ng_runtime' not in self.context or not isinstance(self.context.get('ng_runtime'), dict):
+            self.context['ng_runtime'] = {}
+        self.context['ng_runtime'].setdefault('attack_from_battlelist', False)
+        self.context['ng_runtime'].setdefault('targeting_diag', False)
+        self.context['ng_runtime'].setdefault('window_diag', False)
+        self.context['ng_runtime'].setdefault('dump_task_on_timeout', False)
+        self.context['ng_runtime'].setdefault('status_log_interval_s', 2.0)
+        self.context['ng_runtime'].setdefault('loot_modifier', 'shift')
+        self.context['ng_runtime'].setdefault('attack_only', False)
+        self.context['ng_runtime'].setdefault('allow_attack_without_coord', False)
+        self.context['ng_runtime'].setdefault('warn_on_window_miss', False)
+        self.context['ng_runtime'].setdefault('action_window_title', '')
+        self.context['ng_runtime'].setdefault('capture_window_title', '')
+        self.context['ng_runtime'].setdefault('start_paused', True)
+
+        try:
+            if getattr(self, 'enabledProfile', None) is not None and isinstance(self.enabledProfile.get('config'), dict):
+                self.enabledProfile['config'].setdefault('ng_runtime', {})
+                prof = self.enabledProfile['config'].get('ng_runtime')
+                if not isinstance(prof, dict):
+                    self.enabledProfile['config']['ng_runtime'] = {}
+                    prof = self.enabledProfile['config']['ng_runtime']
+                prof.setdefault('attack_from_battlelist', False)
+                prof.setdefault('targeting_diag', False)
+                prof.setdefault('window_diag', False)
+                prof.setdefault('dump_task_on_timeout', False)
+                prof.setdefault('status_log_interval_s', 2.0)
+                prof.setdefault('loot_modifier', 'shift')
+                prof.setdefault('attack_only', False)
+                prof.setdefault('allow_attack_without_coord', False)
+                prof.setdefault('warn_on_window_miss', False)
+                prof.setdefault('action_window_title', '')
+                prof.setdefault('capture_window_title', '')
+                prof.setdefault('start_paused', True)
+        except Exception:
+            pass
+
+    def setRuntimeStartPaused(self, enabled: bool) -> None:
+        self._ensureNgRuntimeConfig()
+        v = bool(enabled)
+        self.context['ng_runtime']['start_paused'] = v
+        self.enabledProfile['config'].setdefault('ng_runtime', {})
+        self.enabledProfile['config']['ng_runtime']['start_paused'] = v
         self.db.update(self.enabledProfile)
 
     def setWindowTitle(self, window_title: str, persist: bool = True) -> bool:
@@ -327,39 +434,21 @@ class Context:
         self.db.update(self.enabledProfile)
 
     def setManualAutoAttackEnabled(self, enabled: bool) -> None:
-        if 'manual_auto_attack' not in self.context or not isinstance(self.context.get('manual_auto_attack'), dict):
-            self.context['manual_auto_attack'] = {
-                'enabled': False,
-                'method': 'hotkey',
-                'hotkey': 'pageup',
-                'interval_s': 0.70,
-            }
+        self._ensureManualAutoAttackConfig()
         self.context['manual_auto_attack']['enabled'] = enabled
         self.enabledProfile['config'].setdefault('manual_auto_attack', {})
         self.enabledProfile['config']['manual_auto_attack']['enabled'] = enabled
         self.db.update(self.enabledProfile)
 
     def setManualAutoAttackHotkey(self, hotkey: str) -> None:
-        if 'manual_auto_attack' not in self.context or not isinstance(self.context.get('manual_auto_attack'), dict):
-            self.context['manual_auto_attack'] = {
-                'enabled': False,
-                'method': 'hotkey',
-                'hotkey': 'pageup',
-                'interval_s': 0.70,
-            }
+        self._ensureManualAutoAttackConfig()
         self.context['manual_auto_attack']['hotkey'] = hotkey
         self.enabledProfile['config'].setdefault('manual_auto_attack', {})
         self.enabledProfile['config']['manual_auto_attack']['hotkey'] = hotkey
         self.db.update(self.enabledProfile)
 
     def setManualAutoAttackInterval(self, interval_s: float) -> None:
-        if 'manual_auto_attack' not in self.context or not isinstance(self.context.get('manual_auto_attack'), dict):
-            self.context['manual_auto_attack'] = {
-                'enabled': False,
-                'method': 'hotkey',
-                'hotkey': 'pageup',
-                'interval_s': 0.70,
-            }
+        self._ensureManualAutoAttackConfig()
         # Keep sane bounds.
         try:
             interval_s = float(interval_s)
@@ -372,6 +461,196 @@ class Context:
         self.context['manual_auto_attack']['interval_s'] = interval_s
         self.enabledProfile['config'].setdefault('manual_auto_attack', {})
         self.enabledProfile['config']['manual_auto_attack']['interval_s'] = interval_s
+        self.db.update(self.enabledProfile)
+
+    def setManualAutoAttackMethod(self, method: str) -> None:
+        self._ensureManualAutoAttackConfig()
+        method_norm = (method or '').strip().lower()
+        if method_norm not in {'hotkey', 'click'}:
+            method_norm = 'hotkey'
+        self.context['manual_auto_attack']['method'] = method_norm
+        self.enabledProfile['config'].setdefault('manual_auto_attack', {})
+        self.enabledProfile['config']['manual_auto_attack']['method'] = method_norm
+        self.db.update(self.enabledProfile)
+
+    def setManualAutoAttackOnlyWhenNotAttacking(self, enabled: bool) -> None:
+        self._ensureManualAutoAttackConfig()
+        self.context['manual_auto_attack']['only_when_not_attacking'] = bool(enabled)
+        self.enabledProfile['config'].setdefault('manual_auto_attack', {})
+        self.enabledProfile['config']['manual_auto_attack']['only_when_not_attacking'] = bool(enabled)
+        self.db.update(self.enabledProfile)
+
+    def setManualAutoAttackKeyRepeat(self, repeats: int) -> None:
+        self._ensureManualAutoAttackConfig()
+        try:
+            repeats_i = int(repeats)
+        except Exception:
+            repeats_i = 1
+        if repeats_i < 1:
+            repeats_i = 1
+        if repeats_i > 3:
+            repeats_i = 3
+        self.context['manual_auto_attack']['key_repeat'] = repeats_i
+        self.enabledProfile['config'].setdefault('manual_auto_attack', {})
+        self.enabledProfile['config']['manual_auto_attack']['key_repeat'] = repeats_i
+        self.db.update(self.enabledProfile)
+
+    def setManualAutoAttackPreDelay(self, delay_s: float) -> None:
+        self._ensureManualAutoAttackConfig()
+        try:
+            v = float(delay_s)
+        except Exception:
+            v = 0.02
+        if v < 0:
+            v = 0.0
+        if v > 1.0:
+            v = 1.0
+        self.context['manual_auto_attack']['pre_delay_s'] = v
+        self.enabledProfile['config'].setdefault('manual_auto_attack', {})
+        self.enabledProfile['config']['manual_auto_attack']['pre_delay_s'] = v
+        self.db.update(self.enabledProfile)
+
+    def setManualAutoAttackClickModifier(self, modifier: str) -> None:
+        self._ensureManualAutoAttackConfig()
+        mod = (modifier or '').strip().lower()
+        if mod in {'control', 'ctl'}:
+            mod = 'ctrl'
+        if mod not in {'none', 'ctrl', 'alt', 'shift'}:
+            mod = 'none'
+        self.context['manual_auto_attack']['click_modifier'] = mod
+        self.enabledProfile['config'].setdefault('manual_auto_attack', {})
+        self.enabledProfile['config']['manual_auto_attack']['click_modifier'] = mod
+        self.db.update(self.enabledProfile)
+
+    def setManualAutoAttackClickButton(self, button: str) -> None:
+        self._ensureManualAutoAttackConfig()
+        btn = (button or '').strip().lower()
+        if btn not in {'left', 'right'}:
+            btn = 'left'
+        self.context['manual_auto_attack']['click_button'] = btn
+        self.enabledProfile['config'].setdefault('manual_auto_attack', {})
+        self.enabledProfile['config']['manual_auto_attack']['click_button'] = btn
+        self.db.update(self.enabledProfile)
+
+    def setManualAutoAttackFocusBefore(self, enabled: bool) -> None:
+        self._ensureManualAutoAttackConfig()
+        self.context['manual_auto_attack']['focus_before'] = bool(enabled)
+        self.enabledProfile['config'].setdefault('manual_auto_attack', {})
+        self.enabledProfile['config']['manual_auto_attack']['focus_before'] = bool(enabled)
+        self.db.update(self.enabledProfile)
+
+    def setManualAutoAttackFocusAfter(self, delay_s: float) -> None:
+        self._ensureManualAutoAttackConfig()
+        try:
+            v = float(delay_s)
+        except Exception:
+            v = 0.05
+        if v < 0:
+            v = 0.0
+        if v > 1.0:
+            v = 1.0
+        self.context['manual_auto_attack']['focus_after_s'] = v
+        self.enabledProfile['config'].setdefault('manual_auto_attack', {})
+        self.enabledProfile['config']['manual_auto_attack']['focus_after_s'] = v
+        self.db.update(self.enabledProfile)
+
+    def setRuntimeAttackFromBattlelist(self, enabled: bool) -> None:
+        self._ensureNgRuntimeConfig()
+        v = bool(enabled)
+        self.context['ng_runtime']['attack_from_battlelist'] = v
+        self.enabledProfile['config'].setdefault('ng_runtime', {})
+        self.enabledProfile['config']['ng_runtime']['attack_from_battlelist'] = v
+        self.db.update(self.enabledProfile)
+
+    def setRuntimeTargetingDiag(self, enabled: bool) -> None:
+        self._ensureNgRuntimeConfig()
+        v = bool(enabled)
+        self.context['ng_runtime']['targeting_diag'] = v
+        self.enabledProfile['config'].setdefault('ng_runtime', {})
+        self.enabledProfile['config']['ng_runtime']['targeting_diag'] = v
+        self.db.update(self.enabledProfile)
+
+    def setRuntimeWindowDiag(self, enabled: bool) -> None:
+        self._ensureNgRuntimeConfig()
+        v = bool(enabled)
+        self.context['ng_runtime']['window_diag'] = v
+        self.enabledProfile['config'].setdefault('ng_runtime', {})
+        self.enabledProfile['config']['ng_runtime']['window_diag'] = v
+        self.db.update(self.enabledProfile)
+
+    def setRuntimeDumpTaskOnTimeout(self, enabled: bool) -> None:
+        self._ensureNgRuntimeConfig()
+        v = bool(enabled)
+        self.context['ng_runtime']['dump_task_on_timeout'] = v
+        self.enabledProfile['config'].setdefault('ng_runtime', {})
+        self.enabledProfile['config']['ng_runtime']['dump_task_on_timeout'] = v
+        self.db.update(self.enabledProfile)
+
+    def setRuntimeStatusLogInterval(self, interval_s: float) -> None:
+        self._ensureNgRuntimeConfig()
+        try:
+            v = float(interval_s)
+        except Exception:
+            v = 2.0
+        if v < 0.25:
+            v = 0.25
+        if v > 30.0:
+            v = 30.0
+        self.context['ng_runtime']['status_log_interval_s'] = v
+        self.enabledProfile['config'].setdefault('ng_runtime', {})
+        self.enabledProfile['config']['ng_runtime']['status_log_interval_s'] = v
+        self.db.update(self.enabledProfile)
+
+    def setRuntimeLootModifier(self, modifier: str) -> None:
+        self._ensureNgRuntimeConfig()
+        mod = (modifier or '').strip().lower()
+        if mod in {'control', 'ctl'}:
+            mod = 'ctrl'
+        if mod not in {'none', 'shift', 'ctrl', 'alt'}:
+            mod = 'shift'
+        self.context['ng_runtime']['loot_modifier'] = mod
+        self.enabledProfile['config'].setdefault('ng_runtime', {})
+        self.enabledProfile['config']['ng_runtime']['loot_modifier'] = mod
+        self.db.update(self.enabledProfile)
+
+    def setRuntimeAttackOnly(self, enabled: bool) -> None:
+        self._ensureNgRuntimeConfig()
+        v = bool(enabled)
+        self.context['ng_runtime']['attack_only'] = v
+        self.enabledProfile['config'].setdefault('ng_runtime', {})
+        self.enabledProfile['config']['ng_runtime']['attack_only'] = v
+        self.db.update(self.enabledProfile)
+
+    def setRuntimeAllowAttackWithoutCoord(self, enabled: bool) -> None:
+        self._ensureNgRuntimeConfig()
+        v = bool(enabled)
+        self.context['ng_runtime']['allow_attack_without_coord'] = v
+        self.enabledProfile['config'].setdefault('ng_runtime', {})
+        self.enabledProfile['config']['ng_runtime']['allow_attack_without_coord'] = v
+        self.db.update(self.enabledProfile)
+
+    def setRuntimeWarnOnWindowMiss(self, enabled: bool) -> None:
+        self._ensureNgRuntimeConfig()
+        v = bool(enabled)
+        self.context['ng_runtime']['warn_on_window_miss'] = v
+        self.enabledProfile['config'].setdefault('ng_runtime', {})
+        self.enabledProfile['config']['ng_runtime']['warn_on_window_miss'] = v
+        self.db.update(self.enabledProfile)
+
+    def setRuntimeActionWindowTitle(self, title: str) -> None:
+        self._ensureNgRuntimeConfig()
+        v = (title or '').strip()
+        self.context['ng_runtime']['action_window_title'] = v
+        self.enabledProfile['config'].setdefault('ng_runtime', {})
+        self.enabledProfile['config']['ng_runtime']['action_window_title'] = v
+        self.db.update(self.enabledProfile)
+
+    def setRuntimeCaptureWindowTitle(self, title: str) -> None:
+        self._ensureNgRuntimeConfig()
+        v = (title or '').strip()
+        self.context['ng_runtime']['capture_window_title'] = v
+        self.enabledProfile['config'].setdefault('ng_runtime', {})
+        self.enabledProfile['config']['ng_runtime']['capture_window_title'] = v
         self.db.update(self.enabledProfile)
 
     def setHotkeyHealingHighPriorityByKey(self, key: str, hotkey: str) -> None:

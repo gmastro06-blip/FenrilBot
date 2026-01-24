@@ -1,5 +1,5 @@
+import math
 import numpy as np
-from scipy.spatial import distance
 import src.gameplay.utils as gameplayUtils
 from ...typings import Context
 from ...utils import releaseKeys
@@ -64,8 +64,12 @@ class WalkToTargetCreatureTask(VectorTask):
             if np.array_equal(monster['coordinate'], context['ng_cave']['targetCreature']['coordinate']) == False:
                 nonWalkableCoordinates.append(monster['coordinate'])
         walkpoints = []
-        dist = distance.cdist([context['ng_radar']['coordinate']], [
-                            context['ng_cave']['targetCreature']['coordinate']]).flatten()[0]
+        current = context['ng_radar']['coordinate']
+        target = context['ng_cave']['targetCreature']['coordinate']
+        try:
+            dist = math.hypot(float(target[0]) - float(current[0]), float(target[1]) - float(current[1]))
+        except Exception:
+            dist = 9999.0
         if dist < 2:
             gameWindowHeight, gameWindowWidth = context['gameWindow']['image'].shape
             gameWindowCenter = (gameWindowWidth // 2, gameWindowHeight // 2)

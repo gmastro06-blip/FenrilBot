@@ -261,6 +261,305 @@ class ConfigPage(customtkinter.CTkToplevel):
         self.manualAttackIntervalSlider.grid(column=1, row=2, padx=10, pady=(10, 0), sticky='ew')
         self._updateManualAutoAttackIntervalLabel()
 
+        # Runtime settings (persisted in profile: ng_runtime)
+        self.runtimeFrame = customtkinter.CTkFrame(self)
+        self.runtimeFrame.grid(column=0, row=4, columnspan=2, padx=10, pady=10, sticky='nsew')
+        self.runtimeFrame.columnconfigure(0, weight=1)
+        self.runtimeFrame.columnconfigure(1, weight=1)
+        self.runtimeFrame.columnconfigure(2, weight=1)
+
+        self.runtimeTitle = customtkinter.CTkLabel(self.runtimeFrame, text='Runtime')
+        self.runtimeTitle.grid(column=0, row=0, padx=10, pady=(10, 0), sticky='w')
+
+        ng_runtime = self.context.context.get('ng_runtime', {})
+
+        self.runtimeAttackFromBLVar = tk.BooleanVar()
+        self.runtimeTargetingDiagVar = tk.BooleanVar()
+        self.runtimeWindowDiagVar = tk.BooleanVar()
+        self.runtimeDumpTimeoutVar = tk.BooleanVar()
+        self.runtimeAttackOnlyVar = tk.BooleanVar()
+        self.runtimeAllowAttackNoCoordVar = tk.BooleanVar()
+        self.runtimeWarnOnWindowMissVar = tk.BooleanVar()
+        self.runtimeStartPausedVar = tk.BooleanVar()
+
+        try:
+            self.runtimeAttackFromBLVar.set(bool(ng_runtime.get('attack_from_battlelist', False)))
+        except Exception:
+            self.runtimeAttackFromBLVar.set(False)
+        try:
+            self.runtimeTargetingDiagVar.set(bool(ng_runtime.get('targeting_diag', False)))
+        except Exception:
+            self.runtimeTargetingDiagVar.set(False)
+        try:
+            self.runtimeWindowDiagVar.set(bool(ng_runtime.get('window_diag', False)))
+        except Exception:
+            self.runtimeWindowDiagVar.set(False)
+        try:
+            self.runtimeDumpTimeoutVar.set(bool(ng_runtime.get('dump_task_on_timeout', False)))
+        except Exception:
+            self.runtimeDumpTimeoutVar.set(False)
+        try:
+            self.runtimeAttackOnlyVar.set(bool(ng_runtime.get('attack_only', False)))
+        except Exception:
+            self.runtimeAttackOnlyVar.set(False)
+        try:
+            self.runtimeAllowAttackNoCoordVar.set(bool(ng_runtime.get('allow_attack_without_coord', False)))
+        except Exception:
+            self.runtimeAllowAttackNoCoordVar.set(False)
+        try:
+            self.runtimeWarnOnWindowMissVar.set(bool(ng_runtime.get('warn_on_window_miss', False)))
+        except Exception:
+            self.runtimeWarnOnWindowMissVar.set(False)
+        try:
+            self.runtimeStartPausedVar.set(bool(ng_runtime.get('start_paused', True)))
+        except Exception:
+            self.runtimeStartPausedVar.set(True)
+
+        self.runtimeAttackFromBLCheck = customtkinter.CTkCheckBox(
+            self.runtimeFrame,
+            text='Attack-from-battlelist fallback',
+            variable=self.runtimeAttackFromBLVar,
+            command=self.onToggleRuntimeAttackFromBattlelist,
+            hover_color="#870125",
+            fg_color='#C20034'
+        )
+        self.runtimeAttackFromBLCheck.grid(column=0, row=1, padx=10, pady=(10, 0), sticky='w')
+
+        self.runtimeTargetingDiagCheck = customtkinter.CTkCheckBox(
+            self.runtimeFrame,
+            text='Targeting diagnostics',
+            variable=self.runtimeTargetingDiagVar,
+            command=self.onToggleRuntimeTargetingDiag,
+            hover_color="#870125",
+            fg_color='#C20034'
+        )
+        self.runtimeTargetingDiagCheck.grid(column=1, row=1, padx=10, pady=(10, 0), sticky='w')
+
+        self.runtimeWindowDiagCheck = customtkinter.CTkCheckBox(
+            self.runtimeFrame,
+            text='Window diagnostics',
+            variable=self.runtimeWindowDiagVar,
+            command=self.onToggleRuntimeWindowDiag,
+            hover_color="#870125",
+            fg_color='#C20034'
+        )
+        self.runtimeWindowDiagCheck.grid(column=2, row=1, padx=10, pady=(10, 0), sticky='w')
+
+        self.runtimeDumpTimeoutCheck = customtkinter.CTkCheckBox(
+            self.runtimeFrame,
+            text='Dump screenshot on task timeout',
+            variable=self.runtimeDumpTimeoutVar,
+            command=self.onToggleRuntimeDumpTimeout,
+            hover_color="#870125",
+            fg_color='#C20034'
+        )
+        self.runtimeDumpTimeoutCheck.grid(column=0, row=2, padx=10, pady=(10, 0), sticky='w')
+
+        self.runtimeAttackOnlyCheck = customtkinter.CTkCheckBox(
+            self.runtimeFrame,
+            text='Attack-only mode (no waypoints)',
+            variable=self.runtimeAttackOnlyVar,
+            command=self.onToggleRuntimeAttackOnly,
+            hover_color="#870125",
+            fg_color='#C20034'
+        )
+        self.runtimeAttackOnlyCheck.grid(column=1, row=2, padx=10, pady=(10, 0), sticky='w')
+
+        self.runtimeAllowAttackNoCoordCheck = customtkinter.CTkCheckBox(
+            self.runtimeFrame,
+            text='Allow attack without radar coord',
+            variable=self.runtimeAllowAttackNoCoordVar,
+            command=self.onToggleRuntimeAllowAttackNoCoord,
+            hover_color="#870125",
+            fg_color='#C20034'
+        )
+        self.runtimeAllowAttackNoCoordCheck.grid(column=2, row=2, padx=10, pady=(10, 0), sticky='w')
+
+        self.runtimeStatusIntervalLabel = customtkinter.CTkLabel(self.runtimeFrame, text='Status log interval (s):')
+        self.runtimeStatusIntervalLabel.grid(column=0, row=3, padx=10, pady=(10, 10), sticky='w')
+        self.runtimeStatusIntervalVar = tk.StringVar()
+        try:
+            self.runtimeStatusIntervalVar.set(str(float(ng_runtime.get('status_log_interval_s', 2.0))))
+        except Exception:
+            self.runtimeStatusIntervalVar.set('2.0')
+        self.runtimeStatusIntervalEntry = customtkinter.CTkEntry(self.runtimeFrame, textvariable=self.runtimeStatusIntervalVar)
+        self.runtimeStatusIntervalEntry.bind('<KeyRelease>', self.onChangeRuntimeStatusInterval)
+        self.runtimeStatusIntervalEntry.bind('<FocusOut>', self.onChangeRuntimeStatusInterval)
+        self.runtimeStatusIntervalEntry.grid(column=1, row=3, padx=10, pady=(10, 10), sticky='ew')
+
+        self.runtimeStartPausedCheck = customtkinter.CTkCheckBox(
+            self.runtimeFrame,
+            text='Start paused',
+            variable=self.runtimeStartPausedVar,
+            command=self.onToggleRuntimeStartPaused,
+            hover_color="#870125",
+            fg_color='#C20034'
+        )
+        self.runtimeStartPausedCheck.grid(column=2, row=3, padx=10, pady=(10, 10), sticky='w')
+
+        self.runtimeLootModifierLabel = customtkinter.CTkLabel(self.runtimeFrame, text='Loot modifier:')
+        self.runtimeLootModifierLabel.grid(column=2, row=4, padx=10, pady=(10, 0), sticky='w')
+        self.runtimeLootModifierCombo = customtkinter.CTkComboBox(
+            self.runtimeFrame,
+            values=['shift', 'ctrl', 'alt', 'none'],
+            state='readonly',
+            command=self.onChangeRuntimeLootModifier,
+        )
+        self.runtimeLootModifierCombo.grid(column=2, row=5, padx=10, pady=(10, 10), sticky='ew')
+        try:
+            self.runtimeLootModifierCombo.set(str(ng_runtime.get('loot_modifier', 'shift')))
+        except Exception:
+            self.runtimeLootModifierCombo.set('shift')
+
+        self.runtimeWarnOnWindowMissCheck = customtkinter.CTkCheckBox(
+            self.runtimeFrame,
+            text='Warn when window not found',
+            variable=self.runtimeWarnOnWindowMissVar,
+            command=self.onToggleRuntimeWarnOnWindowMiss,
+            hover_color="#870125",
+            fg_color='#C20034'
+        )
+        self.runtimeWarnOnWindowMissCheck.grid(column=0, row=4, padx=10, pady=(10, 0), sticky='w')
+
+        self.runtimeCaptureTitleLabel = customtkinter.CTkLabel(self.runtimeFrame, text='Capture window title (optional):')
+        self.runtimeCaptureTitleLabel.grid(column=0, row=5, padx=10, pady=(10, 10), sticky='w')
+        self.runtimeCaptureTitleVar = tk.StringVar()
+        try:
+            self.runtimeCaptureTitleVar.set(str(ng_runtime.get('capture_window_title', '') or ''))
+        except Exception:
+            self.runtimeCaptureTitleVar.set('')
+        self.runtimeCaptureTitleEntry = customtkinter.CTkEntry(self.runtimeFrame, textvariable=self.runtimeCaptureTitleVar)
+        self.runtimeCaptureTitleEntry.bind('<KeyRelease>', self.onChangeRuntimeCaptureWindowTitle)
+        self.runtimeCaptureTitleEntry.bind('<FocusOut>', self.onChangeRuntimeCaptureWindowTitle)
+        self.runtimeCaptureTitleEntry.grid(column=1, row=5, padx=10, pady=(10, 10), sticky='ew')
+
+        self.runtimeActionTitleLabel = customtkinter.CTkLabel(self.runtimeFrame, text='Action window title (optional):')
+        self.runtimeActionTitleLabel.grid(column=0, row=6, padx=10, pady=(0, 10), sticky='w')
+        self.runtimeActionTitleVar = tk.StringVar()
+        try:
+            self.runtimeActionTitleVar.set(str(ng_runtime.get('action_window_title', '') or ''))
+        except Exception:
+            self.runtimeActionTitleVar.set('')
+        self.runtimeActionTitleEntry = customtkinter.CTkEntry(self.runtimeFrame, textvariable=self.runtimeActionTitleVar)
+        self.runtimeActionTitleEntry.bind('<KeyRelease>', self.onChangeRuntimeActionWindowTitle)
+        self.runtimeActionTitleEntry.bind('<FocusOut>', self.onChangeRuntimeActionWindowTitle)
+        self.runtimeActionTitleEntry.grid(column=1, row=6, padx=10, pady=(0, 10), sticky='ew')
+
+        # Advanced manual auto-attack settings
+        self.manualAttackMethodLabel = customtkinter.CTkLabel(self.manualAttackFrame, text='Method:')
+        self.manualAttackMethodLabel.grid(column=0, row=3, padx=10, pady=(10, 0), sticky='w')
+
+        self.manualAttackMethodVar = tk.StringVar()
+        try:
+            self.manualAttackMethodVar.set(str(self.context.context.get('manual_auto_attack', {}).get('method', 'hotkey')))
+        except Exception:
+            self.manualAttackMethodVar.set('hotkey')
+        self.manualAttackMethodCombo = customtkinter.CTkComboBox(
+            self.manualAttackFrame,
+            values=['hotkey', 'click'],
+            state='readonly',
+            command=self.onChangeManualAutoAttackMethod,
+        )
+        self.manualAttackMethodCombo.grid(column=1, row=3, padx=10, pady=(10, 0), sticky='ew')
+        try:
+            self.manualAttackMethodCombo.set(self.manualAttackMethodVar.get())
+        except Exception:
+            self.manualAttackMethodCombo.set('hotkey')
+
+        self.manualAttackOnlyWhenNotAttackingVar = tk.BooleanVar()
+        try:
+            self.manualAttackOnlyWhenNotAttackingVar.set(bool(self.context.context.get('manual_auto_attack', {}).get('only_when_not_attacking', False)))
+        except Exception:
+            self.manualAttackOnlyWhenNotAttackingVar.set(False)
+        self.manualAttackOnlyWhenNotAttackingCheck = customtkinter.CTkCheckBox(
+            self.manualAttackFrame,
+            text='Only when NOT attacking',
+            variable=self.manualAttackOnlyWhenNotAttackingVar,
+            command=self.onToggleManualAutoAttackOnlyWhenNotAttacking,
+            hover_color="#870125",
+            fg_color='#C20034'
+        )
+        self.manualAttackOnlyWhenNotAttackingCheck.grid(column=0, row=4, padx=10, pady=(10, 0), sticky='w')
+
+        self.manualAttackFocusBeforeVar = tk.BooleanVar()
+        try:
+            self.manualAttackFocusBeforeVar.set(bool(self.context.context.get('manual_auto_attack', {}).get('focus_before', False)))
+        except Exception:
+            self.manualAttackFocusBeforeVar.set(False)
+        self.manualAttackFocusBeforeCheck = customtkinter.CTkCheckBox(
+            self.manualAttackFrame,
+            text='Focus Tibia window before input',
+            variable=self.manualAttackFocusBeforeVar,
+            command=self.onToggleManualAutoAttackFocusBefore,
+            hover_color="#870125",
+            fg_color='#C20034'
+        )
+        self.manualAttackFocusBeforeCheck.grid(column=1, row=4, padx=10, pady=(10, 0), sticky='w')
+
+        self.manualAttackKeyRepeatLabel = customtkinter.CTkLabel(self.manualAttackFrame, text='Key repeat (1-3):')
+        self.manualAttackKeyRepeatLabel.grid(column=0, row=5, padx=10, pady=(10, 0), sticky='w')
+        self.manualAttackKeyRepeatVar = tk.StringVar()
+        try:
+            self.manualAttackKeyRepeatVar.set(str(int(self.context.context.get('manual_auto_attack', {}).get('key_repeat', 1))))
+        except Exception:
+            self.manualAttackKeyRepeatVar.set('1')
+        self.manualAttackKeyRepeatEntry = customtkinter.CTkEntry(self.manualAttackFrame, textvariable=self.manualAttackKeyRepeatVar)
+        self.manualAttackKeyRepeatEntry.bind('<KeyRelease>', self.onChangeManualAutoAttackKeyRepeat)
+        self.manualAttackKeyRepeatEntry.bind('<FocusOut>', self.onChangeManualAutoAttackKeyRepeat)
+        self.manualAttackKeyRepeatEntry.grid(column=1, row=5, padx=10, pady=(10, 0), sticky='ew')
+
+        self.manualAttackPreDelayLabel = customtkinter.CTkLabel(self.manualAttackFrame, text='Pre-delay (s):')
+        self.manualAttackPreDelayLabel.grid(column=0, row=6, padx=10, pady=(10, 0), sticky='w')
+        self.manualAttackPreDelayVar = tk.StringVar()
+        try:
+            self.manualAttackPreDelayVar.set(str(float(self.context.context.get('manual_auto_attack', {}).get('pre_delay_s', 0.02))))
+        except Exception:
+            self.manualAttackPreDelayVar.set('0.02')
+        self.manualAttackPreDelayEntry = customtkinter.CTkEntry(self.manualAttackFrame, textvariable=self.manualAttackPreDelayVar)
+        self.manualAttackPreDelayEntry.bind('<KeyRelease>', self.onChangeManualAutoAttackPreDelay)
+        self.manualAttackPreDelayEntry.bind('<FocusOut>', self.onChangeManualAutoAttackPreDelay)
+        self.manualAttackPreDelayEntry.grid(column=1, row=6, padx=10, pady=(10, 0), sticky='ew')
+
+        self.manualAttackFocusAfterLabel = customtkinter.CTkLabel(self.manualAttackFrame, text='Focus-after delay (s):')
+        self.manualAttackFocusAfterLabel.grid(column=0, row=7, padx=10, pady=(10, 10), sticky='w')
+        self.manualAttackFocusAfterVar = tk.StringVar()
+        try:
+            self.manualAttackFocusAfterVar.set(str(float(self.context.context.get('manual_auto_attack', {}).get('focus_after_s', 0.05))))
+        except Exception:
+            self.manualAttackFocusAfterVar.set('0.05')
+        self.manualAttackFocusAfterEntry = customtkinter.CTkEntry(self.manualAttackFrame, textvariable=self.manualAttackFocusAfterVar)
+        self.manualAttackFocusAfterEntry.bind('<KeyRelease>', self.onChangeManualAutoAttackFocusAfter)
+        self.manualAttackFocusAfterEntry.bind('<FocusOut>', self.onChangeManualAutoAttackFocusAfter)
+        self.manualAttackFocusAfterEntry.grid(column=1, row=7, padx=10, pady=(10, 10), sticky='ew')
+
+        self.manualAttackClickModifierLabel = customtkinter.CTkLabel(self.manualAttackFrame, text='Click modifier:')
+        self.manualAttackClickModifierLabel.grid(column=2, row=3, padx=10, pady=(10, 0), sticky='w')
+        self.manualAttackClickModifierCombo = customtkinter.CTkComboBox(
+            self.manualAttackFrame,
+            values=['none', 'ctrl', 'alt', 'shift'],
+            state='readonly',
+            command=self.onChangeManualAutoAttackClickModifier,
+        )
+        self.manualAttackClickModifierCombo.grid(column=2, row=4, padx=10, pady=(10, 0), sticky='ew')
+        try:
+            self.manualAttackClickModifierCombo.set(str(self.context.context.get('manual_auto_attack', {}).get('click_modifier', 'none')))
+        except Exception:
+            self.manualAttackClickModifierCombo.set('none')
+
+        self.manualAttackClickButtonLabel = customtkinter.CTkLabel(self.manualAttackFrame, text='Click button:')
+        self.manualAttackClickButtonLabel.grid(column=2, row=5, padx=10, pady=(10, 0), sticky='w')
+        self.manualAttackClickButtonCombo = customtkinter.CTkComboBox(
+            self.manualAttackFrame,
+            values=['left', 'right'],
+            state='readonly',
+            command=self.onChangeManualAutoAttackClickButton,
+        )
+        self.manualAttackClickButtonCombo.grid(column=2, row=6, padx=10, pady=(10, 0), sticky='ew')
+        try:
+            self.manualAttackClickButtonCombo.set(str(self.context.context.get('manual_auto_attack', {}).get('click_button', 'left')))
+        except Exception:
+            self.manualAttackClickButtonCombo.set('left')
+
     def getGameWindows(self) -> List[str]:
         def enum_windows_callback(hwnd: int, results: List[str]) -> None:
             if win32gui.IsWindowVisible(hwnd):
@@ -356,6 +655,134 @@ class ConfigPage(customtkinter.CTkToplevel):
         self._updateManualAutoAttackIntervalLabel()
         self.context.setManualAutoAttackInterval(v)
 
+    def onChangeManualAutoAttackMethod(self, _: Any = None) -> None:
+        try:
+            method = str(self.manualAttackMethodCombo.get()).strip().lower()
+        except Exception:
+            method = 'hotkey'
+        self.context.setManualAutoAttackMethod(method)
+
+    def onToggleManualAutoAttackOnlyWhenNotAttacking(self) -> None:
+        self.context.setManualAutoAttackOnlyWhenNotAttacking(bool(self.manualAttackOnlyWhenNotAttackingVar.get()))
+
+    def onToggleManualAutoAttackFocusBefore(self) -> None:
+        self.context.setManualAutoAttackFocusBefore(bool(self.manualAttackFocusBeforeVar.get()))
+
+    def onChangeManualAutoAttackKeyRepeat(self, _: Any = None) -> None:
+        raw = ''
+        try:
+            raw = str(self.manualAttackKeyRepeatVar.get()).strip()
+        except Exception:
+            raw = ''
+        if raw == '':
+            return
+        try:
+            repeats = int(raw)
+        except Exception:
+            repeats = 1
+        self.context.setManualAutoAttackKeyRepeat(repeats)
+
+    def onChangeManualAutoAttackPreDelay(self, _: Any = None) -> None:
+        raw = ''
+        try:
+            raw = str(self.manualAttackPreDelayVar.get()).strip()
+        except Exception:
+            raw = ''
+        if raw == '':
+            return
+        try:
+            v = float(raw)
+        except Exception:
+            v = 0.02
+        self.context.setManualAutoAttackPreDelay(v)
+
+    def onChangeManualAutoAttackFocusAfter(self, _: Any = None) -> None:
+        raw = ''
+        try:
+            raw = str(self.manualAttackFocusAfterVar.get()).strip()
+        except Exception:
+            raw = ''
+        if raw == '':
+            return
+        try:
+            v = float(raw)
+        except Exception:
+            v = 0.05
+        self.context.setManualAutoAttackFocusAfter(v)
+
+    def onChangeManualAutoAttackClickModifier(self, _: Any = None) -> None:
+        try:
+            mod = str(self.manualAttackClickModifierCombo.get()).strip().lower()
+        except Exception:
+            mod = 'none'
+        self.context.setManualAutoAttackClickModifier(mod)
+
+    def onChangeManualAutoAttackClickButton(self, _: Any = None) -> None:
+        try:
+            btn = str(self.manualAttackClickButtonCombo.get()).strip().lower()
+        except Exception:
+            btn = 'left'
+        self.context.setManualAutoAttackClickButton(btn)
+
+    def onToggleRuntimeAttackFromBattlelist(self) -> None:
+        self.context.setRuntimeAttackFromBattlelist(bool(self.runtimeAttackFromBLVar.get()))
+
+    def onToggleRuntimeTargetingDiag(self) -> None:
+        self.context.setRuntimeTargetingDiag(bool(self.runtimeTargetingDiagVar.get()))
+
+    def onToggleRuntimeWindowDiag(self) -> None:
+        self.context.setRuntimeWindowDiag(bool(self.runtimeWindowDiagVar.get()))
+
+    def onToggleRuntimeDumpTimeout(self) -> None:
+        self.context.setRuntimeDumpTaskOnTimeout(bool(self.runtimeDumpTimeoutVar.get()))
+
+    def onToggleRuntimeAttackOnly(self) -> None:
+        self.context.setRuntimeAttackOnly(bool(self.runtimeAttackOnlyVar.get()))
+
+    def onToggleRuntimeAllowAttackNoCoord(self) -> None:
+        self.context.setRuntimeAllowAttackWithoutCoord(bool(self.runtimeAllowAttackNoCoordVar.get()))
+
+    def onToggleRuntimeWarnOnWindowMiss(self) -> None:
+        self.context.setRuntimeWarnOnWindowMiss(bool(self.runtimeWarnOnWindowMissVar.get()))
+
+    def onToggleRuntimeStartPaused(self) -> None:
+        self.context.setRuntimeStartPaused(bool(self.runtimeStartPausedVar.get()))
+
+    def onChangeRuntimeStatusInterval(self, _: Any = None) -> None:
+        raw = ''
+        try:
+            raw = str(self.runtimeStatusIntervalVar.get()).strip()
+        except Exception:
+            raw = ''
+        if raw == '':
+            return
+        try:
+            v = float(raw)
+        except Exception:
+            v = 2.0
+        self.context.setRuntimeStatusLogInterval(v)
+
+    def onChangeRuntimeLootModifier(self, _: Any = None) -> None:
+        try:
+            mod = str(self.runtimeLootModifierCombo.get()).strip().lower()
+        except Exception:
+            mod = 'shift'
+        self.context.setRuntimeLootModifier(mod)
+
+    def onChangeRuntimeCaptureWindowTitle(self, _: Any = None) -> None:
+        try:
+            title = str(self.runtimeCaptureTitleVar.get())
+        except Exception:
+            title = ''
+        self.context.setRuntimeCaptureWindowTitle(title)
+
+    def onChangeRuntimeActionWindowTitle(self, _: Any = None) -> None:
+        try:
+            title = str(self.runtimeActionTitleVar.get())
+        except Exception:
+            title = ''
+        self.context.setRuntimeActionWindowTitle(title)
+
     def onChangePoisonHotkey(self, event: Any) -> None:
         key = event.char
         key_pressed = event.keysym
@@ -402,6 +829,8 @@ class ConfigPage(customtkinter.CTkToplevel):
                 'auto_hur': self.context.context['auto_hur'],
                 'alert': self.context.context['alert'],
                 'clear_stats': self.context.context['clear_stats'],
+                'manual_auto_attack': self.context.context.get('manual_auto_attack', {}),
+                'ng_runtime': self.context.context.get('ng_runtime', {}),
                 'ng_comboSpells': self.context.context['ng_comboSpells'],
                 'healing': self.context.context['healing']
             }

@@ -1,6 +1,7 @@
 import os
 
 from .typings import Context
+from src.utils.runtime_settings import get_bool
 
 
 # TODO: add unit tests
@@ -15,7 +16,7 @@ def hasCreaturesToAttack(context: Context) -> bool:
         # players/NPCs depending on client filters.
         bl_creatures = context.get('ng_battleList', {}).get('creatures')
         bl_count = len(bl_creatures) if bl_creatures is not None else 0
-        if bl_count > 0 and os.getenv('FENRIL_ATTACK_FROM_BATTLELIST', '0') in {'1', 'true', 'True'}:
+        if bl_count > 0 and get_bool(context, 'ng_runtime.attack_from_battlelist', env_var='FENRIL_ATTACK_FROM_BATTLELIST', default=False):
             context['ng_targeting']['canIgnoreCreatures'] = True
             return True
 

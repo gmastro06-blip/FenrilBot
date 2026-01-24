@@ -33,6 +33,7 @@ from src.repositories.gameWindow.creatures import getClosestCreature, getTargetC
 from src.gameplay.core.tasks.attackClosestCreature import AttackClosestCreatureTask
 
 from src.utils.console_log import log, log_throttled
+from src.utils.runtime_settings import get_bool, get_float
 
 if TYPE_CHECKING:
     from src.ui.context import Context as UIContext
@@ -54,8 +55,15 @@ class PilotNGThread:
                 if 'ng_debug' not in self.context.context:
                     self.context.context['ng_debug'] = {'last_tick_reason': None, 'last_exception': None}
                 if self.context.context['ng_pause']:
+                    # Even when paused, try to resolve windows so the UI can show
+                    # which window would be used and the user can hit Play safely.
+                    try:
+                        self.context.context = setTibiaWindowMiddleware(self.context.context)
+                    except Exception:
+                        pass
                     self.context.context['ng_debug']['last_tick_reason'] = 'paused'
-                    log_throttled('pilot.status.paused', 'info', 'Paused (ng_pause=1)', float(os.getenv('FENRIL_STATUS_LOG_INTERVAL', '2.0')))
+                    interval = get_float(self.context.context, 'ng_runtime.status_log_interval_s', env_var='FENRIL_STATUS_LOG_INTERVAL', default=2.0)
+                    log_throttled('pilot.status.paused', 'info', 'Paused (ng_pause=1)', interval)
                     sleep(1)
                     continue
                 startTime = time()
@@ -67,7 +75,7 @@ class PilotNGThread:
                     self.context.context)
 
                 # Periodic status line to make it obvious why cavebot isn't acting.
-                interval = float(os.getenv('FENRIL_STATUS_LOG_INTERVAL', '2.0'))
+                interval = get_float(self.context.context, 'ng_runtime.status_log_interval_s', env_var='FENRIL_STATUS_LOG_INTERVAL', default=2.0)
                 dbg = self.context.context.get('ng_debug', {})
                 reason = dbg.get('last_tick_reason')
                 cave = self.context.context.get('ng_cave', {})
@@ -94,7 +102,7 @@ class PilotNGThread:
                     f"task={task_name} root={root_name} reason={reason}"
                 )
 
-                if os.getenv('FENRIL_WINDOW_DIAG', '0') in {'1', 'true', 'True'}:
+                if get_bool(self.context.context, 'ng_runtime.window_diag', env_var='FENRIL_WINDOW_DIAG', default=False):
                     status_msg += (
                         f" action_title={dbg.get('action_window_title')!r}"
                         f" capture_title={dbg.get('capture_window_title')!r}"
@@ -160,7 +168,7 @@ class PilotNGThread:
         # TODO: func to check if coord is none
         # If we temporarily modified cavebot behavior due to missing radar,
         # restore it as soon as radar comes back.
-        allow_attack = os.getenv('FENRIL_ALLOW_ATTACK_WITHOUT_COORD', '0') in {'1', 'true', 'True'}
+        allow_attack = get_bool(context, 'ng_runtime.allow_attack_without_coord', env_var='FENRIL_ALLOW_ATTACK_WITHOUT_COORD', default=False)
         if allow_attack and context.get('ng_radar', {}).get('coordinate') is not None:
             diag = context.get('ng_diag') if isinstance(context.get('ng_diag'), dict) else None
             if isinstance(diag, dict) and diag.get('forced_runToCreatures') is True:
@@ -243,7 +251,7 @@ class PilotNGThread:
 
         # Attack-only mode: never follow waypoints; only try to acquire/keep a target.
         # This is intended for stationary hunting setups and supervised runs.
-        if os.getenv('FENRIL_ATTACK_ONLY', '0') in {'1', 'true', 'True'}:
+        if get_bool(context, 'ng_runtime.attack_only', env_var='FENRIL_ATTACK_ONLY', default=False):
             try:
                 context['ng_cave']['closestCreature'] = getClosestCreature(
                     context['gameWindow']['monsters'], context['ng_radar']['coordinate'])
@@ -259,7 +267,7 @@ class PilotNGThread:
             manual_enabled_env = os.getenv('FENRIL_MANUAL_AUTO_ATTACK', '0') in {'1', 'true', 'True'}
             if manual_enabled_cfg or manual_enabled_env:
                 should_attack = True
-            if not should_attack and os.getenv('FENRIL_ATTACK_FROM_BATTLELIST', '0') in {'1', 'true', 'True'}:
+            if not should_attack and get_bool(context, 'ng_runtime.attack_from_battlelist', env_var='FENRIL_ATTACK_FROM_BATTLELIST', default=False):
                 try:
                     if context.get('ng_screenshot') is not None:
                         battle_click = battlelist_extractors.getCreatureClickCoordinate(context['ng_screenshot'], index=0)
@@ -310,8 +318,39 @@ class PilotNGThread:
             if currentTask is not None and currentTask.rootTask is not None and currentTask.rootTask.name != 'lootCorpse':
                 context['ng_tasksOrchestrator'].setRootTask(context, None)
             if context['ng_tasksOrchestrator'].getCurrentTask(context) is None:
-                # TODO: get closest dead corpse
-                firstDeadCorpse = context['loot']['corpsesToLoot'][0]
+                current_coord = context.get('ng_radar', {}).get('coordinate')
+                corpses = context['loot']['corpsesToLoot']
+                firstDeadCorpse = corpses[0]
+                if isinstance(current_coord, (list, tuple)) and len(current_coord) >= 3:
+                    cx: Optional[int] = None
+                    cy: Optional[int] = None
+                    cz: Optional[int] = None
+                    try:
+                        cx, cy, cz = int(current_coord[0]), int(current_coord[1]), int(current_coord[2])
+                    except Exception:
+                        cx = cy = cz = None
+                    best = None
+                    best_dist: Optional[int] = None
+                    for corpse in corpses:
+                        if cz is None:
+                            break
+                        corpse_coord = corpse.get('coordinate') if isinstance(corpse, dict) else None
+                        if not (isinstance(corpse_coord, (list, tuple)) and len(corpse_coord) >= 3):
+                            continue
+                        try:
+                            x, y, z = int(corpse_coord[0]), int(corpse_coord[1]), int(corpse_coord[2])
+                        except Exception:
+                            continue
+                        if z != cz:
+                            continue
+                        if cx is None or cy is None:
+                            continue
+                        dist = abs(x - cx) + abs(y - cy)
+                        if best is None or best_dist is None or dist < best_dist:
+                            best = corpse
+                            best_dist = dist
+                    if best is not None:
+                        firstDeadCorpse = best
                 context['ng_tasksOrchestrator'].setRootTask(
                     context, LootCorpseTask(firstDeadCorpse))
             context['gameWindow']['previousMonsters'] = context['gameWindow']['monsters']
@@ -320,7 +359,7 @@ class PilotNGThread:
             hasCreaturesToAttackAfterCheck = hasCreaturesToAttack(context)
 
             # Optional diagnostics to understand "not attacking" reports.
-            if os.getenv('FENRIL_TARGETING_DIAG', '0') in {'1', 'true', 'True'}:
+            if get_bool(context, 'ng_runtime.targeting_diag', env_var='FENRIL_TARGETING_DIAG', default=False):
                 monsters = context.get('gameWindow', {}).get('monsters') or []
                 bl_creatures = context.get('ng_battleList', {}).get('creatures')
                 bl_count = len(bl_creatures) if bl_creatures is not None else 0
@@ -345,7 +384,7 @@ class PilotNGThread:
                     # fallback, treat it as a cavebot (attack) situation.
                     bl_creatures = context.get('ng_battleList', {}).get('creatures')
                     bl_count = len(bl_creatures) if bl_creatures is not None else 0
-                    if bl_count > 0 and os.getenv('FENRIL_ATTACK_FROM_BATTLELIST', '0') in {'1', 'true', 'True'}:
+                    if bl_count > 0 and get_bool(context, 'ng_runtime.attack_from_battlelist', env_var='FENRIL_ATTACK_FROM_BATTLELIST', default=False):
                         context['way'] = 'ng_cave'
                     else:
                         context['way'] = 'waypoint'

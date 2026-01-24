@@ -2,7 +2,6 @@ import math
 from numba import njit
 import numpy as np
 import pathlib
-from scipy.spatial import distance
 import tcod
 from typing import Any, List, Optional, Tuple, Union, cast
 from src.repositories.radar.config import walkableFloorsSqms
@@ -381,11 +380,18 @@ def isTrappedByCreatures(gameWindowCreatures: CreatureList, radarCoordinate: Coo
     playerBox = walkableFloorsSqms[radarCoordinate[2], pixelRadarCoordinate[1] -
                                    1: pixelRadarCoordinate[1] + 2, pixelRadarCoordinate[0] - 1: pixelRadarCoordinate[0] + 2]
     for gameWindowCreature in gameWindowCreatures:
-        distanceOf = distance.cdist([gameWindowCreature['coordinate']], [
-                                    radarCoordinate], 'euclidean').flatten()[0]
+        creatureCoordinate = gameWindowCreature.get('coordinate') if isinstance(gameWindowCreature, dict) else None
+        if not isinstance(creatureCoordinate, (list, tuple)) or len(creatureCoordinate) < 2:
+            continue
+
+        # We only care about adjacency around the player on the current floor,
+        # so compute 2D distance (x, y).
+        dx = float(creatureCoordinate[0]) - float(radarCoordinate[0])
+        dy = float(creatureCoordinate[1]) - float(radarCoordinate[1])
+        distanceOf = math.hypot(dx, dy)
         if distanceOf < 1.42:
-            x = gameWindowCreature['coordinate'][0] - radarCoordinate[0] + 1
-            y = gameWindowCreature['coordinate'][1] - radarCoordinate[1] + 1
+            x = int(creatureCoordinate[0]) - radarCoordinate[0] + 1
+            y = int(creatureCoordinate[1]) - radarCoordinate[1] + 1
             playerBox[y, x] = 0
     if playerBox[0, 0] == 1:
         return False

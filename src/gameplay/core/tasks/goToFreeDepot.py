@@ -1,6 +1,5 @@
 import numpy as np
 import os
-from scipy.spatial import distance
 from typing import Any, Dict, Optional, cast
 
 from src.repositories.battleList.typings import CreatureList
@@ -43,14 +42,28 @@ class GoToFreeDepotTask(VectorTask):
     def onBeforeStart(self, context: Context) -> Context:
         options = self.waypoint.get('options') if isinstance(self.waypoint, dict) else None
         city = options.get('city') if isinstance(options, dict) else None
-        if not city or city not in cities:
-            log('warn', f"goToFreeDepot: missing/invalid waypoint.options.city (got {city!r}); skipping task")
-            self.terminable = True
-            return context
-
         cities_any = cast(Dict[str, Dict[str, Any]], cities)
-        city_data = cities_any.get(city, {})
-        depotCoordinates_any = city_data.get('depotCoordinates', [])
+        city_data: Dict[str, Any] = {}
+        depotCoordinates_any: Any = []
+        depot_goals: Any = None
+
+        # Prefer explicit city when provided, but keep scripts working even when
+        # city isn't set by inferring depot coordinates from all known cities.
+        if city and city in cities_any:
+            city_data = cities_any.get(city, {})
+            depotCoordinates_any = city_data.get('depotCoordinates', [])
+            depot_goals = city_data.get('depotGoalCoordinates')
+        else:
+            if city:
+                log('warn', f"goToFreeDepot: unknown waypoint.options.city {city!r}; inferring from visible depots")
+            else:
+                log('warn', "goToFreeDepot: missing waypoint.options.city; inferring from visible depots")
+            all_depots: list = []
+            for _name, _data in cities_any.items():
+                coords = _data.get('depotCoordinates')
+                if isinstance(coords, list):
+                    all_depots.extend(coords)
+            depotCoordinates_any = all_depots
 
         coordinate = context['ng_radar']['coordinate']
         visibleDepotCoordinates = self.getVisibleDepotCoordinates(coordinate, depotCoordinates_any)
@@ -66,19 +79,21 @@ class GoToFreeDepotTask(VectorTask):
                 for visibleDepotCoordinate in visibleDepotCoordinates:
                     self.visitedOrBusyCoordinates[visibleDepotCoordinate] = True
                 return context
-            freeDepotCoordinatesDistances = distance.cdist(
-                np.array([coordinate], dtype=np.float32),
-                np.array(freeDepotCoordinates, dtype=np.float32),
-                'euclidean',
-            ).flatten()
-            closestFreeDepotCoordinateIndex = np.argmin(freeDepotCoordinatesDistances)
+            current = np.array(coordinate, dtype=np.float32)
+            options_arr = np.array(freeDepotCoordinates, dtype=np.float32)
+            diffs = options_arr - current
+            dist2 = np.sum(diffs * diffs, axis=1)
+            closestFreeDepotCoordinateIndex = int(np.argmin(dist2))
             self.closestFreeDepotCoordinate = freeDepotCoordinates[closestFreeDepotCoordinateIndex]
             
-            # TODO: FIX PING FUNCTION AND REMOVE THIS
-            depot_goals = city_data.get('depotGoalCoordinates')
-            if isinstance(depot_goals, dict) and self.closestFreeDepotCoordinate is not None:
-                context['ng_deposit']['lockerCoordinate'] = depot_goals.get(self.closestFreeDepotCoordinate)
-            # TODO: FIX PING FUNCTION AND REMOVE THIS
+            # Provide a goal coordinate for OpenLockerTask.
+            # If the city has a specific mapping use it; otherwise fallback to using
+            # the depot coordinate itself (many depots are clickable directly).
+            if self.closestFreeDepotCoordinate is not None:
+                locker_goal = None
+                if isinstance(depot_goals, dict):
+                    locker_goal = depot_goals.get(self.closestFreeDepotCoordinate)
+                context['ng_deposit']['lockerCoordinate'] = locker_goal or self.closestFreeDepotCoordinate
 
             if self.closestFreeDepotCoordinate is None:
                 self.terminable = True
@@ -139,12 +154,14 @@ class GoToFreeDepotTask(VectorTask):
             self.terminable = True
             options = self.waypoint.get('options') if isinstance(self.waypoint, dict) else None
             city = options.get('city') if isinstance(options, dict) else None
-            if not city or city not in cities:
-                log('warn', f"goToFreeDepot: missing/invalid waypoint.options.city in ping (got {city!r})")
-                return context
             cities_any = cast(Dict[str, Dict[str, Any]], cities)
-            city_data = cities_any.get(city, {})
-            depot_goals = city_data.get('depotGoalCoordinates')
-            if isinstance(depot_goals, dict):
-                context['ng_deposit']['lockerCoordinate'] = depot_goals.get(self.closestFreeDepotCoordinate)
+            if city and city in cities_any:
+                city_data = cities_any.get(city, {})
+                depot_goals = city_data.get('depotGoalCoordinates')
+                if isinstance(depot_goals, dict):
+                    context['ng_deposit']['lockerCoordinate'] = depot_goals.get(self.closestFreeDepotCoordinate) or self.closestFreeDepotCoordinate
+                else:
+                    context['ng_deposit']['lockerCoordinate'] = self.closestFreeDepotCoordinate
+            else:
+                context['ng_deposit']['lockerCoordinate'] = self.closestFreeDepotCoordinate
         return context

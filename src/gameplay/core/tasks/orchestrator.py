@@ -12,6 +12,7 @@ from typing import Optional
 from src.gameplay.typings import Context
 from .common.base import BaseTask
 from .common.vector import VectorTask
+from src.utils.runtime_settings import get_bool
 
 
 class TasksOrchestrator:
@@ -155,7 +156,7 @@ class TasksOrchestrator:
         return context
 
     def _maybe_dump_timeout(self, context: Context, task: BaseTask) -> None:
-        if os.getenv('FENRIL_DUMP_TASK_ON_TIMEOUT', '0') not in {'1', 'true', 'True'}:
+        if not get_bool(context, 'ng_runtime.dump_task_on_timeout', env_var='FENRIL_DUMP_TASK_ON_TIMEOUT', default=False):
             return
         screenshot = context.get('ng_screenshot') if isinstance(context, dict) else None
         if screenshot is None:
