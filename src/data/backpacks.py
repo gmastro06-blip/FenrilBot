@@ -1,21 +1,15 @@
 from __future__ import annotations
 
 import json
-import os
-import re
 import time
-import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List
 
 
-FANDOM_BACKPACKS_URL = "https://tibia.fandom.com/wiki/Backpacks"
-
-
 @dataclass(frozen=True)
 class BackpacksSourceInfo:
-    source_url: str
+    source: str
     fetched_at_unix: int
 
 
@@ -65,12 +59,12 @@ def load_backpacks_cache() -> list[str] | None:
     return _normalize_names(out)
 
 
-def save_backpacks_cache(names: Iterable[str], *, source_url: str = FANDOM_BACKPACKS_URL) -> Path:
+def save_backpacks_cache(names: Iterable[str], *, source: str = "manual") -> Path:
     names_list = _normalize_names(list(names))
     payload = {
         "names": names_list,
         "source": {
-            "url": source_url,
+            "source": source,
             "fetched_at_unix": int(time.time()),
         },
     }
@@ -99,63 +93,16 @@ def _normalize_names(names: List[str]) -> list[str]:
     return out
 
 
-def fetch_backpacks_from_fandom(*, url: str = FANDOM_BACKPACKS_URL, timeout_s: int = 10) -> list[str]:
-    """Fetch backpack item names from the Tibia fandom wiki page.
-
-    This extracts only item names (no descriptions/images) and is meant to
-    populate the UI combobox.
-    """
-
-    req = urllib.request.Request(
-        url,
-        headers={
-            "User-Agent": "FenrilBot/1.0 (+https://github.com/) Python urllib",
-        },
-    )
-
-    with urllib.request.urlopen(req, timeout=timeout_s) as resp:
-        html = resp.read().decode("utf-8", errors="replace")
-
-    # Heuristic extraction:
-    # - Many relevant links appear as title="<Item Name>".
-    # - We keep titles containing 'Backpack' and a couple common container names.
-    # Note: This avoids copying page text verbatim; it's just item names.
-    titles = re.findall(r'title="([^"]+)"', html)
-
-    candidates: list[str] = []
-    for t in titles:
-        if "Backpack" in t:
-            candidates.append(t)
-
-    # Some commonly used containers are not '... Backpack' but are used by the bot.
-    for extra in ("Parcel",):
-        if extra in titles:
-            candidates.append(extra)
-
-    return _normalize_names(candidates)
-
-
 def get_backpack_names() -> list[str]:
     """Return backpacks list for UI.
 
     Resolution order:
     1) Cache file `src/data/backpacks.json` if present
-    2) If `FENRIL_BACKPACKS_FETCH=1`, fetch from fandom and write cache
-    3) Fallback to a small built-in list
+    2) Fallback to a small built-in list
     """
 
     cached = load_backpacks_cache()
     if cached:
         return cached
-
-    if os.getenv("FENRIL_BACKPACKS_FETCH", "0") in {"1", "true", "True"}:
-        try:
-            names = fetch_backpacks_from_fandom()
-            if names:
-                save_backpacks_cache(names)
-                return names
-        except Exception:
-            # Keep UI functional even if network fails.
-            pass
 
     return _default_backpacks()

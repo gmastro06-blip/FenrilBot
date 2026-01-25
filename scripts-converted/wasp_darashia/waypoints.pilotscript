@@ -151,32 +151,47 @@
     },
     {
         "label": "",
-        "type": "walk",
+        "type": "sellFlasks",
         "coordinate": [
             33217,
             32403,
             7
         ],
         "options": {
-            "action": "sell",
-            "note": "unsupported"
+            "sellableItems": [
+                "empty potion flask",
+                "empty vial"
+            ]
         },
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
         "label": "",
-        "type": "walk",
+        "type": "refill",
         "coordinate": [
             33217,
             32403,
             7
         ],
         "options": {
-            "action": "buy_potions",
-            "note": "unsupported"
+            "healthPotionEnabled": false,
+            "houseNpcEnabled": false,
+            "healthPotion": {
+                "item": "Health Potion",
+                "quantity": 0
+            },
+            "manaPotion": {
+                "item": "Mana Potion",
+                "quantity": 5
+            },
+            "sellFlasksBeforeRefill": true,
+            "sellableItems": [
+                "empty potion flask",
+                "empty vial"
+            ]
         },
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -193,17 +208,20 @@
     },
     {
         "label": "",
-        "type": "walk",
+        "type": "refillChecker",
         "coordinate": [
             33216,
             32391,
             7
         ],
         "options": {
-            "action": "check_supplies",
-            "note": "unsupported"
+            "minimumAmountOfHealthPotions": 0,
+            "minimumAmountOfManaPotions": 1,
+            "minimumAmountOfCap": 80,
+            "healthEnabled": false,
+            "waypointLabelToRedirect": "hunt"
         },
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -544,17 +562,20 @@
     },
     {
         "label": "not_enough_honeycombs",
-        "type": "walk",
+        "type": "refillChecker",
         "coordinate": [
             33211,
             32384,
             6
         ],
         "options": {
-            "action": "check",
-            "note": "unsupported"
+            "minimumAmountOfHealthPotions": 0,
+            "minimumAmountOfManaPotions": 1,
+            "minimumAmountOfCap": 80,
+            "healthEnabled": false,
+            "waypointLabelToRedirect": "leave"
         },
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {

@@ -6,6 +6,7 @@ from .core.tasks.depositGold import DepositGoldTask
 from .core.tasks.depositItems import DepositItemsTask
 from .core.tasks.depositItemsHouse import DepositItemsHouseTask
 from .core.tasks.dropFlasks import DropFlasksTask
+from .core.tasks.sellFlasks import SellFlasksTask
 from .core.tasks.logout import LogoutTask
 from .core.tasks.refill import RefillTask
 from .core.tasks.buyBackpack import BuyBackpackTask
@@ -21,6 +22,7 @@ from .core.tasks.travel import TravelTask
 from .core.tasks.singleMove import SingleMoveTask
 from .core.tasks.rightClickDirectionWaypoint import RightClickDirectionWaypointTask
 from .core.tasks.setNextWaypoint import SetNextWaypointTask
+from src.utils.console_log import log_throttled
 
 # TODO: add unit tests
 def resolveTasksByWaypoint(waypoint: Waypoint) -> Union[BaseTask, VectorTask]:
@@ -34,6 +36,8 @@ def resolveTasksByWaypoint(waypoint: Waypoint) -> Union[BaseTask, VectorTask]:
         return DepositItemsHouseTask()  # pyright: ignore[reportUntypedFunctionCall]
     elif waypoint['type'] == 'dropFlasks':
         return DropFlasksTask()
+    elif waypoint['type'] == 'sellFlasks':
+        return SellFlasksTask(waypoint)
     elif waypoint['type'] == 'logout':
         return LogoutTask()
     elif waypoint['type'] == 'moveDown':
@@ -64,4 +68,14 @@ def resolveTasksByWaypoint(waypoint: Waypoint) -> Union[BaseTask, VectorTask]:
         return WalkToWaypointTask(waypoint['coordinate'], waypoint['ignore'], waypoint['passinho'])
 
     # Fallback: unknown waypoint type.
+    try:
+        wtype = waypoint.get('type') if isinstance(waypoint, dict) else None
+    except Exception:
+        wtype = None
+    log_throttled(
+        'waypoint.unknown_type',
+        'warn',
+        f"Unknown waypoint type {wtype!r}; skipping (SetNextWaypointTask).",
+        10.0,
+    )
     return SetNextWaypointTask()  # pyright: ignore[reportUntypedFunctionCall]

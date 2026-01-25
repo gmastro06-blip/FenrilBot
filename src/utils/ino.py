@@ -1,13 +1,45 @@
 import base64
-import os
 from time import sleep
 
-from typing import Optional
+from typing import Any, Optional
 
-import serial
+try:
+    import serial  # type: ignore
+except Exception:  # pragma: no cover
+    serial = None  # type: ignore
 
-_arduinoSerial = None
+from src.utils.runtime_settings import get_bool, get_str
+
+_arduinoSerial: Optional[Any] = None
 _arduinoAvailable = None
+
+_ARDUINO_PORT: str = get_str({}, '_', env_var='FENRIL_ARDUINO_PORT', default='COM33', prefer_env=True)
+_DISABLE_ARDUINO: bool = get_bool({}, '_', env_var='FENRIL_DISABLE_ARDUINO', default=False, prefer_env=True)
+_DISABLE_ARDUINO_CLICKS: bool = get_bool({}, '_', env_var='FENRIL_DISABLE_ARDUINO_CLICKS', default=False, prefer_env=True)
+
+
+def configure_arduino(
+    *,
+    port: Optional[str] = None,
+    disable_arduino: Optional[bool] = None,
+    disable_clicks: Optional[bool] = None,
+) -> None:
+    """Configure Arduino input backend.
+
+    Defaults come from env vars, but runtime can override via profile config.
+    """
+    global _ARDUINO_PORT, _DISABLE_ARDUINO, _DISABLE_ARDUINO_CLICKS, _arduinoSerial, _arduinoAvailable
+    if port is not None:
+        p = str(port).strip()
+        if p:
+            _ARDUINO_PORT = p
+            # Force re-open with new port on next use.
+            _arduinoSerial = None
+            _arduinoAvailable = None
+    if disable_arduino is not None:
+        _DISABLE_ARDUINO = bool(disable_arduino)
+    if disable_clicks is not None:
+        _DISABLE_ARDUINO_CLICKS = bool(disable_clicks)
 
 
 def _is_clickish_command(command: str) -> bool:
@@ -20,15 +52,20 @@ def _is_clickish_command(command: str) -> bool:
 
 
 def _getArduinoPort() -> str:
-    return os.getenv("FENRIL_ARDUINO_PORT", "COM33")
+    return _ARDUINO_PORT
 
 
-def _ensureArduinoSerial() -> Optional[serial.Serial]:
+def _ensureArduinoSerial() -> Optional[Any]:
     global _arduinoSerial, _arduinoAvailable
     if _arduinoAvailable is False:
         return None
     if _arduinoSerial is not None:
         return _arduinoSerial
+
+    if serial is None:
+        _arduinoAvailable = False
+        _arduinoSerial = None
+        return None
 
     try:
         _arduinoSerial = serial.Serial(_getArduinoPort(), 115200, timeout=1)
@@ -41,12 +78,12 @@ def _ensureArduinoSerial() -> Optional[serial.Serial]:
 
 
 def sendCommandArduino(command: str) -> bool:
-    if os.getenv('FENRIL_DISABLE_ARDUINO', '0') in {'1', 'true', 'True'}:
+    if _DISABLE_ARDUINO:
         return False
 
     # Some Arduino firmwares apply smoothing/delays that make clicks appear to "not happen".
     # Allow bypassing Arduino for click-like commands while still using Arduino for moveTo.
-    if os.getenv('FENRIL_DISABLE_ARDUINO_CLICKS', '0') in {'1', 'true', 'True'} and _is_clickish_command(command):
+    if _DISABLE_ARDUINO_CLICKS and _is_clickish_command(command):
         return False
     arduinoSerial = _ensureArduinoSerial()
     if arduinoSerial is None:

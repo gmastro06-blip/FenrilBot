@@ -5,6 +5,7 @@ import src.utils.keyboard as keyboard
 from src.gameplay.typings import Context
 from .common.base import BaseTask
 from time import sleep
+from src.utils.console_log import log_throttled
 
 class UseShovelTask(BaseTask):
     def __init__(self, waypoint: Waypoint):
@@ -24,7 +25,22 @@ class UseShovelTask(BaseTask):
         if slot is None:
             return context
         sleep(0.2)
-        keyboard.press('p')
+        shovel_hotkey = None
+        try:
+            shovel_hotkey = context.get('general_hotkeys', {}).get('shovel_hotkey')
+        except Exception:
+            shovel_hotkey = None
+        if isinstance(shovel_hotkey, str):
+            shovel_hotkey = shovel_hotkey.strip()
+        if not shovel_hotkey:
+            shovel_hotkey = 'p'
+            log_throttled(
+                'useShovel.default_hotkey',
+                'warn',
+                "useShovel: general_hotkeys.shovel_hotkey not set; falling back to 'p'.",
+                30.0,
+            )
+        keyboard.press(shovel_hotkey)
         sleep(0.2)
         gameWindowSlot.clickSlot(slot, context['gameWindow']['coordinate'])
         sleep(0.2)

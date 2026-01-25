@@ -1,5 +1,4 @@
 import time
-import os
 from src.gameplay.typings import Context
 from src.repositories.inventory.core import images
 from src.shared.typings import GrayImage
@@ -12,10 +11,12 @@ from src.repositories.gameWindow.slot import getSlotPosition
 # TODO: check if item was moved on did. Is possible to check it by cap
 class DragItemsToFloorTask(BaseTask):
     def __init__(self: "DragItemsToFloorTask", containerBarImage: GrayImage) -> None:
-        super().__init__()
+        super().__init__(delayOfTimeout=25.0)
         self.name = 'dragItemsToFloor'
         self.terminable = False
-        self.delayOfTimeout = float(os.getenv('FENRIL_DRAG_ITEMS_TO_FLOOR_TIMEOUT', '25'))
+        self.timeout_config_path = 'ng_runtime.task_timeouts.dragItemsToFloor'
+        self.timeout_env_var = 'FENRIL_DRAG_ITEMS_TO_FLOOR_TIMEOUT'
+        self.timeout_default = 25.0
         self.shouldTimeoutTreeWhenTimeout = True
         self.containerBarImage = containerBarImage
 

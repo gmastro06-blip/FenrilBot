@@ -3,6 +3,7 @@ from src.gameplay.typings import Context
 from .common.vector import VectorTask
 from .rightClickUse import RightClickUseTask
 from .setNextWaypoint import SetNextWaypointTask
+from .walkToCoordinate import WalkToCoordinateTask
 from src.utils.core import getScreenshot, getScreenshotDebugInfo, setScreenshotOutputIdx
 from src.repositories.radar.core import getClosestWaypointIndexFromCoordinate, getCoordinate
 from src.gameplay.core.waypoint import resolveGoalCoordinate
@@ -16,7 +17,8 @@ class UseLadderWaypointTask(VectorTask):
 
     def onBeforeStart(self, context: Context) -> Context:
         self.tasks = [
-            RightClickUseTask(self.waypoint).setParentTask(self).setRootTask(self),
+            WalkToCoordinateTask(self.waypoint['coordinate']).setParentTask(self).setRootTask(self),
+            RightClickUseTask(self.waypoint, expectedZ=self.waypoint['coordinate'][2] - 1).setParentTask(self).setRootTask(self),
             SetNextWaypointTask().setParentTask(self).setRootTask(self),  # type: ignore
         ]
         return context

@@ -5,6 +5,7 @@ from typing import Optional
 
 from src.gameplay.typings import Context
 from src.shared.typings import Coordinate
+from src.utils.runtime_settings import get_float
 
 
 class BaseTask:
@@ -71,6 +72,22 @@ class BaseTask:
         return True
 
     def ping(self, context: Context) -> Context:
+        return context
+
+    def applyRuntimeConfig(self, context: Context) -> Context:
+        """Apply config-first runtime overrides.
+
+        This is called by the orchestrator before each task start.
+        """
+
+        path = getattr(self, 'timeout_config_path', None)
+        env_var = getattr(self, 'timeout_env_var', None)
+        default = getattr(self, 'timeout_default', None)
+        if isinstance(path, str) and path and default is not None:
+            try:
+                self.delayOfTimeout = float(get_float(context, path, env_var=env_var, default=float(default)))
+            except Exception:
+                pass
         return context
 
     def onBeforeStart(self, context: Context) -> Context:

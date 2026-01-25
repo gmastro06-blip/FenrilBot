@@ -121,32 +121,47 @@
     },
     {
         "label": "",
-        "type": "walk",
+        "type": "sellFlasks",
         "coordinate": [
             32971,
             32085,
             6
         ],
         "options": {
-            "action": "sell",
-            "note": "unsupported"
+            "sellableItems": [
+                "empty potion flask",
+                "empty vial"
+            ]
         },
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
         "label": "",
-        "type": "walk",
+        "type": "refill",
         "coordinate": [
             32971,
             32085,
             6
         ],
         "options": {
-            "action": "buy_potions",
-            "note": "unsupported"
+            "healthPotionEnabled": false,
+            "houseNpcEnabled": false,
+            "healthPotion": {
+                "item": "Health Potion",
+                "quantity": 0
+            },
+            "manaPotion": {
+                "item": "Mana Potion",
+                "quantity": 0
+            },
+            "sellFlasksBeforeRefill": true,
+            "sellableItems": [
+                "empty potion flask",
+                "empty vial"
+            ]
         },
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {

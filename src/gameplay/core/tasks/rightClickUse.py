@@ -4,12 +4,23 @@ from src.shared.typings import Waypoint
 from ...typings import Context
 from .common.base import BaseTask
 from time import sleep
+from typing import Optional
 
 class RightClickUseTask(BaseTask):
-    def __init__(self, waypoint: Waypoint):
+    def __init__(self, waypoint: Waypoint, expectedZ: Optional[int] = None):
         super().__init__()
         self.name = 'rightClickUse'
         self.waypoint = waypoint
+        self.expectedZ = expectedZ
+
+        if expectedZ is not None:
+            # If we expect a floor change (e.g. ladder), failing should abort the whole waypoint task.
+            self.shouldTimeoutTreeWhenTimeout = True
+
+            # Runtime-configurable timeout.
+            self.timeout_config_path = 'ng_runtime.task_timeouts.rightClickUse'
+            self.timeout_env_var = 'FENRIL_TIMEOUT_RIGHT_CLICK_USE'
+            self.timeout_default = 6.0
 
     def do(self, context: Context) -> Context:
         current_coord = context.get('ng_radar', {}).get('coordinate')
@@ -25,3 +36,14 @@ class RightClickUseTask(BaseTask):
         gameWindowSlot.rightClickSlot(slot, game_window_pos)
         sleep(0.2)
         return context
+
+    def did(self, context: Context) -> bool:
+        if self.expectedZ is None:
+            return True
+        coord = context.get('ng_radar', {}).get('coordinate')
+        if coord is None:
+            return False
+        try:
+            return int(coord[2]) == int(self.expectedZ)
+        except Exception:
+            return False

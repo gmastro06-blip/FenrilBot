@@ -1,5 +1,4 @@
 import numpy as np
-import os
 from typing import Any, Dict, Optional, cast
 
 from src.repositories.battleList.typings import CreatureList
@@ -14,12 +13,15 @@ from src.utils.console_log import log
 
 class GoToFreeDepotTask(VectorTask):
     def __init__(self, waypoint: Waypoint):
-        super().__init__()
+        super().__init__(name='goToFreeDepot')
         self.name = 'goToFreeDepot'
         self.isRootTask = True
         self.closestFreeDepotCoordinate: Optional[Coordinate] = None
         self.terminable = False
-        self.delayOfTimeout = float(os.getenv('FENRIL_GO_TO_FREE_DEPOT_TIMEOUT', '120'))
+        self.delayOfTimeout = 120.0
+        self.timeout_config_path = 'ng_runtime.task_timeouts.goToFreeDepot'
+        self.timeout_env_var = 'FENRIL_GO_TO_FREE_DEPOT_TIMEOUT'
+        self.timeout_default = 120.0
         self.shouldTimeoutTreeWhenTimeout = True
         self.waypoint = waypoint
         self.state = 'findingVisibleCoordinates'

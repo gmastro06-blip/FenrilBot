@@ -1,0 +1,1560 @@
+[
+    {
+        "label": "go_bank",
+        "type": "walk",
+        "coordinate": [
+            33625,
+            31894,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33626,
+            31891,
+            6
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33626,
+            31892,
+            5
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "depositGold",
+        "coordinate": [
+            33626,
+            31892,
+            5
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33626,
+            31891,
+            5
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "refill",
+        "type": "walk",
+        "coordinate": [
+            33622,
+            31895,
+            6
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33638,
+            31893,
+            7
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "depositItems",
+        "coordinate": [
+            33638,
+            31893,
+            7
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "refill",
+        "coordinate": [
+            33638,
+            31893,
+            7
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33629,
+            31895,
+            7
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33616,
+            31891,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33619,
+            31884,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33620,
+            31880,
+            6
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33620,
+            31880,
+            6
+        ],
+        "options": {
+            "action": "check_runes",
+            "note": "unsupported"
+        },
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33618,
+            31882,
+            5
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33618,
+            31882,
+            5
+        ],
+        "options": {
+            "action": "buy_runes",
+            "note": "unsupported"
+        },
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "skip_runes",
+        "type": "walk",
+        "coordinate": [
+            33617,
+            31879,
+            5
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33618,
+            31882,
+            4
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33618,
+            31882,
+            4
+        ],
+        "options": {
+            "action": "sell",
+            "note": "unsupported"
+        },
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33618,
+            31882,
+            4
+        ],
+        "options": {
+            "action": "buy_potions",
+            "note": "unsupported"
+        },
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33617,
+            31879,
+            4
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33620,
+            31880,
+            5
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33627,
+            31887,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33627,
+            31887,
+            6
+        ],
+        "options": {
+            "action": "check_ammo",
+            "note": "unsupported"
+        },
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33630,
+            31883,
+            6
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33632,
+            31881,
+            5
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33632,
+            31881,
+            5
+        ],
+        "options": {
+            "action": "buy_ammo",
+            "note": "unsupported"
+        },
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33630,
+            31882,
+            5
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "skip_ammo",
+        "type": "walk",
+        "coordinate": [
+            33633,
+            31888,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33633,
+            31888,
+            6
+        ],
+        "options": {
+            "action": "check_imbuements",
+            "note": "unsupported"
+        },
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "imbue_items",
+        "type": "walk",
+        "coordinate": [
+            33626,
+            31887,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33615,
+            31891,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33599,
+            31895,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33594,
+            31899,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33595,
+            31898,
+            6
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33595,
+            31898,
+            6
+        ],
+        "options": {
+            "action": "use_imbuing_shrine",
+            "note": "unsupported"
+        },
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33605,
+            31902,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "skip_imbuement",
+        "type": "walk",
+        "coordinate": [
+            33621,
+            31902,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33621,
+            31902,
+            6
+        ],
+        "options": {
+            "action": "check_supplies",
+            "note": "unsupported"
+        },
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "gohunt",
+        "type": "walk",
+        "coordinate": [
+            33626,
+            31897,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33621,
+            31914,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33637,
+            31926,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33635,
+            31941,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33636,
+            31944,
+            6
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33647,
+            31948,
+            7
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "openDoor",
+        "coordinate": [
+            33647,
+            31947,
+            7
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33651,
+            31943,
+            7
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33651,
+            31941,
+            7
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "openDoor",
+        "coordinate": [
+            33563,
+            31974,
+            12
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33572,
+            31983,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33585,
+            31998,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33597,
+            32018,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33608,
+            32025,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33623,
+            32025,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33626,
+            32021,
+            12
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33644,
+            32015,
+            13
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "useRope",
+        "coordinate": [
+            33651,
+            32015,
+            13
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "hunt",
+        "type": "walk",
+        "coordinate": [
+            33645,
+            32012,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33650,
+            32000,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33651,
+            31987,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33647,
+            31966,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33633,
+            31953,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33635,
+            31938,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33653,
+            31942,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33659,
+            31952,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33676,
+            31937,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33690,
+            31946,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33688,
+            31960,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33679,
+            31975,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33682,
+            31990,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33695,
+            31992,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33705,
+            31987,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33702,
+            32001,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33691,
+            32003,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33686,
+            32022,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33682,
+            32035,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33692,
+            32044,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33705,
+            32035,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33713,
+            32046,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33700,
+            32047,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33694,
+            32057,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33685,
+            32040,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33676,
+            32037,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33655,
+            32037,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33649,
+            32031,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33644,
+            32017,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33644,
+            32017,
+            12
+        ],
+        "options": {
+            "action": "check",
+            "note": "unsupported"
+        },
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "leave",
+        "type": "walk",
+        "coordinate": [
+            33651,
+            32015,
+            12
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "useRope",
+        "coordinate": [
+            33626,
+            32021,
+            13
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33608,
+            32025,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33591,
+            32007,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33577,
+            31991,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33563,
+            31976,
+            12
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "openDoor",
+        "coordinate": [
+            33563,
+            31974,
+            12
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33558,
+            31970,
+            12
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33647,
+            31944,
+            7
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "openDoor",
+        "coordinate": [
+            33647,
+            31947,
+            7
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33645,
+            31950,
+            7
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33635,
+            31946,
+            7
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33635,
+            31944,
+            7
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33637,
+            31934,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33633,
+            31891,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33633,
+            31883,
+            6
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "sell_flint",
+        "type": "walk",
+        "coordinate": [
+            33633,
+            31883,
+            6
+        ],
+        "options": {
+            "action": "sell",
+            "note": "unsupported"
+        },
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33631,
+            31897,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33631,
+            31897,
+            6
+        ],
+        "options": {
+            "action": "check_time",
+            "note": "unsupported"
+        },
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "train",
+        "type": "walk",
+        "coordinate": [
+            33637,
+            31891,
+            6
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33479,
+            31986,
+            7
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "travel",
+        "coordinate": [
+            33479,
+            31986,
+            7
+        ],
+        "options": {
+            "city": "Edron"
+        },
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33176,
+            31771,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33175,
+            31775,
+            6
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33192,
+            31791,
+            7
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33202,
+            31796,
+            7
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33202,
+            31796,
+            7
+        ],
+        "options": {
+            "action": "check_time",
+            "note": "unsupported"
+        },
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "train",
+        "type": "walk",
+        "coordinate": [
+            33202,
+            31796,
+            7
+        ],
+        "options": {
+            "action": "check_train",
+            "note": "unsupported"
+        },
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "magic",
+        "type": "useLadder",
+        "coordinate": [
+            33181,
+            31793,
+            7
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "distance",
+        "type": "useLadder",
+        "coordinate": [
+            33178,
+            31793,
+            7
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "club",
+        "type": "useLadder",
+        "coordinate": [
+            33176,
+            31790,
+            7
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "sword",
+        "type": "useLadder",
+        "coordinate": [
+            33178,
+            31787,
+            7
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "axe",
+        "type": "useLadder",
+        "coordinate": [
+            33181,
+            31787,
+            7
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "start_train",
+        "type": "walk",
+        "coordinate": [
+            33180,
+            31777,
+            7
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "useLadder",
+        "coordinate": [
+            33175,
+            31775,
+            7
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33176,
+            31764,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "travel",
+        "coordinate": [
+            33176,
+            31764,
+            6
+        ],
+        "options": {
+            "city": "Oramond"
+        },
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33486,
+            31985,
+            7
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            33492,
+            31985,
+            7
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    }
+]

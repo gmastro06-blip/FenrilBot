@@ -9,6 +9,8 @@ import os
 import pathlib
 import time
 
+from src.utils.runtime_settings import get_bool, get_float, get_int
+
 
 # TODO: add unit tests
 def setRadarMiddleware(context: Context) -> Context:
@@ -34,8 +36,18 @@ def setRadarMiddleware(context: Context) -> Context:
     # allow a short-lived fallback to the last good coordinate to avoid hard stalls.
     if coordinate is None:
         diag['consecutive_radar_coord_missing'] = int(diag.get('consecutive_radar_coord_missing', 0)) + 1
-        use_prev = os.getenv('FENRIL_RADAR_USE_PREVIOUS_ON_MISS', '1') != '0'
-        max_prev_ticks = int(os.getenv('FENRIL_RADAR_USE_PREVIOUS_MAX_TICKS', '3'))
+        use_prev = get_bool(
+            context,
+            'ng_runtime.radar_use_previous_on_miss',
+            env_var='FENRIL_RADAR_USE_PREVIOUS_ON_MISS',
+            default=True,
+        )
+        max_prev_ticks = get_int(
+            context,
+            'ng_runtime.radar_use_previous_max_ticks',
+            env_var='FENRIL_RADAR_USE_PREVIOUS_MAX_TICKS',
+            default=3,
+        )
         prev_coord = context.get('ng_radar', {}).get('previousCoordinate')
         if use_prev and prev_coord is not None and int(diag.get('consecutive_radar_coord_missing', 0)) <= max_prev_ticks:
             coordinate = prev_coord
@@ -82,9 +94,14 @@ def setRadarMiddleware(context: Context) -> Context:
             debug['floor_level'] = None
 
         # Optional: dump immediately on radar-tools miss (useful for short test runs).
-        if os.getenv('FENRIL_DUMP_RADAR_ON_FAIL', '0') in {'1', 'true', 'True'}:
+        if get_bool(context, 'ng_runtime.dump_radar_on_fail', env_var='FENRIL_DUMP_RADAR_ON_FAIL', default=False):
             now = time.time()
-            min_interval = float(os.getenv('FENRIL_DUMP_RADAR_MIN_INTERVAL_S', '60.0'))
+            min_interval = get_float(
+                context,
+                'ng_runtime.dump_radar_min_interval_s',
+                env_var='FENRIL_DUMP_RADAR_MIN_INTERVAL_S',
+                default=60.0,
+            )
             last_dump = float(diag.get('last_radar_dump_time', 0.0))
             if now - last_dump >= min_interval:
                 diag['last_radar_dump_time'] = now
@@ -98,7 +115,12 @@ def setRadarMiddleware(context: Context) -> Context:
                     pass
 
         # Recovery: reset locator caches after repeated misses.
-        reset_thr = int(os.getenv('FENRIL_RESET_LOCATOR_CACHE_THRESHOLD', '10'))
+        reset_thr = get_int(
+            context,
+            'ng_runtime.reset_locator_cache_threshold',
+            env_var='FENRIL_RESET_LOCATOR_CACHE_THRESHOLD',
+            default=10,
+        )
         if int(diag.get('consecutive_radar_tools_missing', 0)) >= reset_thr:
             try:
                 reset_fn = getattr(getRadarToolsPosition, 'reset_cache', None)
@@ -123,7 +145,12 @@ def setRadarMiddleware(context: Context) -> Context:
         diag['consecutive_game_window_arrows_missing'] = 0
 
     # Recovery: clear the game-window arrow cache after repeated misses.
-    reset_thr = int(os.getenv('FENRIL_RESET_LOCATOR_CACHE_THRESHOLD', '10'))
+    reset_thr = get_int(
+        context,
+        'ng_runtime.reset_locator_cache_threshold',
+        env_var='FENRIL_RESET_LOCATOR_CACHE_THRESHOLD',
+        default=10,
+    )
     if int(diag.get('consecutive_game_window_arrows_missing', 0)) >= reset_thr:
         try:
             gameWindowCache['left']['position'] = None
@@ -136,16 +163,36 @@ def setRadarMiddleware(context: Context) -> Context:
     # Dump frames when we keep failing to see radar/arrows.
     # This is helpful during setup but can spam `debug/` in long runs.
     # Default is OFF; enable with FENRIL_DUMP_RADAR_PERSISTENT=1.
-    radar_thr = int(os.getenv('FENRIL_DIAG_RADAR_MISSING_THRESHOLD', '30'))
-    arrows_thr = int(os.getenv('FENRIL_DIAG_ARROWS_MISSING_THRESHOLD', '30'))
+    radar_thr = get_int(
+        context,
+        'ng_runtime.diag_radar_missing_threshold',
+        env_var='FENRIL_DIAG_RADAR_MISSING_THRESHOLD',
+        default=30,
+    )
+    arrows_thr = get_int(
+        context,
+        'ng_runtime.diag_arrows_missing_threshold',
+        env_var='FENRIL_DIAG_ARROWS_MISSING_THRESHOLD',
+        default=30,
+    )
     should_dump = (
         int(diag.get('consecutive_radar_tools_missing', 0)) >= radar_thr
         or int(diag.get('consecutive_game_window_arrows_missing', 0)) >= arrows_thr
     )
-    if should_dump and os.getenv('FENRIL_DUMP_RADAR_PERSISTENT', '0') in {'1', 'true', 'True'}:
+    if should_dump and get_bool(
+        context,
+        'ng_runtime.dump_radar_persistent',
+        env_var='FENRIL_DUMP_RADAR_PERSISTENT',
+        default=False,
+    ):
         now = time.time()
         last_dump = float(diag.get('last_radar_dump_time', 0.0))
-        min_interval = float(os.getenv('FENRIL_DUMP_RADAR_PERSISTENT_MIN_INTERVAL_S', '120.0'))
+        min_interval = get_float(
+            context,
+            'ng_runtime.dump_radar_persistent_min_interval_s',
+            env_var='FENRIL_DUMP_RADAR_PERSISTENT_MIN_INTERVAL_S',
+            default=120.0,
+        )
         if now - last_dump >= min_interval:
             diag['last_radar_dump_time'] = now
             out_dir = pathlib.Path('debug')

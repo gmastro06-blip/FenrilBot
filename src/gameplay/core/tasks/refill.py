@@ -5,7 +5,10 @@ from .common.vector import VectorTask
 from .buyItem import BuyItemTask
 from .closeNpcTradeBox import CloseNpcTradeBoxTask
 from .enableChat import EnableChatTask
+from .expandBackpack import ExpandBackpackTask
+from .openBackpack import OpenBackpackTask
 from .say import SayTask
+from .sellEachFlask import SellEachFlaskTask
 from .selectChatTab import SelectChatTabTask
 from .setChatOff import SetChatOffTask
 from .setNextWaypoint import SetNextWaypointTask
@@ -43,6 +46,73 @@ class RefillTask(VectorTask):
             0, self.waypoint['options']['manaPotion']['quantity'] - manaPotionsAmount)
         amountOfHealthPotionsToBuy = max(
             0, self.waypoint['options']['healthPotion']['quantity'] - healthPotionsAmount)
+
+        # Optional: sell empty containers before buying potions.
+        # Defaults to True (safe allow-list) and can be disabled per waypoint.
+        sell_before_refill = True
+        sellable_items = ['empty potion flask', 'empty vial']
+        amount_per_stack = 100
+        max_slots_to_scan = 400
+        max_no_trade_retries = 10
+        max_no_screenshot_retries = 10
+        max_consecutive_unknown_slots = 12
+
+        try:
+            opts = self.waypoint.get('options') if isinstance(self.waypoint, dict) else None
+            if isinstance(opts, dict):
+                sbr = opts.get('sellFlasksBeforeRefill')
+                if isinstance(sbr, bool):
+                    sell_before_refill = sbr
+
+                si = opts.get('sellableItems')
+                if isinstance(si, list) and all(isinstance(x, str) for x in si):
+                    sellable_items = [x for x in si if x]
+
+                aps = opts.get('amountPerStack')
+                if isinstance(aps, int):
+                    amount_per_stack = max(1, aps)
+
+                msts = opts.get('maxSlotsToScan')
+                if isinstance(msts, int):
+                    max_slots_to_scan = max(1, msts)
+
+                mntr = opts.get('maxNoTradeRetries')
+                if isinstance(mntr, int):
+                    max_no_trade_retries = max(1, mntr)
+
+                mnsr = opts.get('maxNoScreenshotRetries')
+                if isinstance(mnsr, int):
+                    max_no_screenshot_retries = max(1, mnsr)
+
+                mcus = opts.get('maxConsecutiveUnknownSlots')
+                if isinstance(mcus, int):
+                    max_consecutive_unknown_slots = max(1, mcus)
+        except Exception:
+            pass
+
+        main_backpack = None
+        try:
+            if isinstance(context.get('ng_backpacks'), dict):
+                main_backpack = context['ng_backpacks'].get('main')
+        except Exception:
+            main_backpack = None
+
+        sell_tasks = []
+        if sell_before_refill and isinstance(main_backpack, str) and main_backpack:
+            sell_tasks = [
+                OpenBackpackTask(main_backpack).setParentTask(self).setRootTask(self),
+                ExpandBackpackTask(main_backpack).setParentTask(self).setRootTask(self),
+                SellEachFlaskTask(
+                    main_backpack,
+                    amount_per_stack=amount_per_stack,
+                    sellable_items=sellable_items,
+                    max_slots_to_scan=max_slots_to_scan,
+                    max_no_trade_window_ticks=max_no_trade_retries,
+                    max_no_screenshot_ticks=max_no_screenshot_retries,
+                    max_consecutive_unknown_slots=max_consecutive_unknown_slots,
+                ).setParentTask(self).setRootTask(self),
+            ]
+
         self.tasks = [
             SelectChatTabTask('local chat').setParentTask(
                 self).setRootTask(self),
@@ -51,6 +121,7 @@ class RefillTask(VectorTask):
             EnableChatTask().setParentTask(self).setRootTask(self),
             SayTask('potions' if self.waypoint['options']['houseNpcEnabled'] else 'trade').setParentTask(self).setRootTask(self),
             SetChatOffTask().setParentTask(self).setRootTask(self),
+            *sell_tasks,
             BuyItemTask(self.waypoint['options']['manaPotion']['item'], amountOfManaPotionsToBuy).setParentTask(
                 self).setRootTask(self),
             BuyItemTask(self.waypoint['options']['healthPotion']['item'], amountOfHealthPotionsToBuy, ignore=not self.waypoint['options']['healthPotionEnabled']).setParentTask(

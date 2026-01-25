@@ -13,6 +13,7 @@ from .scrollToItem import ScrollToItemTask
 from .setNextWaypoint import SetNextWaypointTask
 from src.utils.array import getNextArrayIndex
 from src.gameplay.core.waypoint import resolveGoalCoordinate
+from src.utils.console_log import log_throttled
 
 class DepositItemsTask(VectorTask):
     def __init__(self: "DepositItemsTask", waypoint: Waypoint) -> None:
@@ -24,16 +25,49 @@ class DepositItemsTask(VectorTask):
         self.waypoint = waypoint
 
     def onBeforeStart(self, context: Context) -> Context:
+        # Validate backpack config early; otherwise the task can stall on openBackpack forever
+        # when the capture doesn't include the inventory panel or when names are missing.
+        try:
+            bp = context.get('ng_backpacks', {}) if isinstance(context, dict) else {}
+            main_bp = (bp.get('main') or '').strip() if isinstance(bp, dict) else ''
+            loot_bp = (bp.get('loot') or '').strip() if isinstance(bp, dict) else ''
+        except Exception:
+            main_bp, loot_bp = '', ''
+
+        if not main_bp or not loot_bp:
+            log_throttled(
+                'depositItems.missing_backpacks',
+                'warn',
+                'depositItems: missing ng_backpacks.main/ng_backpacks.loot configuration. Set your Main/Loot backpacks in the UI before using depositItems.',
+                10.0,
+            )
+            return self.onTimeout(context)
+
+        try:
+            # Ensure the required templates exist.
+            _ = images['containersBars'][main_bp]
+            _ = images['containersBars'][loot_bp]
+            _ = images['slots'][main_bp]
+            _ = images['slots'][loot_bp]
+        except Exception:
+            log_throttled(
+                'depositItems.unknown_backpacks',
+                'warn',
+                f"depositItems: backpack templates not found for main={main_bp!r} loot={loot_bp!r}. Pick backpacks that exist in inventory templates.",
+                10.0,
+            )
+            return self.onTimeout(context)
+
         self.tasks = [
             GoToFreeDepotTask(self.waypoint).setParentTask(self).setRootTask(self),
             OpenLockerTask().setParentTask(self).setRootTask(self),
-            OpenBackpackTask(context['ng_backpacks']['main']).setParentTask(self).setRootTask(self),
-            ScrollToItemTask(images['containersBars'][context['ng_backpacks']['main']], images['slots'][context['ng_backpacks']['loot']]).setParentTask(self).setRootTask(self),
-            DropBackpackIntoStashTask(context['ng_backpacks']['loot']).setParentTask(self).setRootTask(self),
+            OpenBackpackTask(main_bp).setParentTask(self).setRootTask(self),
+            ScrollToItemTask(images['containersBars'][main_bp], images['slots'][loot_bp]).setParentTask(self).setRootTask(self),
+            DropBackpackIntoStashTask(loot_bp).setParentTask(self).setRootTask(self),
             OpenDepotTask().setParentTask(self).setRootTask(self),
-            OpenBackpackTask(context['ng_backpacks']['loot']).setParentTask(self).setRootTask(self),
-            DragItemsTask(images['containersBars'][context['ng_backpacks']['loot']], images['slots']['depot chest 2']).setParentTask(self).setRootTask(self),
-            CloseContainerTask(images['containersBars'][context['ng_backpacks']['loot']]).setParentTask(self).setRootTask(self),
+            OpenBackpackTask(loot_bp).setParentTask(self).setRootTask(self),
+            DragItemsTask(images['containersBars'][loot_bp], images['slots']['depot chest 2']).setParentTask(self).setRootTask(self),
+            CloseContainerTask(images['containersBars'][loot_bp]).setParentTask(self).setRootTask(self),
             SetNextWaypointTask().setParentTask(self).setRootTask(self),
         ]
         return context

@@ -247,47 +247,65 @@
     },
     {
         "label": "",
-        "type": "walk",
+        "type": "sellFlasks",
         "coordinate": [
             32399,
             32220,
             7
         ],
         "options": {
-            "action": "sell",
-            "note": "unsupported"
+            "sellableItems": [
+                "empty potion flask",
+                "empty vial"
+            ]
         },
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
         "label": "",
-        "type": "walk",
+        "type": "refill",
         "coordinate": [
             32399,
             32220,
             7
         ],
         "options": {
-            "action": "buy_potions",
-            "note": "unsupported"
+            "healthPotionEnabled": false,
+            "houseNpcEnabled": false,
+            "healthPotion": {
+                "item": "Health Potion",
+                "quantity": 0
+            },
+            "manaPotion": {
+                "item": "Mana Potion",
+                "quantity": 5
+            },
+            "sellFlasksBeforeRefill": true,
+            "sellableItems": [
+                "empty potion flask",
+                "empty vial"
+            ]
         },
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
         "label": "",
-        "type": "walk",
+        "type": "refillChecker",
         "coordinate": [
             32399,
             32220,
             7
         ],
         "options": {
-            "action": "check_supplies",
-            "note": "unsupported"
+            "minimumAmountOfHealthPotions": 0,
+            "minimumAmountOfManaPotions": 1,
+            "minimumAmountOfCap": 80,
+            "healthEnabled": false,
+            "waypointLabelToRedirect": "go_hunt"
         },
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -772,17 +790,20 @@
     },
     {
         "label": "continue",
-        "type": "walk",
+        "type": "refillChecker",
         "coordinate": [
             32428,
             32313,
             8
         ],
         "options": {
-            "action": "check",
-            "note": "unsupported"
+            "minimumAmountOfHealthPotions": 0,
+            "minimumAmountOfManaPotions": 1,
+            "minimumAmountOfCap": 80,
+            "healthEnabled": false,
+            "waypointLabelToRedirect": "leave"
         },
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {

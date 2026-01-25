@@ -1,589 +1,610 @@
 [
-  {
-    "label": "refill",
-    "type": "walk",
-    "coordinate": [
-      32681,
-      31686,
-      6
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "depositItems",
-    "coordinate": [
-      32681,
-      31686,
-      6
-    ],
-    "options": {},
-    "ignore": false,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32681,
-      31669,
-      6
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32670,
-      31660,
-      6
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32670,
-      31659,
-      6
-    ],
-    "options": {},
-    "ignore": false,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32670,
-      31659,
-      6
-    ],
-    "options": {
-      "action": "sell",
-      "note": "unsupported"
+    {
+        "label": "refill",
+        "type": "walk",
+        "coordinate": [
+            32681,
+            31686,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
     },
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32670,
-      31659,
-      6
-    ],
-    "options": {
-      "action": "buy_potions",
-      "note": "unsupported"
+    {
+        "label": "",
+        "type": "depositItems",
+        "coordinate": [
+            32681,
+            31686,
+            6
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
     },
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32669,
-      31663,
-      6
-    ],
-    "options": {},
-    "ignore": false,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32669,
-      31663,
-      6
-    ],
-    "options": {
-      "action": "check_supplies",
-      "note": "unsupported"
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32681,
+            31669,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
     },
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "go_hunt",
-    "type": "walk",
-    "coordinate": [
-      32659,
-      31664,
-      6
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32656,
-      31673,
-      6
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "moveDown",
-    "coordinate": [
-      32656,
-      31674,
-      6
-    ],
-    "options": {
-      "direction": "south"
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32670,
+            31660,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
     },
-    "ignore": false,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32645,
-      31693,
-      7
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32638,
-      31713,
-      7
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32616,
-      31716,
-      7
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "hunt",
-    "type": "walk",
-    "coordinate": [
-      32607,
-      31702,
-      7
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "approach",
-    "type": "walk",
-    "coordinate": [
-      32604,
-      31704,
-      7
-    ],
-    "options": {},
-    "ignore": false,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "moveDown",
-    "coordinate": [
-      32603,
-      31704,
-      7
-    ],
-    "options": {
-      "direction": "west"
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32670,
+            31659,
+            6
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
     },
-    "ignore": false,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32612,
-      31703,
-      8
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "approach",
-    "type": "walk",
-    "coordinate": [
-      32615,
-      31700,
-      8
-    ],
-    "options": {},
-    "ignore": false,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "moveDown",
-    "coordinate": [
-      32616,
-      31700,
-      8
-    ],
-    "options": {
-      "direction": "east"
+    {
+        "label": "",
+        "type": "sellFlasks",
+        "coordinate": [
+            32670,
+            31659,
+            6
+        ],
+        "options": {
+            "sellableItems": [
+                "empty potion flask",
+                "empty vial"
+            ]
+        },
+        "ignore": false,
+        "passinho": false
     },
-    "ignore": false,
-    "passinho": false
-  },
-  {
-    "label": "approach",
-    "type": "walk",
-    "coordinate": [
-      32612,
-      31684,
-      9
-    ],
-    "options": {},
-    "ignore": false,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "moveDown",
-    "coordinate": [
-      32612,
-      31683,
-      9
-    ],
-    "options": {
-      "direction": "north"
+    {
+        "label": "",
+        "type": "refill",
+        "coordinate": [
+            32670,
+            31659,
+            6
+        ],
+        "options": {
+            "healthPotionEnabled": false,
+            "houseNpcEnabled": false,
+            "healthPotion": {
+                "item": "Health Potion",
+                "quantity": 0
+            },
+            "manaPotion": {
+                "item": "Mana Potion",
+                "quantity": 5
+            },
+            "sellFlasksBeforeRefill": true,
+            "sellableItems": [
+                "empty potion flask",
+                "empty vial"
+            ]
+        },
+        "ignore": false,
+        "passinho": false
     },
-    "ignore": false,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32618,
-      31706,
-      10
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32634,
-      31700,
-      10
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32623,
-      31688,
-      10
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "useRope",
-    "coordinate": [
-      32612,
-      31683,
-      10
-    ],
-    "options": {},
-    "ignore": false,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32604,
-      31707,
-      9
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32627,
-      31709,
-      9
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32642,
-      31709,
-      9
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32639,
-      31692,
-      9
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32631,
-      31677,
-      9
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "useRope",
-    "coordinate": [
-      32622,
-      31691,
-      9
-    ],
-    "options": {},
-    "ignore": false,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32607,
-      31697,
-      8
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32605,
-      31701,
-      8
-    ],
-    "options": {},
-    "ignore": false,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32603,
-      31703,
-      8
-    ],
-    "options": {},
-    "ignore": false,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "useRope",
-    "coordinate": [
-      32603,
-      31704,
-      8
-    ],
-    "options": {},
-    "ignore": false,
-    "passinho": false
-  },
-  {
-    "label": "continue",
-    "type": "walk",
-    "coordinate": [
-      32603,
-      31704,
-      7
-    ],
-    "options": {
-      "action": "check",
-      "note": "unsupported"
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32669,
+            31663,
+            6
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
     },
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "leave",
-    "type": "walk",
-    "coordinate": [
-      32610,
-      31712,
-      7
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32630,
-      31713,
-      7
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32640,
-      31709,
-      7
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32649,
-      31684,
-      7
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "useLadder",
-    "coordinate": [
-      32656,
-      31674,
-      7
-    ],
-    "options": {},
-    "ignore": false,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32666,
-      31686,
-      6
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32681,
-      31687,
-      6
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "",
-    "type": "walk",
-    "coordinate": [
-      32681,
-      31687,
-      6
-    ],
-    "options": {
-      "action": "check_time",
-      "note": "unsupported"
+    {
+        "label": "",
+        "type": "refillChecker",
+        "coordinate": [
+            32669,
+            31663,
+            6
+        ],
+        "options": {
+            "minimumAmountOfHealthPotions": 0,
+            "minimumAmountOfManaPotions": 1,
+            "minimumAmountOfCap": 8,
+            "healthEnabled": false,
+            "waypointLabelToRedirect": "go_hunt"
+        },
+        "ignore": false,
+        "passinho": false
     },
-    "ignore": true,
-    "passinho": false
-  },
-  {
-    "label": "train",
-    "type": "walk",
-    "coordinate": [
-      32681,
-      31687,
-      6
-    ],
-    "options": {},
-    "ignore": true,
-    "passinho": false
-  }
+    {
+        "label": "go_hunt",
+        "type": "walk",
+        "coordinate": [
+            32659,
+            31664,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32656,
+            31673,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "moveDown",
+        "coordinate": [
+            32656,
+            31674,
+            6
+        ],
+        "options": {
+            "direction": "south"
+        },
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32645,
+            31693,
+            7
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32638,
+            31713,
+            7
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32616,
+            31716,
+            7
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "hunt",
+        "type": "walk",
+        "coordinate": [
+            32607,
+            31702,
+            7
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "approach",
+        "type": "walk",
+        "coordinate": [
+            32604,
+            31704,
+            7
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "moveDown",
+        "coordinate": [
+            32603,
+            31704,
+            7
+        ],
+        "options": {
+            "direction": "west"
+        },
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32612,
+            31703,
+            8
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "approach",
+        "type": "walk",
+        "coordinate": [
+            32615,
+            31700,
+            8
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "moveDown",
+        "coordinate": [
+            32616,
+            31700,
+            8
+        ],
+        "options": {
+            "direction": "east"
+        },
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "approach",
+        "type": "walk",
+        "coordinate": [
+            32612,
+            31684,
+            9
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "moveDown",
+        "coordinate": [
+            32612,
+            31683,
+            9
+        ],
+        "options": {
+            "direction": "north"
+        },
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32618,
+            31706,
+            10
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32634,
+            31700,
+            10
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32623,
+            31688,
+            10
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "useRope",
+        "coordinate": [
+            32612,
+            31683,
+            10
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32604,
+            31707,
+            9
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32627,
+            31709,
+            9
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32642,
+            31709,
+            9
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32639,
+            31692,
+            9
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32631,
+            31677,
+            9
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "useRope",
+        "coordinate": [
+            32622,
+            31691,
+            9
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32607,
+            31697,
+            8
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32605,
+            31701,
+            8
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32603,
+            31703,
+            8
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "useRope",
+        "coordinate": [
+            32603,
+            31704,
+            8
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "continue",
+        "type": "refillChecker",
+        "coordinate": [
+            32603,
+            31704,
+            7
+        ],
+        "options": {
+            "minimumAmountOfHealthPotions": 0,
+            "minimumAmountOfManaPotions": 1,
+            "minimumAmountOfCap": 8,
+            "healthEnabled": false,
+            "waypointLabelToRedirect": "leave"
+        },
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "leave",
+        "type": "walk",
+        "coordinate": [
+            32610,
+            31712,
+            7
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32630,
+            31713,
+            7
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32640,
+            31709,
+            7
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32649,
+            31684,
+            7
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "useLadder",
+        "coordinate": [
+            32656,
+            31674,
+            7
+        ],
+        "options": {},
+        "ignore": false,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32666,
+            31686,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32681,
+            31687,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "",
+        "type": "walk",
+        "coordinate": [
+            32681,
+            31687,
+            6
+        ],
+        "options": {
+            "action": "check_time",
+            "note": "unsupported"
+        },
+        "ignore": true,
+        "passinho": false
+    },
+    {
+        "label": "train",
+        "type": "walk",
+        "coordinate": [
+            32681,
+            31687,
+            6
+        ],
+        "options": {},
+        "ignore": true,
+        "passinho": false
+    }
 ]

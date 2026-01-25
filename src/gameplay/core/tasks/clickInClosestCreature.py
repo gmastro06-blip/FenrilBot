@@ -1,4 +1,3 @@
-import os
 import time
 
 import src.utils.keyboard as keyboard
@@ -8,7 +7,7 @@ from .common.base import BaseTask
 from src.repositories.battleList import extractors as battlelist_extractors
 from src.shared.typings import XYCoordinate
 from src.utils.console_log import log_throttled
-from src.utils.runtime_settings import get_bool
+from src.utils.runtime_settings import get_bool, get_float, get_int, get_str
 
 class ClickInClosestCreatureTask(BaseTask):
     def __init__(self) -> None:
@@ -28,140 +27,131 @@ class ClickInClosestCreatureTask(BaseTask):
         sustain attacks.
         """
 
-        manual_cfg = context.get('manual_auto_attack') if isinstance(context, dict) else None
-        cfg_enabled = False
-        if isinstance(manual_cfg, dict):
-            cfg_enabled = bool(manual_cfg.get('enabled', False))
-
-        env_enabled = os.getenv('FENRIL_MANUAL_AUTO_ATTACK', '0') in {'1', 'true', 'True'}
-        if not (cfg_enabled or env_enabled):
+        enabled = get_bool(
+            context,
+            'manual_auto_attack.enabled',
+            env_var='FENRIL_MANUAL_AUTO_ATTACK',
+            default=False,
+            prefer_env=True,
+        )
+        if not enabled:
             return False
 
         # By default, manual auto-attack runs regardless of current attacking state
         # (useful for "next target" cycling). You can restrict it if desired.
-        only_when_not_attacking = False
-        if isinstance(manual_cfg, dict) and manual_cfg.get('only_when_not_attacking') is not None:
-            only_when_not_attacking = bool(manual_cfg.get('only_when_not_attacking'))
-        else:
-            only_when_not_attacking = os.getenv('FENRIL_MANUAL_AUTO_ATTACK_ONLY_WHEN_NOT_ATTACKING', '0') in {'1', 'true', 'True'}
+        only_when_not_attacking = get_bool(
+            context,
+            'manual_auto_attack.only_when_not_attacking',
+            env_var='FENRIL_MANUAL_AUTO_ATTACK_ONLY_WHEN_NOT_ATTACKING',
+            default=False,
+            prefer_env=True,
+        )
         attacking = bool(context.get('ng_cave', {}).get('isAttackingSomeCreature', False))
         if only_when_not_attacking and attacking:
             return False
 
-        interval_s = None
-        if isinstance(manual_cfg, dict):
-            try:
-                raw_interval = manual_cfg.get('interval_s')
-                if raw_interval is not None:
-                    interval_s = float(raw_interval)
-            except Exception:
-                interval_s = None
-        if interval_s is None:
-            try:
-                interval_s = float(os.getenv('FENRIL_MANUAL_AUTO_ATTACK_INTERVAL_S', '0.70'))
-            except Exception:
-                interval_s = 0.70
+        interval_s = get_float(
+            context,
+            'manual_auto_attack.interval_s',
+            env_var='FENRIL_MANUAL_AUTO_ATTACK_INTERVAL_S',
+            default=0.70,
+            prefer_env=True,
+        )
 
         now = time.time()
         if (now - self._last_manual_attack_ts) < interval_s:
             return True
         self._last_manual_attack_ts = now
 
-        method = None
-        if isinstance(manual_cfg, dict):
-            try:
-                method = str(manual_cfg.get('method', '')).strip().lower()
-            except Exception:
-                method = None
-        if not method:
-            method = os.getenv('FENRIL_MANUAL_AUTO_ATTACK_METHOD', 'hotkey').strip().lower()
+        method = get_str(
+            context,
+            'manual_auto_attack.method',
+            env_var='FENRIL_MANUAL_AUTO_ATTACK_METHOD',
+            default='hotkey',
+            prefer_env=True,
+        ).strip().lower()
 
         if method in {'click', 'cursor', 'cursor_click'}:
             # Click at current cursor position.
             # NOTE: this intentionally does not move the mouse.
-            modifier = None
-            button = None
-            if isinstance(manual_cfg, dict):
-                try:
-                    modifier = str(manual_cfg.get('click_modifier', '')).strip().lower() or None
-                except Exception:
-                    modifier = None
-                try:
-                    button = str(manual_cfg.get('click_button', '')).strip().lower() or None
-                except Exception:
-                    button = None
-            if not modifier:
-                modifier = os.getenv('FENRIL_MANUAL_AUTO_ATTACK_CLICK_MODIFIER', 'none')
-            if not button:
-                button = os.getenv('FENRIL_MANUAL_AUTO_ATTACK_CLICK_BUTTON', 'left')
+            modifier = get_str(
+                context,
+                'manual_auto_attack.click_modifier',
+                env_var='FENRIL_MANUAL_AUTO_ATTACK_CLICK_MODIFIER',
+                default='none',
+                prefer_env=True,
+            ).strip().lower()
+            button = get_str(
+                context,
+                'manual_auto_attack.click_button',
+                env_var='FENRIL_MANUAL_AUTO_ATTACK_CLICK_BUTTON',
+                default='left',
+                prefer_env=True,
+            ).strip().lower()
             self._with_modifier_click(
                 (0, 0),
                 modifier=modifier,
                 button=button,
                 context=context,
                 click_at_cursor=True,
+                move_before_click=False,
             )
             if isinstance(context.get('ng_debug'), dict):
                 context['ng_debug']['last_tick_reason'] = 'manual auto-attack: cursor click'
             return True
 
         # Default: hotkey
-        hotkey = None
-        if isinstance(manual_cfg, dict):
-            try:
-                hotkey = str(manual_cfg.get('hotkey', '')).strip().lower()
-            except Exception:
-                hotkey = None
-        if not hotkey:
-            hotkey = os.getenv('FENRIL_MANUAL_AUTO_ATTACK_HOTKEY', '').strip().lower()
-        if not hotkey:
-            # Default to Tibia next-target hotkey for manual cycling.
-            hotkey = os.getenv('FENRIL_ATTACK_HOTKEY', 'pageup').strip().lower()
+        hotkey = get_str(
+            context,
+            'manual_auto_attack.hotkey',
+            env_var='FENRIL_MANUAL_AUTO_ATTACK_HOTKEY',
+            default='pageup',
+            prefer_env=True,
+        ).strip().lower() or 'pageup'
 
-        focus_enabled = False
-        if isinstance(manual_cfg, dict) and manual_cfg.get('focus_before') is not None:
-            focus_enabled = bool(manual_cfg.get('focus_before'))
-        else:
-            focus_raw = os.getenv('FENRIL_FOCUS_ACTION_WINDOW_BEFORE_MANUAL_HOTKEY')
-            if focus_raw is None:
-                focus_raw = os.getenv('FENRIL_FOCUS_ACTION_WINDOW_BEFORE_ATTACK_CLICK', '0')
-            focus_enabled = focus_raw not in {'0', 'false', 'False'}
+        focus_enabled = get_bool(
+            context,
+            'manual_auto_attack.focus_before',
+            env_var='FENRIL_FOCUS_ACTION_WINDOW_BEFORE_MANUAL_HOTKEY',
+            default=False,
+            prefer_env=True,
+        )
+        if not focus_enabled:
+            # Back-compat: older env var used for attack clicks.
+            focus_enabled = get_bool(
+                context,
+                'manual_auto_attack.focus_before',
+                env_var='FENRIL_FOCUS_ACTION_WINDOW_BEFORE_ATTACK_CLICK',
+                default=False,
+                prefer_env=True,
+            )
         if focus_enabled:
             self._focus_action_window(context)
             try:
-                pre_delay_s = None
-                if isinstance(manual_cfg, dict) and manual_cfg.get('pre_delay_s') is not None:
-                    try:
-                        raw_pre = manual_cfg.get('pre_delay_s')
-                        if raw_pre is not None:
-                            pre_delay_s = float(raw_pre)
-                    except Exception:
-                        pre_delay_s = None
-                if pre_delay_s is None:
-                    pre_delay_s = float(os.getenv('FENRIL_MANUAL_AUTO_ATTACK_PRE_DELAY_S', '0.02'))
+                pre_delay_s = get_float(
+                    context,
+                    'manual_auto_attack.pre_delay_s',
+                    env_var='FENRIL_MANUAL_AUTO_ATTACK_PRE_DELAY_S',
+                    default=0.02,
+                    prefer_env=True,
+                )
                 time.sleep(pre_delay_s)
             except Exception:
                 pass
 
         # Optional extra reliability: repeat the key press a few times.
-        repeats = None
-        if isinstance(manual_cfg, dict) and manual_cfg.get('key_repeat') is not None:
-            try:
-                raw_repeats = manual_cfg.get('key_repeat')
-                if raw_repeats is not None:
-                    repeats = int(raw_repeats)
-            except Exception:
-                repeats = None
-        if repeats is None:
-            try:
-                repeats = int(os.getenv('FENRIL_MANUAL_AUTO_ATTACK_KEY_REPEAT', '1'))
-            except Exception:
-                repeats = 1
+        repeats = get_int(
+            context,
+            'manual_auto_attack.key_repeat',
+            env_var='FENRIL_MANUAL_AUTO_ATTACK_KEY_REPEAT',
+            default=1,
+            prefer_env=True,
+        )
         if repeats < 1:
             repeats = 1
         if repeats > 3:
             repeats = 3
-        if os.getenv('FENRIL_INPUT_DIAG', '0') in {'1', 'true', 'True'}:
+        if get_bool(context, 'ng_runtime.input_diag', env_var='FENRIL_INPUT_DIAG', default=False, prefer_env=True):
             log_throttled(
                 'input.manual_attack.hotkey',
                 'info',
@@ -182,13 +172,15 @@ class ClickInClosestCreatureTask(BaseTask):
 
     def _focus_action_window(self, context: Context) -> bool:
         # Default OFF to avoid stealing focus; enable explicitly when needed.
-        manual_cfg = context.get('manual_auto_attack') if isinstance(context, dict) else None
-        if isinstance(manual_cfg, dict) and manual_cfg.get('focus_before') is not None:
-            if not bool(manual_cfg.get('focus_before')):
-                return False
-        else:
-            if os.getenv('FENRIL_FOCUS_ACTION_WINDOW_BEFORE_ATTACK_CLICK', '0') in {'0', 'false', 'False'}:
-                return False
+        focus_enabled = get_bool(
+            context,
+            'manual_auto_attack.focus_before',
+            env_var='FENRIL_FOCUS_ACTION_WINDOW_BEFORE_ATTACK_CLICK',
+            default=False,
+            prefer_env=True,
+        )
+        if not focus_enabled:
+            return False
 
         win = context.get('action_window') or context.get('window')
         if win is None:
@@ -228,19 +220,13 @@ class ClickInClosestCreatureTask(BaseTask):
             pass
 
         if focused:
-            delay_s = None
-            if isinstance(manual_cfg, dict) and manual_cfg.get('focus_after_s') is not None:
-                try:
-                    raw_focus_after = manual_cfg.get('focus_after_s')
-                    if raw_focus_after is not None:
-                        delay_s = float(raw_focus_after)
-                except Exception:
-                    delay_s = None
-            if delay_s is None:
-                try:
-                    delay_s = float(os.getenv('FENRIL_FOCUS_AFTER_S', '0.05'))
-                except Exception:
-                    delay_s = 0.05
+            delay_s = get_float(
+                context,
+                'manual_auto_attack.focus_after_s',
+                env_var='FENRIL_FOCUS_AFTER_S',
+                default=0.05,
+                prefer_env=True,
+            )
             try:
                 time.sleep(delay_s)
             except Exception:
@@ -255,6 +241,7 @@ class ClickInClosestCreatureTask(BaseTask):
         button: str = 'left',
         context: Context,
         click_at_cursor: bool = False,
+        move_before_click: bool = True,
     ) -> None:
         modifier = modifier.strip().lower()
         button = button.strip().lower()
@@ -264,12 +251,18 @@ class ClickInClosestCreatureTask(BaseTask):
 
         # Safety: allow users to completely disable right-click during targeting.
         # This affects ONLY this task (attack clicks), not waypoint/utility tasks.
-        if os.getenv('FENRIL_BLOCK_RIGHT_CLICK_ATTACK', '0') in {'1', 'true', 'True'}:
+        if get_bool(
+            context,
+            'ng_runtime.block_right_click_attack',
+            env_var='FENRIL_BLOCK_RIGHT_CLICK_ATTACK',
+            default=False,
+            prefer_env=True,
+        ):
             button = 'left'
 
         focused = self._focus_action_window(context)
 
-        if os.getenv('FENRIL_INPUT_DIAG', '0') in {'1', 'true', 'True'}:
+        if get_bool(context, 'ng_runtime.input_diag', env_var='FENRIL_INPUT_DIAG', default=False, prefer_env=True):
             try:
                 abs_coord = mouse.transform_capture_to_action(coord)
                 cap_rect, act_rect = mouse.get_window_transform()
@@ -284,11 +277,20 @@ class ClickInClosestCreatureTask(BaseTask):
 
         if click_at_cursor:
             # Make the click a distinct event: move first, then click at current cursor.
-            try:
-                mouse.moveTo(coord)
-                time.sleep(float(os.getenv('FENRIL_ATTACK_CLICK_PRE_DELAY_S', '0.06')))
-            except Exception:
-                pass
+            if move_before_click:
+                try:
+                    mouse.moveTo(coord)
+                    time.sleep(
+                        get_float(
+                            context,
+                            'ng_runtime.attack_click_pre_delay_s',
+                            env_var='FENRIL_ATTACK_CLICK_PRE_DELAY_S',
+                            default=0.06,
+                            prefer_env=True,
+                        )
+                    )
+                except Exception:
+                    pass
 
         if modifier in {'none', 'no', '0', ''}:
             if button == 'right':
@@ -296,7 +298,7 @@ class ClickInClosestCreatureTask(BaseTask):
             else:
                 mouse.leftClick(None if click_at_cursor else coord)
 
-            if os.getenv('FENRIL_INPUT_DIAG', '0') in {'1', 'true', 'True'}:
+            if get_bool(context, 'ng_runtime.input_diag', env_var='FENRIL_INPUT_DIAG', default=False, prefer_env=True):
                 try:
                     backend = mouse.get_last_click_backend()
                     log_throttled(
@@ -318,7 +320,7 @@ class ClickInClosestCreatureTask(BaseTask):
             mouse.leftClick(None if click_at_cursor else coord)
         keyboard.keyUp(modifier)
 
-        if os.getenv('FENRIL_INPUT_DIAG', '0') in {'1', 'true', 'True'}:
+        if get_bool(context, 'ng_runtime.input_diag', env_var='FENRIL_INPUT_DIAG', default=False, prefer_env=True):
             try:
                 backend = mouse.get_last_click_backend()
                 log_throttled(
@@ -380,8 +382,20 @@ class ClickInClosestCreatureTask(BaseTask):
                 if has_players or has_ignorable:
                     self._with_modifier_click(
                         closest_creature['windowCoordinate'],
-                        modifier=os.getenv('FENRIL_ATTACK_SAFE_CLICK_MODIFIER', 'alt'),
-                        button=os.getenv('FENRIL_ATTACK_CLICK_BUTTON', 'left'),
+                        modifier=get_str(
+                            context,
+                            'ng_runtime.attack_safe_click_modifier',
+                            env_var='FENRIL_ATTACK_SAFE_CLICK_MODIFIER',
+                            default='alt',
+                            prefer_env=True,
+                        ),
+                        button=get_str(
+                            context,
+                            'ng_runtime.attack_click_button',
+                            env_var='FENRIL_ATTACK_CLICK_BUTTON',
+                            default='left',
+                            prefer_env=True,
+                        ),
                         context=context,
                         click_at_cursor=False,
                     )
@@ -389,8 +403,14 @@ class ClickInClosestCreatureTask(BaseTask):
                         context['ng_debug']['last_tick_reason'] = 'attack click: closestCreature (safe)'
                     return context
 
-                hotkey = os.getenv('FENRIL_ATTACK_HOTKEY', 'space')
-                if os.getenv('FENRIL_INPUT_DIAG', '0') in {'1', 'true', 'True'}:
+                hotkey = get_str(
+                    context,
+                    'ng_runtime.attack_hotkey',
+                    env_var='FENRIL_ATTACK_HOTKEY',
+                    default='space',
+                    prefer_env=True,
+                ).strip().lower() or 'space'
+                if get_bool(context, 'ng_runtime.input_diag', env_var='FENRIL_INPUT_DIAG', default=False, prefer_env=True):
                     log_throttled('input.attack.hotkey', 'info', f"input: attack hotkey={hotkey!r}", 1.0)
                 keyboard.press(hotkey)
                 if isinstance(context.get('ng_debug'), dict):
@@ -405,18 +425,42 @@ class ClickInClosestCreatureTask(BaseTask):
                 # open menus / behave unexpectedly depending on Tibia settings.
                 self._with_modifier_click(
                     battle_click,
-                    modifier=os.getenv('FENRIL_BATTLELIST_ATTACK_CLICK_MODIFIER', 'none'),
-                    button=os.getenv('FENRIL_BATTLELIST_ATTACK_CLICK_BUTTON', 'left'),
+                    modifier=get_str(
+                        context,
+                        'ng_runtime.battlelist_attack_click_modifier',
+                        env_var='FENRIL_BATTLELIST_ATTACK_CLICK_MODIFIER',
+                        default='none',
+                        prefer_env=True,
+                    ),
+                    button=get_str(
+                        context,
+                        'ng_runtime.battlelist_attack_click_button',
+                        env_var='FENRIL_BATTLELIST_ATTACK_CLICK_BUTTON',
+                        default='left',
+                        prefer_env=True,
+                    ),
                     context=context,
-                    click_at_cursor=os.getenv('FENRIL_BATTLELIST_CLICK_AT_CURSOR', '0') in {'1', 'true', 'True'},
+                    click_at_cursor=get_bool(
+                        context,
+                        'ng_runtime.battlelist_click_at_cursor',
+                        env_var='FENRIL_BATTLELIST_CLICK_AT_CURSOR',
+                        default=False,
+                        prefer_env=True,
+                    ),
                 )
                 if isinstance(context.get('ng_debug'), dict):
                     context['ng_debug']['last_tick_reason'] = 'attack click: battleList[0]'
                 return context
 
             # Last resort: send a hotkey (user-configurable).
-            hotkey = os.getenv('FENRIL_ATTACK_HOTKEY', 'space')
-            if os.getenv('FENRIL_INPUT_DIAG', '0') in {'1', 'true', 'True'}:
+            hotkey = get_str(
+                context,
+                'ng_runtime.attack_hotkey',
+                env_var='FENRIL_ATTACK_HOTKEY',
+                default='space',
+                prefer_env=True,
+            ).strip().lower() or 'space'
+            if get_bool(context, 'ng_runtime.input_diag', env_var='FENRIL_INPUT_DIAG', default=False, prefer_env=True):
                 log_throttled('input.attack.hotkey', 'info', f"input: attack hotkey={hotkey!r}", 1.0)
             keyboard.press(hotkey)
             if isinstance(context.get('ng_debug'), dict):

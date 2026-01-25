@@ -1,5 +1,6 @@
 from src.gameplay.core.tasks.collectDeadCorpse import CollectDeadCorpseTask
 from src.gameplay.core.tasks.lootCorpse import LootCorpseTask
+from src.gameplay.core.tasks.walkToCoordinate import WalkToCoordinateTask
 
 
 context = {}
@@ -14,8 +15,13 @@ def test_should_test_default_params():
 def test_onBeforeStart():
     task = LootCorpseTask(creature)
     assert task.onBeforeStart(context) == context
-    assert len(task.tasks) == 1
-    assert isinstance(task.tasks[0], CollectDeadCorpseTask)
-    assert task.tasks[0].creature == creature
+    assert len(task.tasks) == 2
+
+    assert isinstance(task.tasks[0], WalkToCoordinateTask)
     assert task.tasks[0].parentTask == task
     assert task.tasks[0].rootTask == task
+
+    assert isinstance(task.tasks[1], CollectDeadCorpseTask)
+    assert task.tasks[1].creature == creature
+    assert task.tasks[1].parentTask == task
+    assert task.tasks[1].rootTask == task

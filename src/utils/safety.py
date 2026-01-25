@@ -1,8 +1,20 @@
 import math
-import os
 from typing import Optional
 
-SAFE_LOG_ENABLED = os.getenv("FENRIL_SAFE_LOG", "").lower() in {"1", "true", "yes", "on"}
+from src.utils.runtime_settings import get_bool
+
+SAFE_LOG_ENABLED = get_bool({}, '_', env_var='FENRIL_SAFE_LOG', default=False, prefer_env=True)
+
+
+def configure_safe_log(*, enabled: Optional[bool] = None) -> None:
+    """Configure whether safety telemetry logs are printed.
+
+    Default comes from env var, but runtime can override via config.
+    """
+    global SAFE_LOG_ENABLED
+    if enabled is None:
+        return
+    SAFE_LOG_ENABLED = bool(enabled)
 
 
 def _log_invalid(label: str, value: object, reason: str) -> None:

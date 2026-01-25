@@ -150,6 +150,25 @@ poetry install
 poetry run python main.py
 ```
 
+## Runtime config (no env vars needed)
+
+Most "knobs" that used to be controlled via `FENRIL_*` environment variables are now persisted per-profile in `file.json` under `ng_runtime` (and editable in the UI).
+
+If you run into `ModuleNotFoundError` while doing quick checks like `python -c "..."`, you’re probably using the wrong interpreter (global Python instead of the project environment). Use one of these:
+
+- `poetry run python main.py`
+- Or call the venv directly: `./.venv/Scripts/python.exe ...`
+
+### Task timeouts
+
+Task timeouts are stored at `ng_runtime.task_timeouts` and can be edited in the UI (Config → Runtime → Task timeouts). Example keys:
+
+- `buyItem`
+- `openDepot`
+- `goToFreeDepot`
+
+Environment variables like `FENRIL_OPEN_DEPOT_TIMEOUT` are still supported as overrides, but they’re optional.
+
 ## 🤝 Contributing
 
 Contributions are always welcome! Create a pull request xD

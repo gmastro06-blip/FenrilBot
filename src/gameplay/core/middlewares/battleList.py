@@ -10,7 +10,7 @@ from src.repositories.battleList.extractors import getContent
 from src.repositories.battleList.locators import getBattleListIconPosition, getContainerBottomBarPosition
 from src.repositories.battleList.typings import Creature
 from src.utils.console_log import log_throttled
-from src.utils.runtime_settings import get_bool
+from src.utils.runtime_settings import get_bool, get_float
 from ...typings import Context
 
 
@@ -23,7 +23,12 @@ def setBattleListMiddleware(context: Context) -> Context:
     )
 
     if (
-        os.getenv('FENRIL_WARN_ON_BATTLELIST_EMPTY', '1') in {'1', 'true', 'True'}
+        get_bool(
+            context,
+            'ng_runtime.warn_on_battlelist_empty',
+            env_var='FENRIL_WARN_ON_BATTLELIST_EMPTY',
+            default=True,
+        )
         and screenshot is not None
         and content is not None
         and len(context['ng_battleList']['creatures']) == 0
@@ -36,7 +41,12 @@ def setBattleListMiddleware(context: Context) -> Context:
         )
 
         # Optional: dump images to help debug why parsing is empty.
-        if os.getenv('FENRIL_DUMP_BATTLELIST_ON_EMPTY', '0') in {'1', 'true', 'True'}:
+        if get_bool(
+            context,
+            'ng_runtime.dump_battlelist_on_empty',
+            env_var='FENRIL_DUMP_BATTLELIST_ON_EMPTY',
+            default=False,
+        ):
             dbg = context.get('ng_debug')
             if not isinstance(dbg, dict):
                 dbg = {}
@@ -46,7 +56,12 @@ def setBattleListMiddleware(context: Context) -> Context:
             now_s = float(datetime.now().timestamp())
             last_dump_s = dbg.get('battleList_empty_last_dump_s')
             # Default interval is intentionally high to avoid flooding `debug/`.
-            min_interval_s = float(os.getenv('FENRIL_DUMP_BATTLELIST_MIN_INTERVAL_S', '120'))
+            min_interval_s = get_float(
+                context,
+                'ng_runtime.dump_battlelist_min_interval_s',
+                env_var='FENRIL_DUMP_BATTLELIST_MIN_INTERVAL_S',
+                default=120.0,
+            )
             if not isinstance(last_dump_s, (int, float)) or (now_s - float(last_dump_s)) >= min_interval_s:
                 dbg['battleList_empty_last_dump_s'] = now_s
                 try:

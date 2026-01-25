@@ -1,17 +1,18 @@
 import src.repositories.gameWindow.core as gameWindowCore
 import src.repositories.gameWindow.slot as gameWindowSlot
 import src.repositories.inventory.core as inventoryCore
-import os
 from ...typings import Context
 from .common.base import BaseTask
 
 
 class OpenLockerTask(BaseTask):
     def __init__(self: "OpenLockerTask") -> None:
-        super().__init__()
+        super().__init__(delayOfTimeout=12.0)
         self.name = 'openLocker'
         self.delayAfterComplete = 1
-        self.delayOfTimeout = float(os.getenv('FENRIL_OPEN_LOCKER_TIMEOUT', '12'))
+        self.timeout_config_path = 'ng_runtime.task_timeouts.openLocker'
+        self.timeout_env_var = 'FENRIL_OPEN_LOCKER_TIMEOUT'
+        self.timeout_default = 12.0
         # If we can't open the locker, don't stall the whole cavebot forever.
         self.shouldTimeoutTreeWhenTimeout = True
 

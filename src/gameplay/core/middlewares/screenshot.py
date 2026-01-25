@@ -7,10 +7,10 @@ from src.utils.core import (
 )
 from src.gameplay.typings import Context
 from src.utils.mouse import set_window_transform
+from src.utils.runtime_settings import get_bool, get_float, get_int
 
 import cv2
 import numpy as np
-import os
 import pathlib
 import time
 from typing import Optional, Tuple
@@ -92,7 +92,7 @@ def setScreenshotMiddleware(context: Context) -> Context:
             cx = left + max(0, w // 2)
             cy = top + max(0, h // 2)
             output_idx = getOutputIdxForPoint(cx, cy)
-            auto_output = os.getenv('FENRIL_AUTO_OUTPUT_IDX', '1') != '0'
+            auto_output = get_bool(context, 'ng_runtime.auto_output_idx', env_var='FENRIL_AUTO_OUTPUT_IDX', default=True)
             if auto_output and output_idx is not None:
                 current_idx = getScreenshotDebugInfo().get('output_idx')
                 if current_idx != output_idx:
@@ -162,11 +162,11 @@ def setScreenshotMiddleware(context: Context) -> Context:
             std_val = float(np.std(screenshot))
             diag['capture_mean'] = mean_val
             diag['capture_std'] = std_val
-            std_thr = float(os.getenv('FENRIL_BLACK_STD_THRESHOLD', '2.0'))
-            mean_thr = float(os.getenv('FENRIL_BLACK_MEAN_THRESHOLD', '10.0'))
-            mean_force_thr = float(os.getenv('FENRIL_BLACK_MEAN_FORCE_THRESHOLD', '3.0'))
-            dark_px_thr = int(os.getenv('FENRIL_BLACK_DARK_PIXEL_THRESHOLD', '8'))
-            dark_frac_thr = float(os.getenv('FENRIL_BLACK_DARK_FRACTION_THRESHOLD', '0.98'))
+            std_thr = get_float(context, 'ng_runtime.black_std_threshold', env_var='FENRIL_BLACK_STD_THRESHOLD', default=2.0)
+            mean_thr = get_float(context, 'ng_runtime.black_mean_threshold', env_var='FENRIL_BLACK_MEAN_THRESHOLD', default=10.0)
+            mean_force_thr = get_float(context, 'ng_runtime.black_mean_force_threshold', env_var='FENRIL_BLACK_MEAN_FORCE_THRESHOLD', default=3.0)
+            dark_px_thr = get_int(context, 'ng_runtime.black_dark_pixel_threshold', env_var='FENRIL_BLACK_DARK_PIXEL_THRESHOLD', default=8)
+            dark_frac_thr = get_float(context, 'ng_runtime.black_dark_fraction_threshold', env_var='FENRIL_BLACK_DARK_FRACTION_THRESHOLD', default=0.98)
             dark_fraction = float(np.mean(screenshot <= dark_px_thr))
             diag['capture_dark_fraction'] = dark_fraction
             is_black = (mean_val < mean_thr) and (
@@ -180,17 +180,22 @@ def setScreenshotMiddleware(context: Context) -> Context:
         else:
             diag['consecutive_black_capture'] = 0
 
-        black_dump_threshold = int(os.getenv('FENRIL_DIAG_BLACK_DUMP_THRESHOLD', '12'))
+        black_dump_threshold = get_int(context, 'ng_runtime.diag_black_dump_threshold', env_var='FENRIL_DIAG_BLACK_DUMP_THRESHOLD', default=12)
         # Dumping black frames is useful during setup, but can flood `debug/` in long runs.
         # Default is OFF; enable with FENRIL_DUMP_BLACK_CAPTURE=1.
         if (
-            os.getenv('FENRIL_DUMP_BLACK_CAPTURE', '0') in {'1', 'true', 'True'}
+            get_bool(context, 'ng_runtime.dump_black_capture', env_var='FENRIL_DUMP_BLACK_CAPTURE', default=False)
             and int(diag.get('consecutive_black_capture', 0)) >= black_dump_threshold
         ):
             last_dump = float(diag.get('last_black_dump_time', 0.0))
             now = time.time()
             # Avoid spamming dumps.
-            min_interval = float(os.getenv('FENRIL_DUMP_BLACK_CAPTURE_MIN_INTERVAL_S', '60.0'))
+            min_interval = get_float(
+                context,
+                'ng_runtime.dump_black_capture_min_interval_s',
+                env_var='FENRIL_DUMP_BLACK_CAPTURE_MIN_INTERVAL_S',
+                default=60.0,
+            )
             if now - last_dump >= min_interval:
                 diag['last_black_dump_time'] = now
                 out_dir = pathlib.Path('debug')

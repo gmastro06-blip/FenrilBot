@@ -203,15 +203,19 @@ class PilotNGThread:
 
             # Manual auto-attack does not require radar. If enabled, keep running the attack task tree
             # even when detection is empty so PageUp/other hotkeys keep firing.
-            manual_cfg = context.get('manual_auto_attack') if isinstance(context, dict) else None
-            manual_enabled_cfg = isinstance(manual_cfg, dict) and bool(manual_cfg.get('enabled', False))
-            manual_enabled_env = os.getenv('FENRIL_MANUAL_AUTO_ATTACK', '0') in {'1', 'true', 'True'}
-            if manual_enabled_cfg or manual_enabled_env:
+            manual_enabled = get_bool(
+                context,
+                'manual_auto_attack.enabled',
+                env_var='FENRIL_MANUAL_AUTO_ATTACK',
+                default=False,
+                prefer_env=True,
+            )
+            if manual_enabled:
                 hasCreaturesToAttackAfterCheck = True
             if hasCreaturesToAttackAfterCheck:
                 context['way'] = 'ng_cave'
                 # In manual mode, schedule attackClosestCreature directly to keep hotkey loop active.
-                if manual_enabled_cfg or manual_enabled_env:
+                if manual_enabled:
                     try:
                         currentTask = context['ng_tasksOrchestrator'].getCurrentTask(context)
                     except Exception:
@@ -262,10 +266,14 @@ class PilotNGThread:
 
             # If manual auto-attack is enabled, always schedule the attack task tree so
             # the hotkey/cursor-click loop can run even when detection returns 0.
-            manual_cfg = context.get('manual_auto_attack') if isinstance(context, dict) else None
-            manual_enabled_cfg = isinstance(manual_cfg, dict) and bool(manual_cfg.get('enabled', False))
-            manual_enabled_env = os.getenv('FENRIL_MANUAL_AUTO_ATTACK', '0') in {'1', 'true', 'True'}
-            if manual_enabled_cfg or manual_enabled_env:
+            manual_enabled = get_bool(
+                context,
+                'manual_auto_attack.enabled',
+                env_var='FENRIL_MANUAL_AUTO_ATTACK',
+                default=False,
+                prefer_env=True,
+            )
+            if manual_enabled:
                 should_attack = True
             if not should_attack and get_bool(context, 'ng_runtime.attack_from_battlelist', env_var='FENRIL_ATTACK_FROM_BATTLELIST', default=False):
                 try:

@@ -1,4 +1,3 @@
-import os
 from typing import Optional, cast
 
 from src.repositories.inventory.core import images
@@ -11,10 +10,12 @@ from .common.base import BaseTask
 # TODO: by cap, is possible to detect if task was did. But it can happen that the backpack is empty.
 class DropBackpackIntoStashTask(BaseTask):
     def __init__(self: "DropBackpackIntoStashTask", backpack: str) -> None:
-        super().__init__()
+        super().__init__(delayOfTimeout=20.0)
         self.name = 'dropBackpackIntoStash'
         self.delayAfterComplete = 1
-        self.delayOfTimeout = float(os.getenv('FENRIL_DROP_BACKPACK_INTO_STASH_TIMEOUT', '20'))
+        self.timeout_config_path = 'ng_runtime.task_timeouts.dropBackpackIntoStash'
+        self.timeout_env_var = 'FENRIL_DROP_BACKPACK_INTO_STASH_TIMEOUT'
+        self.timeout_default = 20.0
         # If we can't stash the backpack, abort the whole deposit tree.
         self.shouldTimeoutTreeWhenTimeout = True
         self.terminable = False

@@ -128,10 +128,19 @@ def main(argv: Optional[list[str]] = None) -> None:
     parser.add_argument('--frames', type=int, default=1, help='Number of frames to capture (default: 1)')
     parser.add_argument('--interval', type=float, default=0.2, help='Seconds to sleep between frames (default: 0.2)')
     parser.add_argument('--save', action='store_true', help='Save each captured frame to debug/ (default: only saves first)')
+    parser.add_argument('--capture-title', type=str, default=None, help='Exact capture window title (OBS projector)')
+    parser.add_argument('--action-title', type=str, default=None, help='Exact action window title (Tibia)')
+    parser.add_argument('--auto-output', action=argparse.BooleanOptionalAction, default=None, help='Auto-pick output idx from capture rect center (default: on)')
+    parser.add_argument('--black-std-threshold', type=float, default=None, help='Black-frame std threshold (default: 2.0)')
+    parser.add_argument('--black-mean-threshold', type=float, default=None, help='Black-frame mean threshold (default: 10.0)')
+    parser.add_argument('--mouse-test', action=argparse.BooleanOptionalAction, default=None, help='Move mouse on action window to validate transform (default: off)')
+    parser.add_argument('--click-test', action=argparse.BooleanOptionalAction, default=None, help='Click during mouse-test (default: off)')
+    parser.add_argument('--activate-action-window', action=argparse.BooleanOptionalAction, default=None, help='Bring action window to foreground before mouse-test (default: on)')
+    parser.add_argument('--click-all', action=argparse.BooleanOptionalAction, default=None, help='During click-test, click all points (default: off)')
     args = parser.parse_args(argv)
 
-    capture_title = os.getenv("FENRIL_CAPTURE_WINDOW_TITLE")
-    action_title = os.getenv("FENRIL_ACTION_WINDOW_TITLE")
+    capture_title = (args.capture_title or os.getenv("FENRIL_CAPTURE_WINDOW_TITLE") or '').strip() or None
+    action_title = (args.action_title or os.getenv("FENRIL_ACTION_WINDOW_TITLE") or '').strip() or None
 
     # Helpful default: if capture title isn't provided, try to auto-detect an OBS projector.
     if not capture_title:
@@ -233,7 +242,10 @@ def main(argv: Optional[list[str]] = None) -> None:
     cx = cap_left + max(0, cap_w // 2)
     cy = cap_top + max(0, cap_h // 2)
 
-    auto_output = os.getenv('FENRIL_AUTO_OUTPUT_IDX', '1') != '0'
+    if args.auto_output is None:
+        auto_output = os.getenv('FENRIL_AUTO_OUTPUT_IDX', '1') != '0'
+    else:
+        auto_output = bool(args.auto_output)
     output_idx = getOutputIdxForPoint(cx, cy) if getOutputIdxForPoint is not None else None
     mon = getMonitorRectForPoint(cx, cy) if getMonitorRectForPoint is not None else None
 
@@ -282,8 +294,14 @@ def main(argv: Optional[list[str]] = None) -> None:
         print("frame=None")
         return
 
-    std_thr = float(os.getenv('FENRIL_BLACK_STD_THRESHOLD', '2.0'))
-    mean_thr = float(os.getenv('FENRIL_BLACK_MEAN_THRESHOLD', '10.0'))
+    if args.black_std_threshold is None:
+        std_thr = float(os.getenv('FENRIL_BLACK_STD_THRESHOLD', '2.0'))
+    else:
+        std_thr = float(args.black_std_threshold)
+    if args.black_mean_threshold is None:
+        mean_thr = float(os.getenv('FENRIL_BLACK_MEAN_THRESHOLD', '10.0'))
+    else:
+        mean_thr = float(args.black_mean_threshold)
 
     black_count = 0
     tools_missing = 0
@@ -348,8 +366,15 @@ def main(argv: Optional[list[str]] = None) -> None:
 
     # Optional: visually validate transform by moving (and optionally clicking) on the action window.
     # Safe defaults: disabled unless explicitly enabled.
-    mouse_test = os.getenv('FENRIL_DUAL_MOUSE_TEST', '0') != '0'
-    click_test = os.getenv('FENRIL_DUAL_CLICK_TEST', '0') != '0'
+    if args.mouse_test is None:
+        mouse_test = os.getenv('FENRIL_DUAL_MOUSE_TEST', '0') != '0'
+    else:
+        mouse_test = bool(args.mouse_test)
+
+    if args.click_test is None:
+        click_test = os.getenv('FENRIL_DUAL_CLICK_TEST', '0') != '0'
+    else:
+        click_test = bool(args.click_test)
     if mouse_test:
         try:
             from src.utils.mouse import moveTo as _moveTo
@@ -358,7 +383,10 @@ def main(argv: Optional[list[str]] = None) -> None:
 
             _set_window_transform(capture_rect, action_rect)
 
-            activate_action = os.getenv('FENRIL_ACTIVATE_ACTION_WINDOW', '1') != '0'
+            if args.activate_action_window is None:
+                activate_action = os.getenv('FENRIL_ACTIVATE_ACTION_WINDOW', '1') != '0'
+            else:
+                activate_action = bool(args.activate_action_window)
             if activate_action:
                 try:
                     if getattr(action_window, 'isMinimized', False):
@@ -373,7 +401,10 @@ def main(argv: Optional[list[str]] = None) -> None:
             print("Moving in 5 seconds...")
             time.sleep(5.0)
 
-            click_all = os.getenv('FENRIL_DUAL_CLICK_ALL', '0') != '0'
+            if args.click_all is None:
+                click_all = os.getenv('FENRIL_DUAL_CLICK_ALL', '0') != '0'
+            else:
+                click_all = bool(args.click_all)
             if click_test and not click_all:
                 print("[safe] ClickTest will click only once (center point). Set FENRIL_DUAL_CLICK_ALL=1 to click all points.")
 

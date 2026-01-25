@@ -3,6 +3,7 @@ from src.gameplay.typings import Context
 from .common.vector import VectorTask
 from .useRope import UseRopeTask
 from .setNextWaypoint import SetNextWaypointTask
+from .walkToCoordinate import WalkToCoordinateTask
 from src.utils.core import getScreenshot, getScreenshotDebugInfo, setScreenshotOutputIdx
 from src.repositories.radar.core import getClosestWaypointIndexFromCoordinate, getCoordinate
 from src.gameplay.core.waypoint import resolveGoalCoordinate
@@ -16,6 +17,7 @@ class UseRopeWaypointTask(VectorTask):
 
     def onBeforeStart(self, context: Context) -> Context:
         self.tasks = [
+            WalkToCoordinateTask(self.waypoint['coordinate']).setParentTask(self).setRootTask(self),
             UseRopeTask(self.waypoint).setParentTask(self).setRootTask(self),
             SetNextWaypointTask().setParentTask(self).setRootTask(self),  # type: ignore
         ]

@@ -232,41 +232,48 @@ class CavebotPage(customtkinter.CTkToplevel):
             border_width=2, hover_color="#C20034")
         self.dropFlasksButton.grid(
             row=9, column=0, padx=5, pady=5, sticky='nsew')
+
+        self.sellFlasksButton = customtkinter.CTkButton(
+            self.actionsFrame, text='Sell flasks', command=lambda: self.addWaypoint('sellFlasks'),
+            corner_radius=32, fg_color="transparent", border_color="#C20034",
+            border_width=2, hover_color="#C20034")
+        self.sellFlasksButton.grid(
+            row=9, column=1, padx=5, pady=5, sticky='nsew')
         
         self.buyBackpackButton = customtkinter.CTkButton(
             self.actionsFrame, text='Buy Backpack', command=lambda: self.openBackpackModal(),
             corner_radius=32, fg_color="transparent", border_color="#C20034",
             border_width=2, hover_color="#C20034")
         self.buyBackpackButton.grid(
-            row=9, column=1, padx=5, pady=5, sticky='nsew')
+            row=10, column=1, padx=5, pady=5, sticky='nsew')
 
         self.refillButton = customtkinter.CTkButton(
             self.actionsFrame, text='Refill', command=lambda: self.openRefillModal(),
             corner_radius=32, fg_color="transparent", border_color="#C20034",
             border_width=2, hover_color="#C20034")
         self.refillButton.grid(
-            row=10, column=0, padx=5, pady=5, sticky='nsew')
+            row=11, column=0, padx=5, pady=5, sticky='nsew')
 
         self.refillCheckerButton = customtkinter.CTkButton(
             self.actionsFrame, text='Refill checker', command=lambda: self.openRefillCheckerModal(),
             corner_radius=32, fg_color="transparent", border_color="#C20034",
             border_width=2, hover_color="#C20034")
         self.refillCheckerButton.grid(
-            row=10, column=1, padx=5, pady=5, sticky='nsew')
+            row=11, column=1, padx=5, pady=5, sticky='nsew')
         
         self.travelButton = customtkinter.CTkButton(
             self.actionsFrame, text='Travel', command=lambda: self.addWaypoint('travel'),
             corner_radius=32, fg_color="transparent", border_color="#C20034",
             border_width=2, hover_color="#C20034")
         self.travelButton.grid(
-            row=11, column=0, padx=5, pady=5, sticky='nsew')
+            row=12, column=0, padx=5, pady=5, sticky='nsew')
         
         self.ignoreCreaturesButton = customtkinter.CTkButton(
             self.actionsFrame, text='Ignorar Criaturas', command=self.ignoreCreaturesWindow,
             corner_radius=32, fg_color="transparent", border_color="#C20034",
             border_width=2, hover_color="#C20034")
         self.ignoreCreaturesButton.grid(
-            row=11, column=1, padx=5, pady=5, sticky='nsew')
+            row=12, column=1, padx=5, pady=5, sticky='nsew')
         
         self.saveConfigFrame = customtkinter.CTkFrame(self)
         self.saveConfigFrame.grid(column=1, row=2, padx=10,

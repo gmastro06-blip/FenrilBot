@@ -103,6 +103,11 @@ def setTibiaWindowMiddleware(context: Context) -> Context:
     action_title = get_str(context, 'ng_runtime.action_window_title', env_var='FENRIL_ACTION_WINDOW_TITLE', default='').strip() or None
     capture_title = get_str(context, 'ng_runtime.capture_window_title', env_var='FENRIL_CAPTURE_WINDOW_TITLE', default='').strip() or None
 
+    # Structured window info for diagnostics/timeouts.
+    ng_window = context.get('ng_window') if isinstance(context.get('ng_window'), dict) else {}
+    ng_window['action_title'] = action_title
+    ng_window['capture_title'] = capture_title
+
     action_exact_requested = bool(action_title)
     capture_exact_requested = bool(capture_title)
     action_exact_found = False
@@ -138,6 +143,13 @@ def setTibiaWindowMiddleware(context: Context) -> Context:
     context['action_window'] = action_window
     context['capture_window'] = capture_window
     context['window'] = action_window
+
+    try:
+        ng_window['action_resolved_title'] = getattr(action_window, 'title', None) if action_window else None
+        ng_window['capture_resolved_title'] = getattr(capture_window, 'title', None) if capture_window else None
+    except Exception:
+        pass
+    context['ng_window'] = ng_window
 
     if context.get('ng_debug') is not None and isinstance(context.get('ng_debug'), dict):
         context['ng_debug']['action_window_title'] = getattr(action_window, 'title', None) if action_window else None

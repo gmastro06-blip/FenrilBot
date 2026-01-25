@@ -1,9 +1,23 @@
 from numba import njit
 import numpy as np
 from typing import Union
-import os
 from src.shared.typings import GrayImage, XYCoordinate
 from .locators import getContainerBottomBarPosition, getBattleListIconPosition
+from src.utils.runtime_settings import get_int
+
+
+def _env_int(name: str, default: int) -> int:
+    return get_int({}, '_', env_var=name, default=int(default), prefer_env=True)
+
+
+_BATTLELIST_EXTRACTOR_CFG = {
+    'click_x_offset': _env_int('FENRIL_BATTLELIST_CLICK_X_OFFSET', 60),
+}
+
+
+def configure_battlelist_extractors(*, click_x_offset: int | None = None) -> None:
+    if click_x_offset is not None:
+        _BATTLELIST_EXTRACTOR_CFG['click_x_offset'] = int(click_x_offset)
 
 
 # PERF: [0.05485419999999941, 4.39999999990448e-06]
@@ -42,7 +56,7 @@ def getCreatureClickCoordinate(screenshot: GrayImage, *, index: int = 0) -> Unio
     header_height = 11
 
     # Click somewhere inside the name area (avoid the scrollbar on the right).
-    x_offset = int(os.getenv('FENRIL_BATTLELIST_CLICK_X_OFFSET', '60'))
+    x_offset = int(_BATTLELIST_EXTRACTOR_CFG.get('click_x_offset', 60))
     click_x = int(list_left + x_offset)
     click_y = int(list_top + header_height + (index * row_height) + (row_height // 2))
 

@@ -1,0 +1,1440 @@
+{
+  "setup_selector": "auto",
+  "dry_run": false,
+  "files_total": 93,
+  "files_modified_total": 82,
+  "files_with_changes": 0,
+  "files_would_change": 0,
+  "buy_potions_converted": 0,
+  "check_supplies_converted": 0,
+  "sell_converted": 0,
+  "errors": [],
+  "notes": [
+    {
+      "path": "bonelord_liberty_bay/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "braindeath/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "carlin_amazon_tower/waypoints.pilotscript",
+      "note": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "cormaya_werecave/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "cults_ankrahmun/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "deepsea_blood_crabs/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "demon_hero_cave/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "drefia_wyrms_box/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "edron_cults/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "edron_werecave/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "elvenbane/waypoints.pilotscript",
+      "note": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "elves_venore/waypoints.pilotscript",
+      "note": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "feyrist_dark_faun/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "feyrist_mountain/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "feyrist_nightmare_cave/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "feyrist_nightmare_cave_down/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "forest_fury/waypoints.pilotscript",
+      "note": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "giant_spider_cave/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "glooth_bandit_east/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "glooth_bandit_south/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "glooth_bandit_west/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "goblin_train_ab/waypoints.pilotscript",
+      "note": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "hero_fortress/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "hero_fortress_box/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "hero_fortress_down/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "ice_fishing/waypoints.pilotscript",
+      "note": "check_supplies/check markers found but no matching setup_*.json in scripts-master"
+    },
+    {
+      "path": "ice_witch/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "kazz_dragon/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "krailos_nightmare/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "krailos_nightmare_box/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "krailos_spider_cave/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "laguna_island_tortoises/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "liberty_bay_cults_before_piano/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "library_tomb/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "magician_quarter/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "medusa_tower/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "meriana_gargoyle/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "minotaur_cults/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "minotaur_darashia/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "mother_of_scarab/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "mount_sternum/waypoints.pilotscript",
+      "note": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "mutated_temple_complex/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "oramond_demon_sewers/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "oramond_hydra_task/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "oramond_sewers_box/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "oramond_tower_box/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "oramond_west/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "oramond_west_tasker/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "orc_fortress_shaman/waypoints.pilotscript",
+      "note": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "outside_orc_fortress/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "peninsula_tomb_ankrahmun/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "putrid_mummy/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "putrid_mummy_mage/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "quaras_liberty_bay/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "salamander_cave/waypoints.pilotscript",
+      "note": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "sea_serpent/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "sell_npc/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "stonerefiner/waypoints.pilotscript",
+      "note": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "swamp_troll/waypoints.pilotscript",
+      "note": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "tarantula_cave/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "thais_cyclops_south/waypoints.pilotscript",
+      "note": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "train_slime/waypoints.pilotscript",
+      "note": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "train_venore_rotworm_north/waypoints.pilotscript",
+      "note": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "vampire_crypt_edron/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "vampire_crypt_edron_box/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "vampire_crypt_edron_mage/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "vampire_crypt_edron_upper/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "venore_amazon_camp/waypoints.pilotscript",
+      "note": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "wasp_ab/waypoints.pilotscript",
+      "note": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "wasp_ab/waypoints_edited.pilotscript",
+      "note": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "wasp_darashia/waypoints.pilotscript",
+      "note": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "wasp_thais/waypoints.pilotscript",
+      "note": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "wyrm_liberty_bay/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "yalahar_cults/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "yalahar_dragons/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "yalahar_elves/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "yalahar_necromancer/waypoints.pilotscript",
+      "note": "normalized 4 refill item name(s)"
+    }
+  ],
+  "files": [
+    {
+      "path": "bonelord_liberty_bay/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "braindeath/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "buy_blessing/waypoints.pilotscript",
+      "modified": false,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": null
+    },
+    {
+      "path": "carlin_amazon_tower/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "cormaya_werecave/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "cults_ankrahmun/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "dark_cathedral/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 2,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": null
+    },
+    {
+      "path": "dawnport/waypoints.pilotscript",
+      "modified": false,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": null
+    },
+    {
+      "path": "deepsea_blood_crabs/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "demon_hero_cave/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "drefia_wyrms_box/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "edron_cults/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "edron_werecave/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "elvenbane/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "elves_venore/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "feyrist_dark_faun/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "feyrist_mountain/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "feyrist_nightmare_cave/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "feyrist_nightmare_cave_down/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "forest_fury/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "giant_spider_cave/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "glooth_bandit_east/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "glooth_bandit_south/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "glooth_bandit_west/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "goblin_train_ab/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "hero_fortress/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "hero_fortress_box/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "hero_fortress_down/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "ice_fishing/waypoints.pilotscript",
+      "modified": false,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 2,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "check_supplies/check markers found but no matching setup_*.json in scripts-master"
+    },
+    {
+      "path": "ice_witch/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "kazz_dragon/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "killer_caimans/killer_caimans/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 2,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": null
+    },
+    {
+      "path": "killer_caimans/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 2,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": null
+    },
+    {
+      "path": "krailos_nightmare/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "krailos_nightmare_box/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "krailos_spider_cave/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "laguna_island_tortoises/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "liberty_bay_cults_before_piano/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "library_tomb/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "magician_quarter/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "market_thais/waypoints.pilotscript",
+      "modified": false,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": null
+    },
+    {
+      "path": "medusa_tower/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "meriana_gargoyle/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "minotaur_cults/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "minotaur_darashia/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "mother_of_scarab/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "mount_sternum/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "mutated_humans/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 2,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": null
+    },
+    {
+      "path": "mutated_temple_complex/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "oramond_demon_sewers/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "oramond_hydra_task/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "oramond_sewers_box/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "oramond_tower_box/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "oramond_west/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "oramond_west_tasker/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "orc_fortress_shaman/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "outside_orc_fortress/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "peninsula_tomb_ankrahmun/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "pirates_yalahar/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 2,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": null
+    },
+    {
+      "path": "putrid_mummy/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "putrid_mummy_mage/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "quaras_liberty_bay/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "quests/apes/waypoints.pilotscript",
+      "modified": false,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": null
+    },
+    {
+      "path": "quests/barbarian_test/waypoints.pilotscript",
+      "modified": false,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": null
+    },
+    {
+      "path": "quests/feyrist/waypoints.pilotscript",
+      "modified": false,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": null
+    },
+    {
+      "path": "quests/green_djinn/waypoints.pilotscript",
+      "modified": false,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": null
+    },
+    {
+      "path": "quests/meriana/waypoints.pilotscript",
+      "modified": false,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": null
+    },
+    {
+      "path": "quests/sea_serpent/waypoints.pilotscript",
+      "modified": false,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": null
+    },
+    {
+      "path": "quests/yalahar/waypoints.pilotscript",
+      "modified": false,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": null
+    },
+    {
+      "path": "rotworm_venore_southeast/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 2,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": null
+    },
+    {
+      "path": "salamander_cave/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "sea_serpent/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "sell_npc/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "stonerefiner/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "swamp_troll/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "tarantula_cave/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "thais_cyclops_south/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "train_slime/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "train_venore_rotworm_north/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "vampire_crypt_edron/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "vampire_crypt_edron_box/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "vampire_crypt_edron_mage/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "vampire_crypt_edron_upper/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "venore_amazon_camp/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "wasp_ab/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "wasp_ab/waypoints_edited.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "wasp_darashia/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "wasp_thais/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 2 refill item name(s)"
+    },
+    {
+      "path": "wyrm_liberty_bay/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "yalahar_cults/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "yalahar_dragons/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "yalahar_elves/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    },
+    {
+      "path": "yalahar_necromancer/waypoints.pilotscript",
+      "modified": true,
+      "converted_buy_potions": 0,
+      "converted_check_supplies": 0,
+      "converted_sell": 0,
+      "skipped_buy_potions": 0,
+      "skipped_check_supplies": 0,
+      "skipped_sell": 0,
+      "setup_used": null,
+      "reason": "normalized 4 refill item name(s)"
+    }
+  ]
+}

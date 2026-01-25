@@ -39,8 +39,15 @@ def get_bool(
     *,
     env_var: Optional[str] = None,
     default: bool = False,
+    prefer_env: bool = False,
 ) -> bool:
     """Get a boolean setting from context (preferred) or env var (fallback)."""
+
+    if env_var and prefer_env:
+        env = os.getenv(env_var)
+        parsed = _parse_bool(env)
+        if parsed is not None:
+            return parsed
 
     value = _get_nested(context, path)
     parsed = _parse_bool(value)
@@ -62,7 +69,15 @@ def get_float(
     *,
     env_var: Optional[str] = None,
     default: float,
+    prefer_env: bool = False,
 ) -> float:
+    if env_var and prefer_env:
+        env = os.getenv(env_var)
+        if env is not None:
+            try:
+                return float(env)
+            except Exception:
+                pass
     value = _get_nested(context, path)
     if value is not None:
         try:
@@ -79,13 +94,49 @@ def get_float(
     return default
 
 
+def get_int(
+    context: Any,
+    path: str,
+    *,
+    env_var: Optional[str] = None,
+    default: int,
+    prefer_env: bool = False,
+) -> int:
+    if env_var and prefer_env:
+        env = os.getenv(env_var)
+        if env is not None:
+            try:
+                return int(float(env))
+            except Exception:
+                pass
+    value = _get_nested(context, path)
+    if value is not None:
+        try:
+            return int(float(value))
+        except Exception:
+            pass
+    if env_var:
+        env = os.getenv(env_var)
+        if env is not None:
+            try:
+                return int(float(env))
+            except Exception:
+                pass
+    return default
+
+
 def get_str(
     context: Any,
     path: str,
     *,
     env_var: Optional[str] = None,
     default: str = "",
+    prefer_env: bool = False,
 ) -> str:
+    if env_var and prefer_env:
+        env = os.getenv(env_var)
+        if env is not None:
+            return env
     value = _get_nested(context, path)
     if value is not None:
         try:

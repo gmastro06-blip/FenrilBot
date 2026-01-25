@@ -3,6 +3,8 @@ import sys
 import os
 import time
 import runpy
+import argparse
+from typing import Optional
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -22,10 +24,28 @@ from src.repositories.gameWindow.core import getLeftArrowPosition, getRightArrow
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description='Fenril capture debug (single window)')
+    parser.add_argument('--window-title', type=str, default=None, help='Window title substring to capture (legacy Tibia window flow)')
+    parser.add_argument('--activate-window', action=argparse.BooleanOptionalAction, default=None, help='Bring window to foreground (default: on)')
+    # Dual-window convenience: allow launching the dual tool without env vars.
+    parser.add_argument('--capture-title', type=str, default=None, help='Exact capture window title (OBS projector)')
+    parser.add_argument('--action-title', type=str, default=None, help='Exact action window title (Tibia)')
+    args = parser.parse_args()
+
     # If dual-window env vars are set, run the dual debug tool instead.
     # This avoids confusion where FENRIL_WINDOW_TITLE (legacy) makes it look
     # like we're capturing the Tibia monitor even though the bot is configured
     # for an OBS projector capture.
+    if args.capture_title or args.action_title:
+        if args.capture_title:
+            os.environ['FENRIL_CAPTURE_WINDOW_TITLE'] = args.capture_title
+        if args.action_title:
+            os.environ['FENRIL_ACTION_WINDOW_TITLE'] = args.action_title
+        dual = ROOT / 'scripts' / 'debug_capture_dual.py'
+        print('[fenril][dual] Running scripts/debug_capture_dual.py (args provided)')
+        runpy.run_path(str(dual), run_name='__main__')
+        return
+
     if os.getenv('FENRIL_CAPTURE_WINDOW_TITLE') or os.getenv('FENRIL_ACTION_WINDOW_TITLE'):
         dual = ROOT / 'scripts' / 'debug_capture_dual.py'
         print('[fenril][dual] Detected dual-window env vars; running scripts/debug_capture_dual.py')
@@ -34,7 +54,7 @@ def main() -> None:
 
     region: Optional[tuple[int, int, int, int]] = None
     region_abs: Optional[tuple[int, int, int, int]] = None
-    window_title = os.getenv('FENRIL_WINDOW_TITLE')
+    window_title = (args.window_title or os.getenv('FENRIL_WINDOW_TITLE') or '').strip() or None
     if window_title:
         try:
             import pygetwindow as gw
@@ -43,7 +63,10 @@ def main() -> None:
             if windows:
                 w = windows[0]
                 # Optionally bring to foreground so desktop capture sees it.
-                activate = os.getenv('FENRIL_ACTIVATE_WINDOW', '1') != '0'
+                if args.activate_window is None:
+                    activate = os.getenv('FENRIL_ACTIVATE_WINDOW', '1') != '0'
+                else:
+                    activate = bool(args.activate_window)
                 if activate:
                     try:
                         if getattr(w, 'isMinimized', False):
@@ -67,8 +90,6 @@ def main() -> None:
 
     out_dir = pathlib.Path('debug')
     out_dir.mkdir(parents=True, exist_ok=True)
-
-    from typing import Optional
 
     def _report(tag: str, frame: Optional[np.ndarray]) -> None:
         print(f"\n=== {tag} ===")

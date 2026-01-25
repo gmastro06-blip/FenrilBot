@@ -107,7 +107,13 @@ def _recreate_camera(output_idx: int) -> dxcam.DXCamera:
     return cam
 
 
-_preferred_output_idx = int(os.getenv('FENRIL_OUTPUT_IDX', '1'))
+try:
+    from src.utils.runtime_settings import get_bool as _rs_get_bool
+    from src.utils.runtime_settings import get_float as _rs_get_float
+    from src.utils.runtime_settings import get_int as _rs_get_int
+    _preferred_output_idx = _rs_get_int({}, '_', env_var='FENRIL_OUTPUT_IDX', default=1, prefer_env=True)
+except Exception:
+    _preferred_output_idx = 1
 camera = _create_camera(_preferred_output_idx)
 _camera_output_idx = _preferred_output_idx
 latestScreenshot = None
@@ -118,6 +124,95 @@ _consecutive_same_frames: int = 0
 _last_screenshot_stats: Optional[Dict[str, Any]] = None
 _last_dxcam_recover_log_time: float = 0.0
 _last_frame_fingerprint: Optional[int] = None
+
+
+def _env_bool(name: str, default: bool) -> bool:
+    try:
+        return _rs_get_bool({}, '_', env_var=name, default=bool(default), prefer_env=True)
+    except Exception:
+        return bool(default)
+
+
+def _env_int(name: str, default: int) -> int:
+    try:
+        return _rs_get_int({}, '_', env_var=name, default=int(default), prefer_env=True)
+    except Exception:
+        return int(default)
+
+
+def _env_float(name: str, default: float) -> float:
+    try:
+        return _rs_get_float({}, '_', env_var=name, default=float(default), prefer_env=True)
+    except Exception:
+        return float(default)
+
+
+_CAPTURE_CFG: Dict[str, Any] = {
+    # MSS fallback
+    'mss_fallback_on_none': _env_bool('FENRIL_MSS_FALLBACK_ON_NONE', False),
+    'mss_fallback': _env_bool('FENRIL_MSS_FALLBACK', False),
+    # Black-frame detection thresholds
+    'black_dark_pixel_threshold': _env_int('FENRIL_BLACK_DARK_PIXEL_THRESHOLD', 8),
+    'black_dark_fraction_threshold': _env_float('FENRIL_BLACK_DARK_FRACTION_THRESHOLD', 0.98),
+    'black_std_threshold': _env_float('FENRIL_BLACK_STD_THRESHOLD', 2.0),
+    'black_mean_threshold': _env_float('FENRIL_BLACK_MEAN_THRESHOLD', 10.0),
+    'black_mean_force_threshold': _env_float('FENRIL_BLACK_MEAN_FORCE_THRESHOLD', 3.0),
+    # Recovery behavior
+    'dxcam_retry_on_hard_black': _env_bool('FENRIL_DXCAM_RETRY_ON_HARD_BLACK', True),
+    'black_frame_threshold': _env_int('FENRIL_BLACK_FRAME_THRESHOLD', 8),
+    'same_frame_threshold': _env_int('FENRIL_SAME_FRAME_THRESHOLD', 300),
+    'dxcam_recover_on_stale': _env_bool('FENRIL_DXCAM_RECOVER_ON_STALE', True),
+    'dxcam_recover_on_black': _env_bool('FENRIL_DXCAM_RECOVER_ON_BLACK', True),
+    'log_dxcam_recovery': _env_bool('FENRIL_LOG_DXCAM_RECOVERY', True),
+}
+
+
+def configure_capture(
+    *,
+    mss_fallback_on_none: Optional[bool] = None,
+    mss_fallback: Optional[bool] = None,
+    black_dark_pixel_threshold: Optional[int] = None,
+    black_dark_fraction_threshold: Optional[float] = None,
+    black_std_threshold: Optional[float] = None,
+    black_mean_threshold: Optional[float] = None,
+    black_mean_force_threshold: Optional[float] = None,
+    dxcam_retry_on_hard_black: Optional[bool] = None,
+    black_frame_threshold: Optional[int] = None,
+    same_frame_threshold: Optional[int] = None,
+    dxcam_recover_on_stale: Optional[bool] = None,
+    dxcam_recover_on_black: Optional[bool] = None,
+    log_dxcam_recovery: Optional[bool] = None,
+) -> None:
+    if mss_fallback_on_none is not None:
+        _CAPTURE_CFG['mss_fallback_on_none'] = bool(mss_fallback_on_none)
+    if mss_fallback is not None:
+        _CAPTURE_CFG['mss_fallback'] = bool(mss_fallback)
+    if black_dark_pixel_threshold is not None:
+        _CAPTURE_CFG['black_dark_pixel_threshold'] = int(black_dark_pixel_threshold)
+    if black_dark_fraction_threshold is not None:
+        _CAPTURE_CFG['black_dark_fraction_threshold'] = float(black_dark_fraction_threshold)
+    if black_std_threshold is not None:
+        _CAPTURE_CFG['black_std_threshold'] = float(black_std_threshold)
+    if black_mean_threshold is not None:
+        _CAPTURE_CFG['black_mean_threshold'] = float(black_mean_threshold)
+    if black_mean_force_threshold is not None:
+        _CAPTURE_CFG['black_mean_force_threshold'] = float(black_mean_force_threshold)
+    if dxcam_retry_on_hard_black is not None:
+        _CAPTURE_CFG['dxcam_retry_on_hard_black'] = bool(dxcam_retry_on_hard_black)
+    if black_frame_threshold is not None:
+        _CAPTURE_CFG['black_frame_threshold'] = int(black_frame_threshold)
+    if same_frame_threshold is not None:
+        _CAPTURE_CFG['same_frame_threshold'] = int(same_frame_threshold)
+    if dxcam_recover_on_stale is not None:
+        _CAPTURE_CFG['dxcam_recover_on_stale'] = bool(dxcam_recover_on_stale)
+    if dxcam_recover_on_black is not None:
+        _CAPTURE_CFG['dxcam_recover_on_black'] = bool(dxcam_recover_on_black)
+    if log_dxcam_recovery is not None:
+        _CAPTURE_CFG['log_dxcam_recovery'] = bool(log_dxcam_recovery)
+
+
+def get_capture_config() -> Dict[str, Any]:
+    return dict(_CAPTURE_CFG)
 
 
 def getScreenshotDebugInfo() -> Dict[str, Any]:
@@ -360,7 +455,7 @@ def getScreenshot(
 
     # Optional MSS fallback when dxcam returns None.
     # NOTE: MSS/GDI capture often returns black for GPU-accelerated windows (e.g. OBS/projectors).
-    mss_fallback_on_none = os.getenv('FENRIL_MSS_FALLBACK_ON_NONE', '0') != '0'
+    mss_fallback_on_none = bool(_CAPTURE_CFG.get('mss_fallback_on_none', False))
     if screenshot is None and mss_fallback_on_none and abs_region is not None:
         mss_frame = _grab_mss(abs_region)
         if mss_frame is not None:
@@ -400,8 +495,8 @@ def getScreenshot(
 
         mean_val = float(np.mean(frame))
         std_val = float(np.std(frame))
-        dark_px_thr = int(os.getenv('FENRIL_BLACK_DARK_PIXEL_THRESHOLD', '8'))
-        dark_frac_thr = float(os.getenv('FENRIL_BLACK_DARK_FRACTION_THRESHOLD', '0.98'))
+        dark_px_thr = int(_CAPTURE_CFG.get('black_dark_pixel_threshold', 8))
+        dark_frac_thr = float(_CAPTURE_CFG.get('black_dark_fraction_threshold', 0.98))
         dark_fraction = float(np.mean(frame <= dark_px_thr))
         _last_screenshot_stats = {
             'shape': tuple(frame.shape),
@@ -413,9 +508,9 @@ def getScreenshot(
             'absolute_region': abs_region,
             'backend': 'dxcam',
         }
-        std_thr = float(os.getenv('FENRIL_BLACK_STD_THRESHOLD', '2.0'))
-        mean_thr = float(os.getenv('FENRIL_BLACK_MEAN_THRESHOLD', '10.0'))
-        mean_force_thr = float(os.getenv('FENRIL_BLACK_MEAN_FORCE_THRESHOLD', '3.0'))
+        std_thr = float(_CAPTURE_CFG.get('black_std_threshold', 2.0))
+        mean_thr = float(_CAPTURE_CFG.get('black_mean_threshold', 10.0))
+        mean_force_thr = float(_CAPTURE_CFG.get('black_mean_force_threshold', 3.0))
         # Some setups return "mostly black" frames with random noise; std can be high.
         # Treat as black if it's dark on average and most pixels are near-black.
         is_probably_black = (mean_val < mean_thr) and (
@@ -425,7 +520,7 @@ def getScreenshot(
         # If the frame is *completely* black, try an immediate dxcam retry/recover.
         # This is a common transient dxcam glitch and retrying avoids stalling the pipeline.
         hard_black = mean_val <= 0.5 and std_val <= 0.5
-        if hard_black and os.getenv('FENRIL_DXCAM_RETRY_ON_HARD_BLACK', '1') != '0':
+        if hard_black and bool(_CAPTURE_CFG.get('dxcam_retry_on_hard_black', True)):
             try:
                 # Re-grab once without recreating the camera.
                 # Calling dxcam.create repeatedly can spam stdout.
@@ -462,11 +557,11 @@ def getScreenshot(
     except Exception:
         _last_screenshot_stats = None
 
-    black_threshold = int(os.getenv('FENRIL_BLACK_FRAME_THRESHOLD', '8'))
+    black_threshold = int(_CAPTURE_CFG.get('black_frame_threshold', 8))
 
     # Detect frozen capture (same frame for a long time) and try to recover.
-    stale_threshold = int(os.getenv('FENRIL_SAME_FRAME_THRESHOLD', '300'))
-    recover_on_stale = os.getenv('FENRIL_DXCAM_RECOVER_ON_STALE', '1') != '0'
+    stale_threshold = int(_CAPTURE_CFG.get('same_frame_threshold', 300))
+    recover_on_stale = bool(_CAPTURE_CFG.get('dxcam_recover_on_stale', True))
     if recover_on_stale and _consecutive_same_frames >= stale_threshold:
         try:
             camera = _recreate_camera(_camera_output_idx)
@@ -480,7 +575,7 @@ def getScreenshot(
                 _consecutive_same_frames = 0
                 _last_frame_fingerprint = _frame_fingerprint(cast(np.ndarray, frame2))
 
-                if os.getenv('FENRIL_LOG_DXCAM_RECOVERY', '1') != '0':
+                if bool(_CAPTURE_CFG.get('log_dxcam_recovery', True)):
                     now = time.time()
                     if now - _last_dxcam_recover_log_time >= 5.0:
                         _last_dxcam_recover_log_time = now
@@ -495,7 +590,7 @@ def getScreenshot(
                 pass
 
     # Prefer recovering dxcam (recreate the camera) over MSS fallback.
-    dxcam_recover = os.getenv('FENRIL_DXCAM_RECOVER_ON_BLACK', '1') != '0'
+    dxcam_recover = bool(_CAPTURE_CFG.get('dxcam_recover_on_black', True))
     if dxcam_recover and _consecutive_black_frames >= black_threshold:
         try:
             camera = _recreate_camera(_camera_output_idx)
@@ -507,12 +602,12 @@ def getScreenshot(
                 frame2 = cv2.cvtColor(shot2, cv2.COLOR_BGRA2GRAY)
                 mean2 = float(np.mean(frame2))
                 std2 = float(np.std(frame2))
-                dark_px_thr = int(os.getenv('FENRIL_BLACK_DARK_PIXEL_THRESHOLD', '8'))
-                dark_frac_thr = float(os.getenv('FENRIL_BLACK_DARK_FRACTION_THRESHOLD', '0.98'))
+                dark_px_thr = int(_CAPTURE_CFG.get('black_dark_pixel_threshold', 8))
+                dark_frac_thr = float(_CAPTURE_CFG.get('black_dark_fraction_threshold', 0.98))
                 dark_fraction2 = float(np.mean(frame2 <= dark_px_thr))
-                std_thr = float(os.getenv('FENRIL_BLACK_STD_THRESHOLD', '2.0'))
-                mean_thr = float(os.getenv('FENRIL_BLACK_MEAN_THRESHOLD', '10.0'))
-                mean_force_thr = float(os.getenv('FENRIL_BLACK_MEAN_FORCE_THRESHOLD', '3.0'))
+                std_thr = float(_CAPTURE_CFG.get('black_std_threshold', 2.0))
+                mean_thr = float(_CAPTURE_CFG.get('black_mean_threshold', 10.0))
+                mean_force_thr = float(_CAPTURE_CFG.get('black_mean_force_threshold', 3.0))
                 recovered_is_black = (mean2 < mean_thr) and (
                     mean2 <= mean_force_thr or std2 < std_thr or dark_fraction2 >= dark_frac_thr
                 )
@@ -531,7 +626,7 @@ def getScreenshot(
                     }
 
                     # Helpful runtime signal (throttled).
-                    if os.getenv('FENRIL_LOG_DXCAM_RECOVERY', '1') != '0':
+                    if bool(_CAPTURE_CFG.get('log_dxcam_recovery', True)):
                         now = time.time()
                         if now - _last_dxcam_recover_log_time >= 5.0:
                             _last_dxcam_recover_log_time = now
@@ -547,7 +642,7 @@ def getScreenshot(
 
     # Optional MSS fallback when dxcam is producing black frames.
     # Disabled by default because it commonly returns black for OBS/projectors.
-    mss_fallback = os.getenv('FENRIL_MSS_FALLBACK', '0') != '0'
+    mss_fallback = bool(_CAPTURE_CFG.get('mss_fallback', False))
     if mss_fallback and abs_region is not None and _consecutive_black_frames >= black_threshold:
         mss_frame = _grab_mss(abs_region)
         if mss_frame is not None:

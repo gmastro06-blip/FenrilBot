@@ -1,4 +1,7 @@
 import pathlib
+from typing import Any
+
+import numpy as np
 from src.utils.core import hashit
 from src.utils.image import loadFromRGBToGray
 
@@ -7,6 +10,49 @@ currentPath = pathlib.Path(__file__).parent.resolve()
 imagesPath = f'{currentPath}/images'
 containersBarsImagesPath = f'{imagesPath}/containersBars'
 slotsImagesPath = f'{imagesPath}/slots'
+
+
+def _load_optional(path: str) -> np.ndarray[Any, Any] | None:
+    try:
+        if pathlib.Path(path).exists():
+            return loadFromRGBToGray(path)
+    except Exception:
+        return None
+    return None
+
+
+def _add_optional_slot_image(images_dict: dict, slot_key: str, filename: str) -> None:
+    try:
+        img = _load_optional(f'{slotsImagesPath}/{filename}')
+        if img is not None:
+            images_dict['slots'][slot_key] = img
+    except Exception:
+        # Best-effort: optional images should never break startup.
+        return
+
+
+def _add_optional_slot_hashes(
+    images_dict: dict,
+    *,
+    filename_prefix: str,
+    canonical_name: str,
+    hashes_dict: dict,
+) -> None:
+    try:
+        slots_dir = pathlib.Path(slotsImagesPath)
+        for file in slots_dir.glob(f'{filename_prefix}*.png'):
+            try:
+                img = _load_optional(str(file))
+                if img is None:
+                    continue
+                # Keep a reference for debugging / future reuse.
+                images_dict['slots'][file.stem] = img
+                hashes_dict[hashit(img)] = canonical_name
+            except Exception:
+                continue
+    except Exception:
+        return
+
 images = {
     'containersBars': {
         'backpack bottom': loadFromRGBToGray(f'{containersBarsImagesPath}/backpack bottom.png'),
@@ -74,9 +120,18 @@ images = {
         'Wolf Backpack': loadFromRGBToGray(f'{slotsImagesPath}/Wolf Backpack.png'),
     }
 }
+
 slotsImagesHashes = {
     hashit(images['slots']['big empty potion flask']): 'empty potion flask',
     hashit(images['slots']['medium empty potion flask']): 'empty potion flask',
     hashit(images['slots']['small empty potion flask']): 'empty potion flask',
     hashit(images['slots']['empty']): 'empty slot',
 }
+
+# Optional slot templates (safe if missing). Any file matching `empty vial*.png` will be mapped.
+_add_optional_slot_hashes(
+    images,
+    filename_prefix='empty vial',
+    canonical_name='empty vial',
+    hashes_dict=slotsImagesHashes,
+)

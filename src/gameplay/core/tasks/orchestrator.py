@@ -56,6 +56,12 @@ class TasksOrchestrator:
             return None
         if isinstance(task, VectorTask):
             if task.status == 'notStarted':
+                if task.startedAt is None:
+                    task.startedAt = time()
+                try:
+                    context = task.applyRuntimeConfig(context)
+                except Exception:
+                    pass
                 context = task.onBeforeStart(context)
                 task.status = 'running'
             if task.status != 'completed':
@@ -91,6 +97,23 @@ class TasksOrchestrator:
         if self.rootTask.status == 'completed':
             return context
         currentTask = self.getCurrentTask(context)
+
+        # Root-task timeouts: VectorTask roots were previously never timing out
+        # because VectorTask.start logic bypassed handleTasks' startedAt setup.
+        # Check the root timer as a guardrail for long-running task trees.
+        if currentTask is not None:
+            root = getattr(currentTask, 'rootTask', None)
+            if root is not None and root is not currentTask and root.status != 'completed':
+                if self.didTaskTimedout(root):
+                    self._maybe_dump_timeout(context, root)
+                    context = root.onTimeout(context)
+                    currentTask.statusReason = 'timeout'
+                    return self.markCurrentTaskAsFinished(
+                        currentTask,
+                        context,
+                        shouldTimeoutTreeWhenTimeout=True,
+                    )
+
         if currentTask is not None and currentTask.status == 'awaitingManualTermination':
             if currentTask.shouldManuallyComplete(context):
                 currentTask.status = 'completed'
@@ -107,6 +130,10 @@ class TasksOrchestrator:
             currentTask.isRestarting = False
             if currentTask.startedAt is None:
                 currentTask.startedAt = time()
+            try:
+                context = currentTask.applyRuntimeConfig(context)
+            except Exception:
+                pass
             context = currentTask.onBeforeStart(context)
             if self.didPassedEnoughTimeToExecute(currentTask):
                 if currentTask.shouldIgnore(context):

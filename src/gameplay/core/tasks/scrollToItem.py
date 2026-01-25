@@ -1,5 +1,4 @@
 from typing import Union
-import os
 from src.shared.typings import BBox, GrayImage
 from src.utils.core import locate
 from src.utils.mouse import moveTo, scroll
@@ -9,10 +8,12 @@ from .common.base import BaseTask
 
 class ScrollToItemTask(BaseTask):
     def __init__(self, containerImage: GrayImage, itemImage: GrayImage):
-        super().__init__()
+        super().__init__(delayOfTimeout=20.0)
         self.name = 'scrollToItem'
         self.terminable = False
-        self.delayOfTimeout = float(os.getenv('FENRIL_SCROLL_TO_ITEM_TIMEOUT', '20'))
+        self.timeout_config_path = 'ng_runtime.task_timeouts.scrollToItem'
+        self.timeout_env_var = 'FENRIL_SCROLL_TO_ITEM_TIMEOUT'
+        self.timeout_default = 20.0
         self.shouldTimeoutTreeWhenTimeout = True
         self.containerImage = containerImage
         self.itemImage = itemImage

@@ -1,12 +1,9 @@
 """One-off diagnostic: locate and click a battle list entry.
 
 Usage (PowerShell):
-  $env:FENRIL_CAPTURE_WINDOW_TITLE='Proyector en ventana (Fuente) - Tibia_Fuente'
-  $env:FENRIL_ACTION_WINDOW_TITLE='Tibia - ...'   # optional
-  $env:FENRIL_DISABLE_ARDUINO='1'                 # recommended for fast clicks
-  $env:FENRIL_BATTLELIST_CLICK_INDEX='0'
-  $env:FENRIL_BATTLELIST_CLICK_X_OFFSET='60'      # optional
-    ./.venv/Scripts/python.exe -u scripts/test_battlelist_click.py
+    ./.venv/Scripts/python.exe -u scripts/test_battlelist_click.py --index 0 --button left --timeout-s 10
+
+Optional env vars are still supported for convenience, but not required.
 
 It will:
 - resolve capture/action windows
@@ -21,6 +18,7 @@ import os
 import pathlib
 import sys
 import time
+import argparse
 from typing import Optional, cast
 
 import cv2
@@ -38,8 +36,8 @@ from src.repositories.battleList import extractors as battlelist_extractors
 import src.utils.mouse as mouse
 
 
-def _focus_action_window(ctx: dict) -> bool:
-    if os.getenv('FENRIL_FOCUS_ACTION_WINDOW', '1') in {'0', 'false', 'False'}:
+def _focus_action_window(ctx: dict, *, enabled: bool, focus_after_s: float) -> bool:
+    if not enabled:
         return False
 
     win = ctx.get('action_window') or ctx.get('window')
@@ -80,14 +78,21 @@ def _focus_action_window(ctx: dict) -> bool:
         pass
 
     if focused:
-        try:
-            time.sleep(float(os.getenv('FENRIL_FOCUS_AFTER_S', '0.10')))
-        except Exception:
-            time.sleep(0.10)
+        time.sleep(max(0.0, float(focus_after_s)))
     return focused
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description='One-off diagnostic: locate and click a battle list entry')
+    parser.add_argument('--index', type=int, default=None, help='Battlelist entry index (default: 0)')
+    parser.add_argument('--button', type=str, default=None, choices=['left', 'right'], help='Click button (default: left)')
+    parser.add_argument('--timeout-s', type=float, default=None, help='Max seconds to wait for click coordinate (default: 10.0)')
+    parser.add_argument('--focus-action-window', action=argparse.BooleanOptionalAction, default=None, help='Try to focus action window before clicking (default: on)')
+    parser.add_argument('--focus-after-s', type=float, default=None, help='Seconds to sleep after focusing (default: 0.10)')
+    parser.add_argument('--click-at-cursor', action=argparse.BooleanOptionalAction, default=None, help='Move to point then click at cursor (default: off)')
+    parser.add_argument('--pre-delay-s', type=float, default=None, help='Delay before click when using --click-at-cursor (default: 0.15)')
+    args = parser.parse_args()
+
     ctx = dict(base_context)
     ctx['ng_pause'] = False
     ctx['ng_debug'] = {'last_tick_reason': None}
@@ -96,12 +101,40 @@ def main() -> int:
     out_dir = pathlib.Path('debug')
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    idx = int(os.getenv('FENRIL_BATTLELIST_CLICK_INDEX', '0'))
-    button = os.getenv('FENRIL_BATTLELIST_ATTACK_CLICK_BUTTON', 'left').strip().lower()
+    idx = args.index if args.index is not None else int(os.getenv('FENRIL_BATTLELIST_CLICK_INDEX', '0'))
+    button = (args.button or os.getenv('FENRIL_BATTLELIST_ATTACK_CLICK_BUTTON', 'left')).strip().lower()
     if button not in {'left', 'right'}:
         button = 'left'
 
-    deadline = time.time() + float(os.getenv('FENRIL_TEST_CLICK_TIMEOUT_S', '10.0'))
+    if args.focus_action_window is None:
+        focus_action_window = os.getenv('FENRIL_FOCUS_ACTION_WINDOW', '1') not in {'0', 'false', 'False'}
+    else:
+        focus_action_window = bool(args.focus_action_window)
+
+    if args.focus_after_s is None:
+        try:
+            focus_after_s = float(os.getenv('FENRIL_FOCUS_AFTER_S', '0.10'))
+        except Exception:
+            focus_after_s = 0.10
+    else:
+        focus_after_s = float(args.focus_after_s)
+
+    if args.timeout_s is None:
+        timeout_s = float(os.getenv('FENRIL_TEST_CLICK_TIMEOUT_S', '10.0'))
+    else:
+        timeout_s = float(args.timeout_s)
+
+    if args.click_at_cursor is None:
+        click_at_cursor = os.getenv('FENRIL_TEST_CLICK_AT_CURSOR', '0') in {'1', 'true', 'True'}
+    else:
+        click_at_cursor = bool(args.click_at_cursor)
+
+    if args.pre_delay_s is None:
+        pre_delay_s = float(os.getenv('FENRIL_TEST_CLICK_PRE_DELAY_S', '0.15'))
+    else:
+        pre_delay_s = float(args.pre_delay_s)
+
+    deadline = time.time() + max(0.0, timeout_s)
     attempt = 0
     shot_none_count = 0
     last_shot: Optional[np.ndarray] = None
@@ -136,15 +169,13 @@ def main() -> int:
 
         abs_click = mouse.transform_capture_to_action(click)
         cap_rect, act_rect = mouse.get_window_transform()
-        focused = _focus_action_window(ctx)
+        focused = _focus_action_window(ctx, enabled=focus_action_window, focus_after_s=focus_after_s)
         print(f"[test] FOUND click={click} abs={abs_click} cap_rect={cap_rect} act_rect={act_rect} idx={idx} button={button}")
         print(f"[test] focus_action_window={focused}")
         print(f"[test] dumped screenshot: {dump_path}")
-
-        click_at_cursor = os.getenv('FENRIL_TEST_CLICK_AT_CURSOR', '0') in {'1', 'true', 'True'}
         if click_at_cursor:
             mouse.moveTo(click)
-            time.sleep(float(os.getenv('FENRIL_TEST_CLICK_PRE_DELAY_S', '0.15')))
+            time.sleep(max(0.0, pre_delay_s))
             if button == 'right':
                 mouse.rightClick(None)
             else:
