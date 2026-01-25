@@ -10,6 +10,7 @@ from .say import SayTask
 from .selectChatTab import SelectChatTabTask
 from .sellEachFlask import SellEachFlaskTask
 from .setChatOff import SetChatOffTask
+from .setNpcTradeMode import SetNpcTradeModeTask
 from .setNextWaypoint import SetNextWaypointTask
 
 
@@ -65,6 +66,7 @@ class SellFlasksTask(VectorTask):
             EnableChatTask().setParentTask(self).setRootTask(self),
             SayTask('trade').setParentTask(self).setRootTask(self),
             SetChatOffTask().setParentTask(self).setRootTask(self),
+            SetNpcTradeModeTask('sell').setParentTask(self).setRootTask(self),
             OpenBackpackTask(context['ng_backpacks']['main']).setParentTask(self).setRootTask(self),
             ExpandBackpackTask(context['ng_backpacks']['main']).setParentTask(self).setRootTask(self),
             SellEachFlaskTask(

@@ -66,10 +66,28 @@ def _resolve_first_tibia_window() -> Optional[gw.Win32Window]:
         win32gui.EnumWindows(lambda hwnd, param: param.append(hwnd), windowsList)
         windowsNames = list(map(lambda hwnd: win32gui.GetWindowText(hwnd), windowsList))
         regex = re.compile(r'.*tibia.*', re.IGNORECASE)
-        windowsFilter = list(filter(lambda windowName: regex.match(windowName), windowsNames))
-        if len(windowsFilter) > 0:
-            wins = gw.getWindowsWithTitle(windowsFilter[0])
-            return wins[0] if wins else None
+        candidates = [name for name in windowsNames if name and regex.match(name)]
+        if not candidates:
+            return None
+
+        # Avoid selecting OBS projector / OBS UI as the "action" window.
+        def is_bad(title: str) -> bool:
+            t = title.lower()
+            return (
+                'proyector en ventana' in t
+                or 'projector' in t
+                or t.startswith('obs')
+                or 'obs ' in t
+            )
+
+        filtered = [t for t in candidates if not is_bad(t)]
+
+        # Prefer the common Tibia client title format when available.
+        preferred = [t for t in filtered if t.lower().startswith('tibia -')]
+        pick = (preferred[0] if preferred else (filtered[0] if filtered else candidates[0]))
+
+        wins = gw.getWindowsWithTitle(pick)
+        return wins[0] if wins else None
         return None
     except Exception:
         return None

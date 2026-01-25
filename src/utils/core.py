@@ -346,6 +346,15 @@ def hashit(arr: np.ndarray) -> int:
 
 # TODO: add unit tests
 def locate(compareImage: GrayImage, img: GrayImage, confidence: float = 0.85, type: int = cv2.TM_CCOEFF_NORMED) -> Optional[BBox]:
+    try:
+        cmp_h, cmp_w = compareImage.shape[:2]
+        img_h, img_w = img.shape[:2]
+    except Exception:
+        return None
+    # OpenCV requires the search image to be >= template size.
+    # User-captured templates may be larger than some cropped search regions.
+    if img_h > cmp_h or img_w > cmp_w:
+        return None
     match = cv2.matchTemplate(compareImage, img, type)
     res = cv2.minMaxLoc(match)
     if res[1] <= confidence:
@@ -406,6 +415,13 @@ def locateMultiScale(
 
 # TODO: add unit tests
 def locateMultiple(compareImg: GrayImage, img: GrayImage, confidence: float = 0.85) -> List[BBox]:
+    try:
+        cmp_h, cmp_w = compareImg.shape[:2]
+        img_h, img_w = img.shape[:2]
+    except Exception:
+        return []
+    if img_h > cmp_h or img_w > cmp_w:
+        return []
     match = cv2.matchTemplate(compareImg, img, cv2.TM_CCOEFF_NORMED)
     loc = np.where(match >= confidence)
     resultList = []

@@ -1,18 +1,48 @@
 from time import sleep
 from typing import Optional
 from src.shared.typings import BBox, GrayImage
-from src.utils.core import cacheObjectPosition, locate, getScreenshot
+from src.utils.core import cacheObjectPosition, locate, locateMultiScale, getScreenshot
 from src.utils.image import crop
 from src.utils.keyboard import hotkey, press, write
 from src.utils.mouse import leftClick, moveTo
-from .config import images, npcTradeBarImage, npcTradeOkImage
+from .config import images, npcTradeBarImages, npcTradeOkImages
+
+
+def _locate_any_template(
+    screenshot: GrayImage,
+    templates: list[GrayImage],
+    *,
+    confidence: float,
+    scales: tuple[float, ...],
+) -> Optional[BBox]:
+    for template in templates:
+        pos = locateMultiScale(
+            screenshot,
+            template,
+            confidence=confidence,
+            scales=scales,
+        )
+        if pos is not None:
+            return pos
+    for template in templates:
+        pos = locate(screenshot, template, confidence=confidence)
+        if pos is not None:
+            return pos
+    return None
 
 
 # TODO: add unit tests
 # TODO: add perf
 @cacheObjectPosition
 def getTradeTopPosition(screenshot: GrayImage) -> Optional[BBox]:
-    return locate(screenshot, npcTradeBarImage)
+    # Robust to capture scaling/DPI.
+    # If you always capture at native 1920x1080 with 100% scaling, this behaves the same.
+    return _locate_any_template(
+        screenshot,
+        npcTradeBarImages,
+        confidence=0.80,
+        scales=(0.75, 0.80, 0.85, 0.90, 0.95, 1.0, 1.05, 1.10, 1.15, 1.20, 1.25),
+    )
 
 
 # TODO: add unit tests
@@ -23,9 +53,25 @@ def getTradeBottomPos(screenshot: GrayImage) -> Optional[BBox]:
     if tradeTopPos is None:
         return None
     (x, y, _, _) = tradeTopPos
-    croppedImage = crop(
-        screenshot, x, y, 174, len(screenshot) - y)
-    tradeOkPos = locate(croppedImage, npcTradeOkImage)
+    # The legacy trade window width is ~174px, but user-captured OK templates may be wider.
+    # Widen the search crop to avoid matchTemplate failures and increase robustness.
+    crop_width = 174
+    try:
+        for tpl in npcTradeOkImages:
+            try:
+                w = int(tpl.shape[1])
+            except Exception:
+                continue
+            crop_width = max(crop_width, w + 20)
+    except Exception:
+        pass
+    croppedImage = crop(screenshot, x, y, crop_width, len(screenshot) - y)
+    tradeOkPos = _locate_any_template(
+        croppedImage,
+        npcTradeOkImages,
+        confidence=0.80,
+        scales=(0.75, 0.80, 0.85, 0.90, 0.95, 1.0, 1.05, 1.10, 1.15, 1.20, 1.25),
+    )
     if tradeOkPos is None:
         return None
     (_, botY, _, _) = tradeOkPos

@@ -154,10 +154,27 @@ poetry run python main.py
 
 Most "knobs" that used to be controlled via `FENRIL_*` environment variables are now persisted per-profile in `file.json` under `ng_runtime` (and editable in the UI).
 
+Bank deposits use the dialogue sequence `hi` → `deposit all` → `yes` for broad NPC/server compatibility (no extra flag required).
+
+### NPC trade tabs (Buy/Sell)
+
+Some newer clients show Buy/Sell tabs in the NPC trade window. To make switching tabs robust across DPI/scaling, capture templates from your own OBS/capture pipeline:
+
+- Open the NPC trade window in-game.
+- Run: `./.venv/Scripts/python.exe scripts/capture_trade_tab_templates.py`
+
+This writes templates to `src/repositories/refill/images/tradeTabs/` and enables template-based tab switching in the bot.
+
 If you run into `ModuleNotFoundError` while doing quick checks like `python -c "..."`, you’re probably using the wrong interpreter (global Python instead of the project environment). Use one of these:
 
 - `poetry run python main.py`
 - Or call the venv directly: `./.venv/Scripts/python.exe ...`
+
+If the trade window is not detected (e.g. the script dumps a frame but can’t find the trade bar), your client UI likely doesn’t match the repo default templates. Capture your own variants from the OBS/projector frame:
+
+- Run: `./.venv/Scripts/python.exe scripts/capture_trade_window_templates.py --capture-title "<OBS projector title>"`
+
+This writes `npcTradeBar_*.png` / `npcTradeOk_*.png` variants into `src/repositories/refill/images/` and the bot will automatically try them.
 
 ### Task timeouts
 

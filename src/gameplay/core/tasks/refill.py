@@ -10,6 +10,7 @@ from .openBackpack import OpenBackpackTask
 from .say import SayTask
 from .sellEachFlask import SellEachFlaskTask
 from .selectChatTab import SelectChatTabTask
+from .setNpcTradeMode import SetNpcTradeModeTask
 from .setChatOff import SetChatOffTask
 from .setNextWaypoint import SetNextWaypointTask
 from src.gameplay.core.tasks.useHotkey import UseHotkeyTask
@@ -100,6 +101,7 @@ class RefillTask(VectorTask):
         sell_tasks = []
         if sell_before_refill and isinstance(main_backpack, str) and main_backpack:
             sell_tasks = [
+                SetNpcTradeModeTask('sell').setParentTask(self).setRootTask(self),
                 OpenBackpackTask(main_backpack).setParentTask(self).setRootTask(self),
                 ExpandBackpackTask(main_backpack).setParentTask(self).setRootTask(self),
                 SellEachFlaskTask(
@@ -122,6 +124,7 @@ class RefillTask(VectorTask):
             SayTask('potions' if self.waypoint['options']['houseNpcEnabled'] else 'trade').setParentTask(self).setRootTask(self),
             SetChatOffTask().setParentTask(self).setRootTask(self),
             *sell_tasks,
+            SetNpcTradeModeTask('buy').setParentTask(self).setRootTask(self),
             BuyItemTask(self.waypoint['options']['manaPotion']['item'], amountOfManaPotionsToBuy).setParentTask(
                 self).setRootTask(self),
             BuyItemTask(self.waypoint['options']['healthPotion']['item'], amountOfHealthPotionsToBuy, ignore=not self.waypoint['options']['healthPotionEnabled']).setParentTask(

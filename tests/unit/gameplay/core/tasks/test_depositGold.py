@@ -50,3 +50,5 @@ def test_onBeforeStart():
     assert isinstance(task.tasks[8], SetNextWaypointTask)
     assert task.tasks[8].parentTask == task
     assert task.tasks[8].rootTask == task
+
+
