@@ -292,6 +292,152 @@ def _normalize_sell_flasks_waypoint_options_in_place(waypoints: List[Dict[str, A
     return changed
 
 
+def _merge_sellable_items(existing: Any, extra: Any) -> List[str]:
+    base: List[str] = []
+    if isinstance(existing, list):
+        base = [x for x in existing if isinstance(x, str) and x]
+    add: List[str] = []
+    if isinstance(extra, list):
+        add = [x for x in extra if isinstance(x, str) and x]
+
+    seen = set()
+    out: List[str] = []
+    for x in base + add:
+        if x not in seen:
+            seen.add(x)
+            out.append(x)
+    return out
+
+
+def _dedupe_sellflasks_into_refill_in_place(waypoints: List[Dict[str, Any]]) -> int:
+    """If a `sellFlasks` waypoint targets the same coordinate as a `refill` waypoint,
+    merge its options into the refill and remove the redundant sellFlasks waypoint.
+
+    This keeps selling strictly allow-listed, but avoids doing two separate waypoints
+    when the intent is: sell empties then buy potions at the same NPC.
+    """
+
+    def _coord_key(wp: Dict[str, Any]) -> Optional[Tuple[int, int, int]]:
+        c = wp.get('coordinate')
+        if (
+            isinstance(c, list)
+            and len(c) == 3
+            and all(isinstance(v, int) for v in c)
+        ):
+            return (c[0], c[1], c[2])
+        return None
+
+    refill_indexes_by_coord: Dict[Tuple[int, int, int], List[int]] = {}
+    for idx, wp in enumerate(waypoints):
+        if not isinstance(wp, dict) or wp.get('type') != 'refill':
+            continue
+        key = _coord_key(wp)
+        if key is None:
+            continue
+        refill_indexes_by_coord.setdefault(key, []).append(idx)
+
+    if not refill_indexes_by_coord:
+        return 0
+
+    removed = 0
+    new_waypoints: List[Dict[str, Any]] = []
+
+    for idx, wp in enumerate(waypoints):
+        if not isinstance(wp, dict) or wp.get('type') != 'sellFlasks':
+            if isinstance(wp, dict):
+                new_waypoints.append(wp)
+            continue
+
+        key = _coord_key(wp)
+        if key is None:
+            new_waypoints.append(wp)
+            continue
+
+        refill_idxs = refill_indexes_by_coord.get(key)
+        if not refill_idxs:
+            new_waypoints.append(wp)
+            continue
+
+        # Prefer the next refill after this sellFlasks, otherwise fallback to the closest earlier refill.
+        target_idx: Optional[int] = None
+        for ridx in refill_idxs:
+            if ridx > idx:
+                target_idx = ridx
+                break
+        if target_idx is None:
+            target_idx = refill_idxs[-1]
+
+        try:
+            target_refill = waypoints[target_idx]
+            sell_opts = wp.get('options')
+            if not isinstance(sell_opts, dict):
+                sell_opts = {}
+
+            refill_opts = target_refill.get('options') if isinstance(target_refill, dict) else None
+            if not isinstance(refill_opts, dict):
+                refill_opts = {}
+                if isinstance(target_refill, dict):
+                    target_refill['options'] = refill_opts
+
+            # Ensure selling step is enabled inside refill.
+            if 'sellFlasksBeforeRefill' not in refill_opts:
+                refill_opts['sellFlasksBeforeRefill'] = True
+
+            # Merge allow-list + tuning options (do not overwrite existing values).
+            if 'sellableItems' not in refill_opts:
+                refill_opts['sellableItems'] = sell_opts.get('sellableItems', ['empty potion flask', 'empty vial'])
+            else:
+                refill_opts['sellableItems'] = _merge_sellable_items(refill_opts.get('sellableItems'), sell_opts.get('sellableItems'))
+
+            for k in (
+                'amountPerStack',
+                'maxSlotsToScan',
+                'maxNoTradeRetries',
+                'maxNoScreenshotRetries',
+                'maxConsecutiveUnknownSlots',
+            ):
+                if k not in refill_opts and k in sell_opts:
+                    refill_opts[k] = sell_opts[k]
+
+            # Drop redundant sellFlasks waypoint.
+            removed += 1
+            continue
+        except Exception:
+            # Best-effort: if anything looks odd, keep the original waypoint.
+            new_waypoints.append(wp)
+            continue
+
+    if removed:
+        waypoints[:] = new_waypoints
+
+    return removed
+
+
+def _remove_sellflasks_if_refill_present_in_place(waypoints: List[Dict[str, Any]]) -> int:
+    """If the route already has a refill step, remove standalone sellFlasks waypoints.
+
+    Rationale: refill now sells empty containers before buying potions, so keeping
+    separate sellFlasks steps is redundant and can cause double-selling / extra loops.
+    """
+
+    has_refill = any(isinstance(wp, dict) and wp.get('type') == 'refill' for wp in waypoints)
+    if not has_refill:
+        return 0
+
+    removed = 0
+    new_waypoints: List[Dict[str, Any]] = []
+    for wp in waypoints:
+        if isinstance(wp, dict) and wp.get('type') == 'sellFlasks':
+            removed += 1
+            continue
+        if isinstance(wp, dict):
+            new_waypoints.append(wp)
+
+    if removed:
+        waypoints[:] = new_waypoints
+    return removed
+
+
 def _upgrade_waypoints_in_place(
     waypoints: List[Dict[str, Any]],
     refill_options: Dict[str, Any],
@@ -435,6 +581,8 @@ def convert_file(path: Path, setup_selector: str, dry_run: bool, backup: bool) -
 
     normalized_refill_items = _normalize_refill_waypoint_options_in_place(payload)
     normalized_sell_flasks = _normalize_sell_flasks_waypoint_options_in_place(payload)
+    merged_sellflasks_into_refill = _dedupe_sellflasks_into_refill_in_place(payload)
+    removed_sellflasks = _remove_sellflasks_if_refill_present_in_place(payload)
 
     has_buy_potions = any(
         isinstance(wp, dict)
@@ -461,7 +609,12 @@ def convert_file(path: Path, setup_selector: str, dry_run: bool, backup: bool) -
     )
 
     if not has_buy_potions and not has_check_supplies and not has_sell:
-        if (normalized_refill_items > 0 or normalized_sell_flasks > 0) and not dry_run:
+        if (
+            normalized_refill_items > 0
+            or normalized_sell_flasks > 0
+            or merged_sellflasks_into_refill > 0
+            or removed_sellflasks > 0
+        ) and not dry_run:
             if backup:
                 bak = path.with_suffix(path.suffix + '.bak')
                 if not bak.exists():
@@ -469,7 +622,7 @@ def convert_file(path: Path, setup_selector: str, dry_run: bool, backup: bool) -
             _dump_json(path, payload)
         return FileResult(
             path=str(rel).replace('\\', '/'),
-            modified=((normalized_refill_items > 0 or normalized_sell_flasks > 0) and not dry_run),
+            modified=((normalized_refill_items > 0 or normalized_sell_flasks > 0 or merged_sellflasks_into_refill > 0 or removed_sellflasks > 0) and not dry_run),
             converted_buy_potions=0,
             converted_check_supplies=0,
             converted_sell=0,
@@ -479,11 +632,48 @@ def convert_file(path: Path, setup_selector: str, dry_run: bool, backup: bool) -
             setup_used=None,
             reason=(
                 None
-                if (normalized_refill_items == 0 and normalized_sell_flasks == 0)
+                if (normalized_refill_items == 0 and normalized_sell_flasks == 0 and merged_sellflasks_into_refill == 0 and removed_sellflasks == 0)
                 else (
-                    f"normalized {normalized_refill_items} refill item name(s)"
-                    if normalized_sell_flasks == 0
-                    else f"normalized {normalized_sell_flasks} sellFlasks option(s)"
+                    f"merged {merged_sellflasks_into_refill} sellFlasks into refill"
+                    if (
+                        merged_sellflasks_into_refill > 0
+                        and removed_sellflasks == 0
+                        and normalized_refill_items == 0
+                        and normalized_sell_flasks == 0
+                    )
+                    else (
+                        f"normalized {normalized_refill_items} refill item name(s)"
+                        if (
+                            normalized_refill_items > 0
+                            and normalized_sell_flasks == 0
+                            and merged_sellflasks_into_refill == 0
+                            and removed_sellflasks == 0
+                        )
+                        else (
+                            f"normalized {normalized_sell_flasks} sellFlasks option(s)"
+                            if (
+                                normalized_sell_flasks > 0
+                                and normalized_refill_items == 0
+                                and merged_sellflasks_into_refill == 0
+                                and removed_sellflasks == 0
+                            )
+                            else (
+                                (
+                                    f"removed {removed_sellflasks} sellFlasks (refill handles selling now)"
+                                    if (removed_sellflasks > 0 and merged_sellflasks_into_refill == 0 and normalized_refill_items == 0 and normalized_sell_flasks == 0)
+                                    else (
+                                        f"removed {removed_sellflasks} sellFlasks; merged {merged_sellflasks_into_refill}; normalized {normalized_refill_items} refill item name(s) and {normalized_sell_flasks} sellFlasks option(s)"
+                                        if removed_sellflasks > 0
+                                        else (
+                                            f"normalized {normalized_refill_items} refill item name(s) and {normalized_sell_flasks} sellFlasks option(s)"
+                                            if merged_sellflasks_into_refill == 0
+                                            else f"merged {merged_sellflasks_into_refill} sellFlasks into refill; normalized {normalized_refill_items} refill item name(s) and {normalized_sell_flasks} sellFlasks option(s)"
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
                 )
             ),
         )
@@ -564,6 +754,8 @@ def convert_file(path: Path, setup_selector: str, dry_run: bool, backup: bool) -
         and converted_sell <= 0
         and normalized_refill_items <= 0
         and normalized_sell_flasks <= 0
+        and merged_sellflasks_into_refill <= 0
+        and removed_sellflasks <= 0
     ):
         reason: Optional[str] = None
         if has_check_supplies and checker_base is None:

@@ -151,23 +151,6 @@
     },
     {
         "label": "",
-        "type": "sellFlasks",
-        "coordinate": [
-            32345,
-            32810,
-            7
-        ],
-        "options": {
-            "sellableItems": [
-                "empty potion flask",
-                "empty vial"
-            ]
-        },
-        "ignore": false,
-        "passinho": false
-    },
-    {
-        "label": "",
         "type": "refill",
         "coordinate": [
             32345,
@@ -1560,23 +1543,6 @@
     },
     {
         "label": "",
-        "type": "sellFlasks",
-        "coordinate": [
-            32345,
-            32810,
-            7
-        ],
-        "options": {
-            "sellableItems": [
-                "empty potion flask",
-                "empty vial"
-            ]
-        },
-        "ignore": false,
-        "passinho": false
-    },
-    {
-        "label": "",
         "type": "walk",
         "coordinate": [
             32347,
@@ -1608,23 +1574,6 @@
             5
         ],
         "options": {},
-        "ignore": false,
-        "passinho": false
-    },
-    {
-        "label": "",
-        "type": "sellFlasks",
-        "coordinate": [
-            32345,
-            32808,
-            5
-        ],
-        "options": {
-            "sellableItems": [
-                "empty potion flask",
-                "empty vial"
-            ]
-        },
         "ignore": false,
         "passinho": false
     },

@@ -79,23 +79,6 @@
     },
     {
         "label": "",
-        "type": "sellFlasks",
-        "coordinate": [
-            33132,
-            32821,
-            6
-        ],
-        "options": {
-            "sellableItems": [
-                "empty potion flask",
-                "empty vial"
-            ]
-        },
-        "ignore": false,
-        "passinho": false
-    },
-    {
-        "label": "",
         "type": "depositGold",
         "coordinate": [
             33132,
@@ -127,23 +110,6 @@
             5
         ],
         "options": {},
-        "ignore": false,
-        "passinho": false
-    },
-    {
-        "label": "",
-        "type": "sellFlasks",
-        "coordinate": [
-            33131,
-            32813,
-            5
-        ],
-        "options": {
-            "sellableItems": [
-                "empty potion flask",
-                "empty vial"
-            ]
-        },
         "ignore": false,
         "passinho": false
     },

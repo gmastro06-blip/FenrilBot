@@ -169,23 +169,6 @@
     },
     {
         "label": "",
-        "type": "sellFlasks",
-        "coordinate": [
-            32400,
-            32220,
-            7
-        ],
-        "options": {
-            "sellableItems": [
-                "empty potion flask",
-                "empty vial"
-            ]
-        },
-        "ignore": false,
-        "passinho": false
-    },
-    {
-        "label": "",
         "type": "refill",
         "coordinate": [
             32400,
@@ -1326,23 +1309,6 @@
         ],
         "options": {},
         "ignore": true,
-        "passinho": false
-    },
-    {
-        "label": "",
-        "type": "sellFlasks",
-        "coordinate": [
-            32360,
-            32199,
-            7
-        ],
-        "options": {
-            "sellableItems": [
-                "empty potion flask",
-                "empty vial"
-            ]
-        },
-        "ignore": false,
         "passinho": false
     },
     {
