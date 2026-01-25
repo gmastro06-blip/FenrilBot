@@ -5,6 +5,7 @@ import src.utils.mouse as mouse
 from src.gameplay.typings import Context
 from .common.base import BaseTask
 from src.repositories.battleList import extractors as battlelist_extractors
+from src.repositories.battleList.selection import choose_target_index
 from src.shared.typings import XYCoordinate
 from src.utils.console_log import log_throttled
 from src.utils.runtime_settings import get_bool, get_float, get_int, get_str
@@ -346,7 +347,8 @@ class ClickInClosestCreatureTask(BaseTask):
                 # Even if parsing returns 0 entries, we may still have a locatable battle list.
                 # Keep clicking until an on-screen targetCreature is acquired.
                 if context.get('ng_screenshot') is not None:
-                    battle_click = battlelist_extractors.getCreatureClickCoordinate(context['ng_screenshot'], index=0)
+                    idx, _, _ = choose_target_index(context)
+                    battle_click = battlelist_extractors.getCreatureClickCoordinate(context['ng_screenshot'], index=idx)
                     if battle_click is not None:
                         return False
         return context['ng_cave']['isAttackingSomeCreature'] == True
@@ -363,7 +365,8 @@ class ClickInClosestCreatureTask(BaseTask):
             # If we can locate the battle list click coordinate and we still don't have an on-screen
             # targetCreature, treat "attacking" as untrusted and keep trying to acquire a target.
             if ng_cave.get('targetCreature') is None:
-                battle_click = battlelist_extractors.getCreatureClickCoordinate(context['ng_screenshot'], index=0)
+                idx, _, _ = choose_target_index(context)
+                battle_click = battlelist_extractors.getCreatureClickCoordinate(context['ng_screenshot'], index=idx)
                 if battle_click is not None:
                     attacking = False
 
@@ -419,7 +422,8 @@ class ClickInClosestCreatureTask(BaseTask):
 
             # Fallback: click the first creature in battle list, if we can locate it.
             if battle_click is None and context.get('ng_screenshot') is not None:
-                battle_click = battlelist_extractors.getCreatureClickCoordinate(context['ng_screenshot'], index=0)
+                idx, name, reason = choose_target_index(context)
+                battle_click = battlelist_extractors.getCreatureClickCoordinate(context['ng_screenshot'], index=idx)
             if battle_click is not None:
                 # Battle list clicks tend to work without Ctrl, and holding Ctrl can
                 # open menus / behave unexpectedly depending on Tibia settings.
@@ -449,7 +453,11 @@ class ClickInClosestCreatureTask(BaseTask):
                     ),
                 )
                 if isinstance(context.get('ng_debug'), dict):
-                    context['ng_debug']['last_tick_reason'] = 'attack click: battleList[0]'
+                    # Extra structured diagnostics (useful when selection changes by name).
+                    context['ng_debug']['battleList_target_index'] = int(idx)
+                    context['ng_debug']['battleList_target_name'] = name
+                    context['ng_debug']['battleList_target_reason'] = reason
+                    context['ng_debug']['last_tick_reason'] = f'attack click: battleList[{idx}]'
                 return context
 
             # Last resort: send a hotkey (user-configurable).

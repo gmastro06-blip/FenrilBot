@@ -23,6 +23,7 @@ Outputs:
 from __future__ import annotations
 
 import argparse
+import os
 import pathlib
 import sys
 import time
@@ -40,6 +41,7 @@ from src.gameplay.core.middlewares.screenshot import setScreenshotMiddleware
 from src.gameplay.core.middlewares.window import setTibiaWindowMiddleware
 from src.gameplay.core.tasks.setNpcTradeMode import SetNpcTradeModeTask
 from src.repositories.refill import core as refillCore
+from src.utils.ino import configure_arduino
 from src.utils.mouse import configure_mouse, get_last_click_backend
 
 
@@ -64,11 +66,32 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser.add_argument("--action-title", type=str, default=None)
     parser.add_argument("--wait-seconds", type=float, default=30.0)
     parser.add_argument(
+        "--arduino-port",
+        type=str,
+        default=None,
+        help="Optional Arduino serial port (e.g. COM5). Overrides FENRIL_ARDUINO_PORT for this run.",
+    )
+    parser.add_argument(
+        "--open-fail",
+        action="store_true",
+        help="If trade window is not detected, open the captured failure image in the default viewer.",
+    )
+    parser.add_argument(
+        "--require-backend",
+        type=str,
+        choices=("any", "arduino", "pyautogui"),
+        default="any",
+        help="Fail if clicks are not executed via the requested backend.",
+    )
+    parser.add_argument(
         "--force-pyautogui",
         action="store_true",
         help="Force clicks via pyautogui (disables Arduino clicks) for debugging.",
     )
     args = parser.parse_args(list(argv) if argv is not None else None)
+
+    if args.arduino_port:
+        configure_arduino(port=str(args.arduino_port))
 
     configure_mouse(input_diag=True, disable_arduino_clicks=bool(args.force_pyautogui))
 
@@ -82,12 +105,10 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     ctx = setTibiaWindowMiddleware(ctx)
 
-    try:
-        win = ctx.get('ng_window') if isinstance(ctx.get('ng_window'), dict) else {}
+    win = ctx.get('ng_window')
+    if isinstance(win, dict):
         print('resolved_action_title', win.get('action_resolved_title'))
         print('resolved_capture_title', win.get('capture_resolved_title'))
-    except Exception:
-        pass
 
     out_dir = REPO_ROOT / "debug"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -128,14 +149,34 @@ def main(argv: Optional[list[str]] = None) -> int:
     print("tradeBottom", bot)
 
     if top is None:
-        raise RuntimeError("Trade window top not detected in capture. Keep NPC trade open and visible in OBS.")
+        ts = int(time.time())
+        fail_path = out_dir / f"smoke_trade_no_trade_window_{ts}.png"
+        cv2.imwrite(str(fail_path), _to_bgr(before_gray))
+        print(f"Wrote {fail_path} for inspection")
+        if args.open_fail:
+            try:
+                os.startfile(str(fail_path))  # type: ignore[attr-defined]
+            except Exception as e:
+                print(f"Failed to open failure image: {e}")
+        print(
+            "Trade window top not detected in capture. Keep NPC trade open and visible in OBS, "
+            "then re-run the smoke test."
+        )
+        return 2
 
     # Run BUY then SELL.
     for mode in ("buy", "sell"):
         task = SetNpcTradeModeTask(mode)  # type: ignore[arg-type]
         ctx["ng_screenshot"] = before_gray
         task.do(ctx)
-        print('click_backend', get_last_click_backend())
+        backend = get_last_click_backend()
+        print('click_backend', backend)
+        if args.require_backend != "any" and backend != args.require_backend:
+            print(
+                f"ERROR: Expected click backend={args.require_backend!r} but got {backend!r}. "
+                "If you expected Arduino, ensure it's connected and responding, and that FENRIL_DISABLE_ARDUINO_CLICKS is not set."
+            )
+            return 3
         time.sleep(0.35)
         ctx = setScreenshotMiddleware(ctx)
         after = ctx.get("ng_screenshot")

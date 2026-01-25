@@ -636,7 +636,9 @@ class WaypointsVisualizer:
 
         if not self.x:
             print('No data to edit.')
-            return list(self.data)
+            if isinstance(self.data, Sequence):
+                return [dict(step) for step in self.data if isinstance(step, Mapping)]
+            return []
 
         plt = _optional_import('matplotlib.pyplot')
         mpimg = _optional_import('matplotlib.image')

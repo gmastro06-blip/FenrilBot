@@ -206,28 +206,28 @@ def main(argv: Optional[list[str]] = None) -> int:
         print("--- global search fallback ---")
         for mode in list(missing):
             templates = tradeTabsImages.get(mode) or []
-            found = None
+            global_found: Optional[tuple[int, tuple[int, int, int, int]]] = None
             for i, templ in enumerate(templates):
                 pos = locateMultiScale(gray, templ, confidence=0.70, scales=scales)
                 if pos is not None:
-                    found = (i, pos)
+                    global_found = (i, pos)
                     break
-            print(mode, "global", found)
+            print(mode, "global", global_found)
 
         fp2 = out_dir / "trade_tabs_match_debug_global.png"
         # annotate global matches (if any) on a copy
         dbg2 = dbg_bgr.copy()
         for mode in ("buy", "sell"):
             templates = tradeTabsImages.get(mode) or []
-            best = None
+            best_global: Optional[tuple[int, tuple[int, int, int, int]]] = None
             for i, templ in enumerate(templates):
                 pos = locateMultiScale(gray, templ, confidence=0.70, scales=scales)
                 if pos is not None:
-                    best = (i, pos)
+                    best_global = (i, pos)
                     break
-            if best is None:
+            if best_global is None:
                 continue
-            _, (x, y, w, h) = best
+            _, (x, y, w, h) = best_global
             color = (255, 0, 0) if mode == "buy" else (0, 0, 255)
             _draw_box(dbg2, (int(x), int(y), int(w), int(h)), color, f"{mode}.global")
         cv2.imwrite(str(fp2), dbg2)

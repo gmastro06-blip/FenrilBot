@@ -29,6 +29,7 @@ from src.gameplay.healing.observers.swapAmulet import swapAmulet
 from src.gameplay.healing.observers.swapRing import swapRing
 from src.gameplay.targeting import hasCreaturesToAttack
 from src.repositories.battleList import extractors as battlelist_extractors
+from src.repositories.battleList.selection import choose_target_index
 from src.repositories.gameWindow.creatures import getClosestCreature, getTargetCreature
 from src.gameplay.core.tasks.attackClosestCreature import AttackClosestCreatureTask
 
@@ -278,7 +279,8 @@ class PilotNGThread:
             if not should_attack and get_bool(context, 'ng_runtime.attack_from_battlelist', env_var='FENRIL_ATTACK_FROM_BATTLELIST', default=False):
                 try:
                     if context.get('ng_screenshot') is not None:
-                        battle_click = battlelist_extractors.getCreatureClickCoordinate(context['ng_screenshot'], index=0)
+                        idx, _, _ = choose_target_index(context)
+                        battle_click = battlelist_extractors.getCreatureClickCoordinate(context['ng_screenshot'], index=idx)
                         if battle_click is not None:
                             should_attack = True
                 except Exception:
