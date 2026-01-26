@@ -41,6 +41,13 @@ class OpenBackpackTask(BaseTask):
         backpackPosition = utilsCore.locate(
             context['ng_screenshot'], tpl, confidence=0.8)
         if backpackPosition is None:
+            backpackPosition = utilsCore.locateMultiScale(
+                context['ng_screenshot'],
+                tpl,
+                confidence=0.78,
+                scales=(0.85, 0.90, 0.95, 1.0, 1.05, 1.10, 1.15),
+            )
+        if backpackPosition is None:
             log_throttled(
                 'openBackpack.not_found',
                 'warn',

@@ -79,7 +79,14 @@ def getBattleListIconPosition(screenshot: GrayImage) -> Union[BBox, None]:
     if steps < 2:
         steps = 2
     scales = [min_scale + (max_scale - min_scale) * i / (steps - 1) for i in range(steps)]
-    return locateMultiScale(screenshot, images['icons']['ng_battleList'], confidence=confidence, scales=scales)
+    res = locateMultiScale(screenshot, images['icons']['ng_battleList'], confidence=confidence, scales=scales)
+    if res is not None:
+        return res
+
+    # Fallback for OBS/projector scaling and slight theme differences.
+    # Keep this inside the locator so callers don't need to tune env vars.
+    fallback_scales = (0.50, 0.60, 0.70, 0.80, 0.90, 1.00, 1.10, 1.20, 1.30, 1.40, 1.50, 1.60, 1.70, 1.80)
+    return locateMultiScale(screenshot, images['icons']['ng_battleList'], confidence=max(0.60, confidence - 0.15), scales=fallback_scales)
 
 
 # PERF: [0.05364349999999973, 1.8999999991109462e-06]
@@ -104,4 +111,10 @@ def getContainerBottomBarPosition(screenshot: GrayImage) -> Union[BBox, None]:
         if position is not None:
             return (position[0] + start_x, position[1] + start_y, position[2], position[3])
 
-    return locateMultiScale(screenshot, images['containers']['bottomBar'], confidence=confidence, scales=scales)
+    res = locateMultiScale(screenshot, images['containers']['bottomBar'], confidence=confidence, scales=scales)
+    if res is not None:
+        return res
+
+    # Fallback for scaled captures.
+    fallback_scales = (0.50, 0.60, 0.70, 0.80, 0.90, 1.00, 1.10, 1.20, 1.30, 1.40, 1.50, 1.60, 1.70, 1.80)
+    return locateMultiScale(screenshot, images['containers']['bottomBar'], confidence=max(0.60, confidence - 0.15), scales=fallback_scales)

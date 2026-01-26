@@ -1,6 +1,7 @@
 from src.repositories.inventory.core import images
 import src.utils.core as coreUtils
 import src.utils.mouse as mouse
+import time
 from typing import Any, Optional, Tuple, cast
 from ...typings import Context
 from .common.base import BaseTask
@@ -39,12 +40,23 @@ class OpenDepotTask(BaseTask):
         if screenshot is None:
             return context
 
+        # The depot icon is inside the locker window. Template matching can be
+        # sensitive to UI scaling, so try a couple strategies.
+        depot_tpl = images['slots']['depot']
         depotPosition: Optional[Tuple[int, int, int, int]] = coreUtils.locate(
             screenshot,
-            images['slots']['depot'],
+            depot_tpl,
+            confidence=0.80,
         )
         if depotPosition is None:
-            btn = get_str(ctx, 'ng_runtime.depot_open_button', env_var='FENRIL_DEPOT_OPEN_BUTTON', default='right').strip().lower()
+            depotPosition = coreUtils.locateMultiScale(
+                screenshot,
+                depot_tpl,
+                confidence=0.82,
+                scales=(0.85, 0.90, 0.95, 1.0, 1.05, 1.10, 1.15),
+            )
+        if depotPosition is None:
+            btn = get_str(ctx, 'ng_runtime.depot_open_button', env_var='FENRIL_DEPOT_OPEN_BUTTON', default='left').strip().lower()
             log_throttled(
                 'openDepot.no_icon',
                 'warn',
@@ -56,11 +68,24 @@ class OpenDepotTask(BaseTask):
         # Click near the center to avoid missing the depot icon.
         cx = int(x + max(1, w // 2))
         cy = int(y + max(1, h // 2))
-        button = get_str(ctx, 'ng_runtime.depot_open_button', env_var='FENRIL_DEPOT_OPEN_BUTTON', default='right').strip().lower()
-        if button == 'left':
-            mouse.leftClick((cx, cy))
+
+        button = get_str(ctx, 'ng_runtime.depot_open_button', env_var='FENRIL_DEPOT_OPEN_BUTTON', default='left').strip().lower()
+        coord = (cx, cy)
+
+        # Accept a few aliases since users describe this setting differently.
+        if button in {'double', 'double_left', 'dbl', 'dbl_left', 'left_double'}:
+            mouse.leftClick(coord)
+            time.sleep(0.06)
+            mouse.leftClick(coord)
+        elif button in {'double_right', 'dbl_right', 'right_double'}:
+            mouse.rightClick(coord)
+            time.sleep(0.06)
+            mouse.rightClick(coord)
+        elif button in {'left', 'click', 'mouse', 'direct'}:
+            mouse.leftClick(coord)
         else:
-            mouse.rightClick((cx, cy))
+            # Default/back-compat.
+            mouse.rightClick(coord)
         return context
 
     def did(self, context: Context) -> bool:

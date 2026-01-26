@@ -115,9 +115,9 @@ def loadContextFromConfig(config: Dict[str, Any], context: Dict[str, Any]) -> Di
         'battlelist_bottombar_min_scale': 0.70,
         'battlelist_bottombar_max_scale': 1.30,
         'battlelist_bottombar_scale_steps': 13,
-        'battlelist_click_x_offset': 60,
+        'battlelist_click_x_offset': 80,
         # UI-configured defaults
-        'depot_open_button': 'right',
+        'depot_open_button': 'left',
         # Attack input defaults (used by clickInClosestCreature)
         'attack_hotkey': 'space',
         'attack_click_button': 'left',

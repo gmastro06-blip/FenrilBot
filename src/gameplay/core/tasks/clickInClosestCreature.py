@@ -344,10 +344,12 @@ class ClickInClosestCreatureTask(BaseTask):
                 bl_creatures = context.get('ng_battleList', {}).get('creatures')
                 if bl_creatures is not None and len(bl_creatures) > 0:
                     return False
-                # Even if parsing returns 0 entries, we may still have a locatable battle list.
-                # Keep clicking until an on-screen targetCreature is acquired.
+                # If parsing returns 0 entries, do NOT keep clicking battle list.
+                # Clicking index 0 on empty lists causes "phantom attacking".
                 if context.get('ng_screenshot') is not None:
                     idx, _, _ = choose_target_index(context)
+                    if idx is None:
+                        return context['ng_cave']['isAttackingSomeCreature'] == True
                     battle_click = battlelist_extractors.getCreatureClickCoordinate(context['ng_screenshot'], index=idx)
                     if battle_click is not None:
                         return False
@@ -365,10 +367,11 @@ class ClickInClosestCreatureTask(BaseTask):
             # If we can locate the battle list click coordinate and we still don't have an on-screen
             # targetCreature, treat "attacking" as untrusted and keep trying to acquire a target.
             if ng_cave.get('targetCreature') is None:
-                idx, _, _ = choose_target_index(context)
-                battle_click = battlelist_extractors.getCreatureClickCoordinate(context['ng_screenshot'], index=idx)
-                if battle_click is not None:
-                    attacking = False
+                probe_idx, _, _ = choose_target_index(context)
+                if probe_idx is not None:
+                    battle_click = battlelist_extractors.getCreatureClickCoordinate(context['ng_screenshot'], index=probe_idx)
+                    if battle_click is not None:
+                        attacking = False
 
         if attacking == False:
             if self._maybe_manual_auto_attack(context):
@@ -421,9 +424,13 @@ class ClickInClosestCreatureTask(BaseTask):
                 return context
 
             # Fallback: click the first creature in battle list, if we can locate it.
+            target_idx: int | None = None
+            name: str | None = None
+            reason: str = 'n/a'
             if battle_click is None and context.get('ng_screenshot') is not None:
-                idx, name, reason = choose_target_index(context)
-                battle_click = battlelist_extractors.getCreatureClickCoordinate(context['ng_screenshot'], index=idx)
+                target_idx, name, reason = choose_target_index(context)
+                if target_idx is not None:
+                    battle_click = battlelist_extractors.getCreatureClickCoordinate(context['ng_screenshot'], index=target_idx)
             if battle_click is not None:
                 # Battle list clicks tend to work without Ctrl, and holding Ctrl can
                 # open menus / behave unexpectedly depending on Tibia settings.
@@ -454,10 +461,29 @@ class ClickInClosestCreatureTask(BaseTask):
                 )
                 if isinstance(context.get('ng_debug'), dict):
                     # Extra structured diagnostics (useful when selection changes by name).
-                    context['ng_debug']['battleList_target_index'] = int(idx)
-                    context['ng_debug']['battleList_target_name'] = name
+                    context['ng_debug']['battleList_target_index'] = int(target_idx) if target_idx is not None else -1
+                    context['ng_debug']['battleList_target_name'] = name or ''
                     context['ng_debug']['battleList_target_reason'] = reason
-                    context['ng_debug']['last_tick_reason'] = f'attack click: battleList[{idx}]'
+                    context['ng_debug']['last_tick_reason'] = f'attack click: battleList[{target_idx if target_idx is not None else "?"}]'
+                return context
+
+            # If battle list targeting is enabled but we have no valid battle list entries
+            # AND we also have no on-screen closestCreature, do not spam the attack hotkey.
+            if (
+                get_bool(context, 'ng_runtime.attack_from_battlelist', env_var='FENRIL_ATTACK_FROM_BATTLELIST', default=False)
+                and ng_cave.get('targetCreature') is None
+                and ng_cave.get('closestCreature') is None
+                and (context.get('ng_battleList', {}).get('creatures') is None or len(context.get('ng_battleList', {}).get('creatures')) == 0)
+            ):
+                if isinstance(context.get('ng_debug'), dict):
+                    context['ng_debug']['last_tick_reason'] = 'no valid targets (battle list empty)'
+                return context
+
+            # If we have no target and nothing to click, do NOT spam attack hotkeys.
+            # (This is a common cause of "se queda atacando" when detection is empty.)
+            if closest_creature is None and ng_cave.get('targetCreature') is None:
+                if isinstance(context.get('ng_debug'), dict):
+                    context['ng_debug']['last_tick_reason'] = 'idle (no target to attack)'
                 return context
 
             # Last resort: send a hotkey (user-configurable).

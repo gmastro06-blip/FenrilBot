@@ -7,6 +7,8 @@ from ...comboSpells.core import spellsPath
 from ...typings import Context
 from ..tasks.selectChatTab import SelectChatTabTask
 
+import time
+
 
 # TODO: add unit tests
 def setDirectionMiddleware(context: Context) -> Context:
@@ -49,10 +51,19 @@ def setHandleLootMiddleware(context: Context) -> Context:
             context['ng_tasksOrchestrator'].setRootTask(
                 context, SelectChatTabTask('loot'))
     if hasNewLoot(context['ng_screenshot']):
-        if context['ng_cave']['previousTargetCreature'] is not None:
-            context['loot']['corpsesToLoot'].append(
-                context['ng_cave']['previousTargetCreature'])
+        # Primary signal: last known target creature.
+        corpse = context['ng_cave'].get('previousTargetCreature')
+        # Fallback: current target creature (can still be selected when loot message arrives).
+        if corpse is None:
+            corpse = context['ng_cave'].get('targetCreature')
+
+        if corpse is not None:
+            context['loot']['corpsesToLoot'].append(corpse)
             context['ng_cave']['previousTargetCreature'] = None
+        else:
+            dbg = context.get('ng_debug')
+            if isinstance(dbg, dict):
+                dbg['last_tick_reason'] = 'loot msg detected but no target creature'
         # has spelled exori category
         if context['ng_comboSpells']['lastUsedSpell'] is not None and context['ng_comboSpells']['lastUsedSpell'] in ['exori', 'exori gran', 'exori mas']:
             spellPath = spellsPath.get(
@@ -64,6 +75,35 @@ def setHandleLootMiddleware(context: Context) -> Context:
                     context['loot']['corpsesToLoot'].append(creature)
             context['ng_comboSpells']['lastUsedSpell'] = None
             context['ng_comboSpells']['lastUsedSpellAt'] = None
+
+    # Fallback loot trigger: if loot chat detection is unreliable (capture/crop/theme),
+    # still try to loot when a fight just ended.
+    try:
+        now = time.time()
+        attacking = bool(context.get('ng_cave', {}).get('isAttackingSomeCreature', False))
+        tgt = context.get('ng_cave', {}).get('targetCreature')
+        if attacking and tgt is not None:
+            context['ng_cave']['_last_attack_ts'] = now
+            context['ng_cave']['_last_attack_target'] = tgt
+
+        # If we were attacking recently and are no longer attacking, queue one corpse.
+        last_ts = context.get('ng_cave', {}).get('_last_attack_ts')
+        last_tgt = context.get('ng_cave', {}).get('_last_attack_target')
+        if (
+            (not attacking)
+            and isinstance(last_ts, (int, float))
+            and (now - float(last_ts)) <= 3.0
+            and last_tgt is not None
+        ):
+            context['loot']['corpsesToLoot'].append(last_tgt)
+            # Clear so we don't enqueue repeatedly.
+            context['ng_cave']['_last_attack_ts'] = None
+            context['ng_cave']['_last_attack_target'] = None
+            dbg = context.get('ng_debug')
+            if isinstance(dbg, dict):
+                dbg['last_tick_reason'] = 'loot fallback: fight ended'
+    except Exception:
+        pass
     context['ng_cave']['targetCreature'] = getTargetCreature(
         context['gameWindow']['monsters'])
     if context['ng_cave']['targetCreature'] is not None:

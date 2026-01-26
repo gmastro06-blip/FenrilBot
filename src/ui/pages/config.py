@@ -459,7 +459,7 @@ class ConfigPage(customtkinter.CTkToplevel):
         )
         self.runtimeDepotOpenButtonCombo.grid(column=1, row=7, padx=10, pady=(10, 10), sticky='w')
         try:
-            self.runtimeDepotOpenButtonCombo.set(str(ng_runtime.get('depot_open_button', 'right')))
+            self.runtimeDepotOpenButtonCombo.set(str(ng_runtime.get('depot_open_button', 'left')))
         except Exception:
             self.runtimeDepotOpenButtonCombo.set('right')
 

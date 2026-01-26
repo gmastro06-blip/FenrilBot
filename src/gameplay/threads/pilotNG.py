@@ -242,6 +242,26 @@ class PilotNGThread:
                     if prev in (None, 'running', 'no coord'):
                         context['ng_debug']['last_tick_reason'] = 'no coord (attack fallback idle)'
 
+            # When radar is missing and we're idle (e.g., standing at depot), we can still
+            # execute certain safe waypoint tasks that don't require navigation.
+            # This unblocks deposit/openDepot flows during radar template/matching issues.
+            try:
+                if context.get('ng_cave', {}).get('enabled') and context['ng_tasksOrchestrator'].getCurrentTask(context) is None:
+                    currentWaypointIndex = context.get('ng_cave', {}).get('waypoints', {}).get('currentIndex')
+                    items = context.get('ng_cave', {}).get('waypoints', {}).get('items')
+                    if currentWaypointIndex is not None and items:
+                        currentWaypoint = items[currentWaypointIndex]
+                        wp_type = currentWaypoint.get('type') if isinstance(currentWaypoint, dict) else None
+                        allowed = {'depositItems', 'depositItemsHouse'}
+                        if wp_type in allowed:
+                            context['ng_tasksOrchestrator'].setRootTask(
+                                context, resolveTasksByWaypoint(currentWaypoint)
+                            )
+                            if 'ng_debug' in context and isinstance(context['ng_debug'], dict):
+                                context['ng_debug']['last_tick_reason'] = f"set task (no coord): {wp_type}"
+            except Exception:
+                pass
+
             try:
                 context['gameWindow']['previousMonsters'] = context['gameWindow']['monsters']
             except Exception:
@@ -280,9 +300,10 @@ class PilotNGThread:
                 try:
                     if context.get('ng_screenshot') is not None:
                         idx, _, _ = choose_target_index(context)
-                        battle_click = battlelist_extractors.getCreatureClickCoordinate(context['ng_screenshot'], index=idx)
-                        if battle_click is not None:
-                            should_attack = True
+                        if idx is not None:
+                            battle_click = battlelist_extractors.getCreatureClickCoordinate(context['ng_screenshot'], index=idx)
+                            if battle_click is not None:
+                                should_attack = True
                 except Exception:
                     pass
 
@@ -302,6 +323,15 @@ class PilotNGThread:
                     if prev in (None, 'running', 'attack-only'):
                         context['ng_debug']['last_tick_reason'] = 'attack-only'
             else:
+                # If we were previously attacking, explicitly clear the attack task tree
+                # so we don't keep spamming clicks/hotkeys while idle.
+                try:
+                    currentTask = context['ng_tasksOrchestrator'].getCurrentTask(context)
+                except Exception:
+                    currentTask = None
+                currentRootTask = currentTask.rootTask if currentTask is not None else None
+                if currentRootTask is not None and getattr(currentRootTask, 'name', None) == 'attackClosestCreature':
+                    context['ng_tasksOrchestrator'].setRootTask(context, None)
                 if 'ng_debug' in context and isinstance(context['ng_debug'], dict):
                     prev = context['ng_debug'].get('last_tick_reason')
                     if prev in (None, 'running', 'attack-only idle'):
@@ -368,6 +398,20 @@ class PilotNGThread:
         if context['ng_cave']['runToCreatures'] == True and context['ng_cave']['enabled']:
             hasCreaturesToAttackAfterCheck = hasCreaturesToAttack(context)
 
+            # When traveling to the hunt, you may want the bot to prioritize waypoints
+            # instead of getting distracted by monsters on the path.
+            attack_while_waypointing = get_bool(
+                context,
+                'ng_runtime.attack_while_waypointing',
+                env_var='FENRIL_ATTACK_WHILE_WAYPOINTING',
+                default=True,
+                prefer_env=True,
+            )
+            # "Engaged" should mean we already started a fight.
+            # Do NOT treat merely "having a targetCreature" as engaged, otherwise the
+            # bot will keep starting new fights even when attack_while_waypointing=False.
+            engaged = bool(context.get('ng_cave', {}).get('isAttackingSomeCreature', False))
+
             # Optional diagnostics to understand "not attacking" reports.
             if get_bool(context, 'ng_runtime.targeting_diag', env_var='FENRIL_TARGETING_DIAG', default=False):
                 monsters = context.get('gameWindow', {}).get('monsters') or []
@@ -386,7 +430,7 @@ class PilotNGThread:
                     2.0,
                 )
 
-            if hasCreaturesToAttackAfterCheck:
+            if hasCreaturesToAttackAfterCheck and (attack_while_waypointing or engaged):
                 if context['ng_cave']['closestCreature'] is not None:
                     context['way'] = 'ng_cave'
                 else:
@@ -400,7 +444,33 @@ class PilotNGThread:
                         context['way'] = 'waypoint'
             else:
                 context['way'] = 'waypoint'
-            if hasCreaturesToAttackAfterCheck and shouldAskForCavebotTasks(context):
+
+            # If we're explicitly prioritizing waypoints, ensure we are not stuck running
+            # the attack task tree from a previous tick.
+            if context['way'] == 'waypoint' and (not attack_while_waypointing) and (not engaged):
+                try:
+                    currentTask = context['ng_tasksOrchestrator'].getCurrentTask(context)
+                except Exception:
+                    currentTask = None
+                currentRootTask = currentTask.rootTask if currentTask is not None else None
+                if currentRootTask is not None and getattr(currentRootTask, 'name', None) == 'attackClosestCreature':
+                    context['ng_tasksOrchestrator'].setRootTask(context, None)
+                    if 'ng_debug' in context and isinstance(context['ng_debug'], dict):
+                        context['ng_debug']['last_tick_reason'] = 'waypoint priority (cleared attack task)'
+
+            # If there are no creatures to attack, ensure we are not stuck running
+            # the attack task tree from a previous tick.
+            if context['way'] == 'waypoint' and not hasCreaturesToAttackAfterCheck and not engaged:
+                try:
+                    currentTask = context['ng_tasksOrchestrator'].getCurrentTask(context)
+                except Exception:
+                    currentTask = None
+                currentRootTask = currentTask.rootTask if currentTask is not None else None
+                if currentRootTask is not None and getattr(currentRootTask, 'name', None) == 'attackClosestCreature':
+                    context['ng_tasksOrchestrator'].setRootTask(context, None)
+                    if 'ng_debug' in context and isinstance(context['ng_debug'], dict):
+                        context['ng_debug']['last_tick_reason'] = 'no creatures (cleared attack task)'
+            if hasCreaturesToAttackAfterCheck and (attack_while_waypointing or engaged) and shouldAskForCavebotTasks(context):
                 currentRootTask = currentTask.rootTask if currentTask is not None else None
                 isTryingToAttackClosestCreature = currentRootTask is not None and (
                     currentRootTask.name == 'attackClosestCreature')

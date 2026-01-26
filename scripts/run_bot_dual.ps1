@@ -7,7 +7,9 @@ param(
   [switch]$VerboseDiag,
   [switch]$TargetingDiag,
   [switch]$DumpBattlelistOnEmpty,
-  [double]$BattlelistGraceS = 0.0
+  [double]$BattlelistGraceS = 0.0,
+  [switch]$DumpRadarMatchOnFail,
+  [double]$DumpRadarMatchMinIntervalS = 15.0
 )
 
 $ErrorActionPreference = 'Stop'
@@ -81,6 +83,16 @@ if ($DumpBattlelistOnEmpty) {
   Remove-Item Env:FENRIL_DUMP_BATTLELIST_MIN_INTERVAL_S -ErrorAction SilentlyContinue
 }
 
+# Radar diagnostics: dump minimap crops when we keep seeing "radar match not found"
+# (tools+floor are present but minimap->floor matching fails).
+if ($DumpRadarMatchOnFail) {
+  $env:FENRIL_DUMP_RADAR_MATCH_ON_FAIL = '1'
+  $env:FENRIL_DUMP_RADAR_MATCH_MIN_INTERVAL_S = [string]$DumpRadarMatchMinIntervalS
+} else {
+  Remove-Item Env:FENRIL_DUMP_RADAR_MATCH_ON_FAIL -ErrorAction SilentlyContinue
+  Remove-Item Env:FENRIL_DUMP_RADAR_MATCH_MIN_INTERVAL_S -ErrorAction SilentlyContinue
+}
+
 # Smooth brief battle list parsing glitches by reusing the last non-empty list
 # for a short grace window (seconds). 0 disables.
 if ($BattlelistGraceS -gt 0) {
@@ -91,6 +103,13 @@ if ($BattlelistGraceS -gt 0) {
 
 # Better stability on transient dxcam glitches (hard-black frames).
 $env:FENRIL_DXCAM_RETRY_ON_HARD_BLACK = '1'
+
+# Debugging: dump a screenshot + metadata whenever a task times out.
+# This is extremely helpful for diagnosing deposit/openLocker/openDepot issues.
+$env:FENRIL_DUMP_TASK_ON_TIMEOUT = '1'
+
+# Ensure Python logs stream immediately (especially when output is piped/redirected).
+$env:PYTHONUNBUFFERED = '1'
 
 $python = Join-Path $repoRoot '.venv\Scripts\python.exe'
 if (-not (Test-Path $python)) {
@@ -105,6 +124,8 @@ Write-Host "  VerboseDiag=$VerboseDiag" -ForegroundColor Cyan
 Write-Host "  TargetingDiag=$TargetingDiag" -ForegroundColor Cyan
 Write-Host "  DumpBattlelistOnEmpty=$DumpBattlelistOnEmpty" -ForegroundColor Cyan
 Write-Host "  BattlelistGraceS=$BattlelistGraceS" -ForegroundColor Cyan
+Write-Host "  DumpRadarMatchOnFail=$DumpRadarMatchOnFail" -ForegroundColor Cyan
+Write-Host "  DumpRadarMatchMinIntervalS=$DumpRadarMatchMinIntervalS" -ForegroundColor Cyan
 Write-Host "  FENRIL_WARN_ON_WINDOW_MISS=$($env:FENRIL_WARN_ON_WINDOW_MISS)" -ForegroundColor Cyan
 Write-Host "  FENRIL_WINDOW_DIAG=$($env:FENRIL_WINDOW_DIAG)" -ForegroundColor Cyan
 Write-Host "  FENRIL_INPUT_DIAG=$($env:FENRIL_INPUT_DIAG)" -ForegroundColor Cyan
@@ -112,6 +133,9 @@ Write-Host "  FENRIL_TARGETING_DIAG=$($env:FENRIL_TARGETING_DIAG)" -ForegroundCo
 Write-Host "  FENRIL_WARN_ON_BATTLELIST_EMPTY=$($env:FENRIL_WARN_ON_BATTLELIST_EMPTY)" -ForegroundColor Cyan
 Write-Host "  FENRIL_DUMP_BATTLELIST_ON_EMPTY=$($env:FENRIL_DUMP_BATTLELIST_ON_EMPTY)" -ForegroundColor Cyan
 Write-Host "  FENRIL_BATTLELIST_GRACE_S=$($env:FENRIL_BATTLELIST_GRACE_S)" -ForegroundColor Cyan
+Write-Host "  FENRIL_DUMP_RADAR_MATCH_ON_FAIL=$($env:FENRIL_DUMP_RADAR_MATCH_ON_FAIL)" -ForegroundColor Cyan
+Write-Host "  FENRIL_DUMP_RADAR_MATCH_MIN_INTERVAL_S=$($env:FENRIL_DUMP_RADAR_MATCH_MIN_INTERVAL_S)" -ForegroundColor Cyan
+Write-Host "  FENRIL_DUMP_TASK_ON_TIMEOUT=$($env:FENRIL_DUMP_TASK_ON_TIMEOUT)" -ForegroundColor Cyan
 
 if ($Preflight) {
   Write-Host "Preflight: resolving windows from profile/env..." -ForegroundColor Cyan

@@ -14,6 +14,7 @@ from .setNextWaypoint import SetNextWaypointTask
 from src.utils.array import getNextArrayIndex
 from src.gameplay.core.waypoint import resolveGoalCoordinate
 from src.utils.console_log import log_throttled
+from src.utils.runtime_settings import get_bool
 
 class DepositItemsTask(VectorTask):
     def __init__(self: "DepositItemsTask", waypoint: Waypoint) -> None:
@@ -70,6 +71,29 @@ class DepositItemsTask(VectorTask):
             CloseContainerTask(images['containersBars'][loot_bp]).setParentTask(self).setRootTask(self),
             SetNextWaypointTask().setParentTask(self).setRootTask(self),
         ]
+
+        # If radar is currently unavailable, GoToFreeDepot cannot navigate.
+        # Allow an opt-in shortcut to run the depot sequence directly when the player is
+        # already standing at the depot (common during supervised testing).
+        try:
+            coord = context.get('ng_radar', {}).get('coordinate')
+            coord_missing = coord is None or (isinstance(coord, (list, tuple)) and any(c is None for c in coord))
+        except Exception:
+            coord_missing = True
+
+        if coord_missing and get_bool(
+            context,
+            'ng_runtime.deposit_skip_goto_when_no_coord',
+            env_var='FENRIL_DEPOSIT_SKIP_GOTO_WHEN_NO_COORD',
+            default=False,
+        ):
+            log_throttled(
+                'depositItems.skip_goto_no_coord',
+                'warn',
+                'depositItems: coord is missing; skipping goToFreeDepot (running depot open/deposit sequence directly).',
+                10.0,
+            )
+            self.tasks = [t for t in self.tasks if getattr(t, 'name', None) != 'goToFreeDepot']
         return context
 
     def onTimeout(self, context: Context) -> Context:

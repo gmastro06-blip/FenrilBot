@@ -2,7 +2,7 @@ import pathlib
 from typing import Any, Dict, List, Optional, Tuple, Union
 from src.shared.typings import BBox, GrayImage
 from src.repositories.gameWindow.core import getLeftArrowPosition
-from src.utils.core import cacheObjectPosition, hashit, locate, locateMultiple
+from src.utils.core import cacheObjectPosition, hashit, locate, locateMultiScale, locateMultiple
 from src.utils.image import convertGraysToBlack, loadFromRGBToGray
 from .config import hashes
 
@@ -40,7 +40,9 @@ def getTabs(screenshot: GrayImage) -> Dict[str, Dict[str, Any]]:
             if xOfTab < 0 or xOfTab >= chatsTabsContainerImage.shape[1]:
                 break
             firstPixel = chatsTabsContainerImage[0, xOfTab]
-            if firstPixel != 114 and firstPixel != 125:
+            # Older code relied on exact pixel values (114/125) which breaks under
+            # capture scaling, UI themes, or minor gamma changes. Use a tolerance.
+            if int(firstPixel) < 80 or int(firstPixel) > 170:
                 shouldFindTabs = False
                 continue
             tabImage = chatsTabsContainerImage[2:16, xOfTab + 2:xOfTab + 2 + 92]
@@ -49,7 +51,7 @@ def getTabs(screenshot: GrayImage) -> Dict[str, Dict[str, Any]]:
             tabName = hashes['tabs'].get(hashit(tabImage), 'Unknown')
             if tabName != 'Unknown':
                 tabs.setdefault(
-                    tabName, {'isSelected': firstPixel == 114, 'position': (x + xOfTab, y, 92, 14)})
+                    tabName, {'isSelected': int(firstPixel) <= 120, 'position': (x + xOfTab, y, 92, 14)})
             tabIndex += 1
         return tabs
     else:
@@ -108,14 +110,27 @@ def getLootLines(screenshot: GrayImage) -> List[Tuple[GrayImage, BBox]]:
 # TODO: add perf
 @cacheObjectPosition
 def getChatMenuPosition(screenshot: GrayImage) -> Union[BBox, None]:
-    return locate(screenshot, chatMenuImg)
+    # OBS projector + Windows DPI scaling can slightly resize the capture output.
+    # Use multiscale matching so chat-dependent features (loot detection, tab clicks)
+    # keep working.
+    return locateMultiScale(
+        screenshot,
+        chatMenuImg,
+        confidence=0.78,
+        scales=(0.80, 0.85, 0.90, 0.95, 1.0, 1.05, 1.10, 1.15, 1.20),
+    )
 
 
 # TODO: add unit tests
 # TODO: add perf
 @cacheObjectPosition
 def getChatOffPosition(screenshot: GrayImage) -> Union[BBox, None]:
-    return locate(screenshot, chatOffImg, confidence=0.985)
+    return locateMultiScale(
+        screenshot,
+        chatOffImg,
+        confidence=0.92,
+        scales=(0.85, 0.90, 0.95, 1.0, 1.05, 1.10, 1.15),
+    )
 
 
 # TODO: add unit tests
@@ -125,7 +140,12 @@ def getChatStatus(screenshot: GrayImage) -> Tuple[Optional[BBox], bool]:
     chatOffPos = getChatOffPosition(screenshot)
     if chatOffPos:
         return chatOffPos, False
-    chatOnPos = locate(screenshot, chatOnImgTemp, confidence=0.9)
+    chatOnPos = locateMultiScale(
+        screenshot,
+        chatOnImgTemp,
+        confidence=0.80,
+        scales=(0.85, 0.90, 0.95, 1.0, 1.05, 1.10, 1.15),
+    )
     return chatOnPos, True
 
 

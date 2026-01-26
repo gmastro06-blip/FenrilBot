@@ -1,0 +1,23 @@
+{
+  "timestamp": 1769439999.5660045,
+  "tools_pos": [
+    1870,
+    55,
+    20,
+    60
+  ],
+  "scale_estimate": 1.0,
+  "floor_level": 6,
+  "ui_crop_bbox": [
+    1790,
+    0,
+    130,
+    195
+  ],
+  "floor_strip_bbox_raw": [
+    1898,
+    48,
+    2,
+    67
+  ]
+}

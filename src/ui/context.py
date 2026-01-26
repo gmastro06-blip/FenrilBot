@@ -119,7 +119,7 @@ class Context:
 
         try:
             configure_battlelist_extractors(
-                click_x_offset=get_int(self.context, 'ng_runtime.battlelist_click_x_offset', env_var='FENRIL_BATTLELIST_CLICK_X_OFFSET', default=60),
+                click_x_offset=get_int(self.context, 'ng_runtime.battlelist_click_x_offset', env_var='FENRIL_BATTLELIST_CLICK_X_OFFSET', default=80),
             )
         except Exception:
             pass
@@ -197,7 +197,7 @@ class Context:
                     'action_window_title': '',
                     'capture_window_title': '',
                     'start_paused': True,
-                    'depot_open_button': 'right',
+                    'depot_open_button': 'left',
                     'input_diag': False,
                     'safe_log': False,
                     'console_log': True,
@@ -730,7 +730,7 @@ class Context:
         self.context['ng_runtime'].setdefault('action_window_title', '')
         self.context['ng_runtime'].setdefault('capture_window_title', '')
         self.context['ng_runtime'].setdefault('start_paused', True)
-        self.context['ng_runtime'].setdefault('depot_open_button', 'right')
+        self.context['ng_runtime'].setdefault('depot_open_button', 'left')
         # Attack input defaults (used by clickInClosestCreature)
         self.context['ng_runtime'].setdefault('attack_hotkey', 'space')
         self.context['ng_runtime'].setdefault('attack_click_button', 'left')
@@ -827,7 +827,7 @@ class Context:
                 prof.setdefault('action_window_title', '')
                 prof.setdefault('capture_window_title', '')
                 prof.setdefault('start_paused', True)
-                prof.setdefault('depot_open_button', 'right')
+                prof.setdefault('depot_open_button', 'left')
                 # Attack input defaults (used by clickInClosestCreature)
                 prof.setdefault('attack_hotkey', 'space')
                 prof.setdefault('attack_click_button', 'left')

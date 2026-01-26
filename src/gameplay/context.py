@@ -149,6 +149,11 @@ context = {
         'coordinate': None,
         'previousCoordinate': None,
         'lastCoordinateVisited': None,
+        'radarImage': None,
+        'previousRadarImage': None,
+        'pendingCoordinate': None,
+        'pendingCoordinateTicks': 0,
+        'lockConfirmed': False,
     },
     'ng_resolution': 1080,
     'ng_statusBar': {

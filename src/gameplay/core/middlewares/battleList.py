@@ -6,12 +6,136 @@ from datetime import datetime
 import cv2
 
 from src.repositories.battleList.core import getCreatures, isAttackingSomeCreature
-from src.repositories.battleList.extractors import getContent
+from src.repositories.battleList.extractors import getContent, getCreaturesNamesImages
 from src.repositories.battleList.locators import getBattleListIconPosition, getContainerBottomBarPosition
 from src.repositories.battleList.typings import Creature
 from src.utils.console_log import log_throttled
-from src.utils.runtime_settings import get_bool, get_float
+from src.utils.runtime_settings import get_bool, get_float, get_str
 from ...typings import Context
+
+
+_PREFERRED_NAME_TEMPLATES: dict[str, np.ndarray] = {}
+
+
+def _canonicalize_name_row(row: np.ndarray) -> np.ndarray:
+    # Mirror battleList.extractors.getCreaturesNamesImages canonicalization (1D row length 115).
+    if row is None or row.size == 0:
+        return np.zeros((115,), dtype=np.uint8)
+    row = np.ascontiguousarray(row).astype(np.uint8)
+    if row.shape[0] != 115:
+        # Keep it safe: resize by simple crop/pad.
+        out = np.zeros((115,), dtype=np.uint8)
+        n = min(115, int(row.shape[0]))
+        out[:n] = row[:n]
+        row = out
+
+    min_v = int(row.min())
+    max_v = int(row.max())
+    out = np.zeros((115,), dtype=np.uint8)
+    if max_v < 120:
+        thr = min_v + 10
+        for i, v in enumerate(row):
+            iv = int(v)
+            if iv == 192 or iv == 247 or iv >= thr:
+                out[i] = 192
+    else:
+        for i, v in enumerate(row):
+            iv = int(v)
+            if iv == 192 or iv == 247 or iv >= 170:
+                out[i] = 192
+    return out
+
+
+def _canonicalize_name_band(band: np.ndarray) -> np.ndarray:
+    """Canonicalize a small (H x 115) band into a single 1D mask.
+
+    Using multiple rows makes matching far more robust across themes/gamma.
+    """
+    if band is None or band.size == 0:
+        return np.zeros((115,), dtype=np.uint8)
+    try:
+        band = np.ascontiguousarray(band).astype(np.uint8)
+        if band.ndim == 1:
+            return _canonicalize_name_row(band)
+        # OR (max) the canonicalized rows.
+        out = np.zeros((115,), dtype=np.uint8)
+        for r in range(band.shape[0]):
+            out = np.maximum(out, _canonicalize_name_row(band[r]))
+        return out
+    except Exception:
+        return np.zeros((115,), dtype=np.uint8)
+
+
+def _template_for_creature_name(name: str) -> np.ndarray | None:
+    key = (name or '').strip().lower()
+    if not key:
+        return None
+    cached = _PREFERRED_NAME_TEMPLATES.get(key)
+    if cached is not None:
+        return cached
+
+    try:
+        from src.utils.image import loadFromRGBToGray
+    except Exception:
+        return None
+
+    try:
+        # Keep path construction consistent with battleList/config.py.
+        monsters_dir = pathlib.Path(__file__).resolve().parents[3] / 'repositories' / 'battleList' / 'images' / 'monsters'
+        fp = monsters_dir / f'{name}.png'
+        if not fp.exists():
+            return None
+        templ = loadFromRGBToGray(str(fp))
+        # Use a thicker band than the legacy hashing (more robust).
+        band2d = templ[6:11, 0:115]
+        canon = _canonicalize_name_band(band2d)
+        _PREFERRED_NAME_TEMPLATES[key] = canon
+        return canon
+    except Exception:
+        return None
+
+
+def _best_fuzzy_match(row: np.ndarray, preferred_names: list[str]) -> str | None:
+    if row is None or row.size == 0:
+        return None
+    row = _canonicalize_name_band(row)
+    if int(np.count_nonzero(row)) < 3:
+        return None
+
+    best_name: str | None = None
+    best_score = 0.0
+
+    # Allow a tiny horizontal shift (capture scaling/gamma can move edges).
+    for name in preferred_names:
+        templ = _template_for_creature_name(name)
+        if templ is None:
+            continue
+        if int(np.count_nonzero(templ)) < 3:
+            continue
+
+        # Try small shifts of the template against the row.
+        for shift in (-3, -2, -1, 0, 1, 2, 3):
+            if shift == 0:
+                a = row
+                b = templ
+            elif shift > 0:
+                a = row[shift:]
+                b = templ[:-shift]
+            else:
+                s = -shift
+                a = row[:-s]
+                b = templ[s:]
+            if a.size == 0 or b.size == 0:
+                continue
+            score = float(np.mean(a == b))
+            if score > best_score:
+                best_score = score
+                best_name = name
+
+    # Threshold tuned to be forgiving (hashing is exact, this is approximate).
+    if best_name is not None and best_score >= 0.85:
+        return best_name
+    return None
 
 
 # TODO: add unit tests
@@ -19,6 +143,39 @@ def setBattleListMiddleware(context: Context) -> Context:
     screenshot = context.get('ng_screenshot')
     content = getContent(screenshot) if screenshot is not None else None
     creatures = getCreatures(content) if content is not None else np.array([], dtype=Creature)
+
+    # If names are coming back as "Unknown" (common on different Tibia themes/capture gamma),
+    # try a fuzzy resolution for preferred targets so name-based targeting still works.
+    try:
+        if content is not None and creatures is not None and len(creatures) > 0:
+            prefer_raw = get_str(
+                context,
+                'ng_runtime.battlelist_prefer_names',
+                env_var='FENRIL_BATTLELIST_PREFER_NAMES',
+                default='',
+                prefer_env=True,
+            )
+            preferred = [p.strip() for p in prefer_raw.replace(';', ',').split(',') if p.strip()]
+            if preferred and hasattr(creatures, '__getitem__'):
+                unknown_idxs = [i for i, c in enumerate(creatures) if str(c['name']).strip().lower() == 'unknown']
+                if unknown_idxs:
+                    from src.repositories.battleList.core import getFilledSlotsCount
+                    filled = int(getFilledSlotsCount(content))
+                    if filled > 0:
+                        # Use a multi-row band around the name baseline.
+                        for i in unknown_idxs:
+                            if i < 0 or i >= filled:
+                                continue
+                            y = 11 + (i * 22)
+                            y0 = max(0, y - 2)
+                            y1 = min(int(content.shape[0]), y + 3)
+                            band = content[y0:y1, 23:138]
+                            match = _best_fuzzy_match(band, preferred)
+                            if match is not None:
+                                creatures[i]['name'] = match
+    except Exception:
+        # Never let fuzzy matching break the main loop.
+        pass
 
     # Persist the last non-empty parsed list. This helps troubleshooting and can
     # optionally smooth over brief parsing glitches.

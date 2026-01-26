@@ -74,4 +74,12 @@ def getRadarToolsPosition(screenshot: GrayImage) -> Union[BBox, None]:
     if steps < 2:
         steps = 2
     scales = [min_scale + (max_scale - min_scale) * i / (steps - 1) for i in range(steps)]
-    return locateMultiScale(screenshot, images['tools'], confidence=confidence, scales=scales)
+
+    res = locateMultiScale(screenshot, images['tools'], confidence=confidence, scales=scales)
+    if res is not None:
+        return res
+
+    # Fallback: OBS scaling / DPI scaling can move confidence below 0.80.
+    # Wider scales + slightly lower confidence improves stability.
+    fallback_scales = (0.60, 0.70, 0.80, 0.90, 1.00, 1.10, 1.20, 1.30, 1.40)
+    return locateMultiScale(screenshot, images['tools'], confidence=max(0.65, confidence - 0.12), scales=fallback_scales)

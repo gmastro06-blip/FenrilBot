@@ -1,6 +1,8 @@
 import src.repositories.gameWindow.core as gameWindowCore
 import src.repositories.gameWindow.slot as gameWindowSlot
 import src.repositories.inventory.core as inventoryCore
+import src.utils.core as coreUtils
+from src.repositories.inventory.core import images
 from ...typings import Context
 from .common.base import BaseTask
 
@@ -20,7 +22,26 @@ class OpenLockerTask(BaseTask):
         screenshot = context.get('ng_screenshot') if isinstance(context, dict) else None
         if screenshot is None:
             return False
-        return inventoryCore.isContainerOpen(screenshot, 'locker')
+        if inventoryCore.isContainerOpen(screenshot, 'locker'):
+            return True
+
+        # Extra signal: the depot icon lives inside the locker UI.
+        # If we can see it, the locker is open even if the container bar template
+        # didn't match (common under scaling/theme changes).
+        try:
+            tpl = images['slots']['depot']
+            if coreUtils.locate(screenshot, tpl, confidence=0.78) is not None:
+                return True
+            if coreUtils.locateMultiScale(
+                screenshot,
+                tpl,
+                confidence=0.78,
+                scales=(0.85, 0.90, 0.95, 1.0, 1.05, 1.10, 1.15),
+            ) is not None:
+                return True
+        except Exception:
+            pass
+        return False
 
     def do(self, context: Context) -> Context:
         current_coord = context.get('ng_radar', {}).get('coordinate')
