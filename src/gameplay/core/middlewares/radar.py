@@ -71,6 +71,7 @@ def setRadarMiddleware(context: Context) -> Context:
                 context['ng_radar']['pendingCoordinate'] = None
                 context['ng_radar']['pendingCoordinateTicks'] = 0
                 context['ng_radar']['lockConfirmed'] = True
+                context['ng_radar']['lockAgeTicks'] = 0
         except Exception:
             pass
 
@@ -78,6 +79,7 @@ def setRadarMiddleware(context: Context) -> Context:
     try:
         prev_coord = context.get('ng_radar', {}).get('previousCoordinate')
         lock_ok = bool(context.get('ng_radar', {}).get('lockConfirmed'))
+        lock_age = int(context.get('ng_radar', {}).get('lockAgeTicks', 0) or 0)
         if (
             coordinate is not None
             and prev_coord is not None
@@ -86,6 +88,12 @@ def setRadarMiddleware(context: Context) -> Context:
             and prev_coord[2] == coordinate[2]
             and lock_ok
         ):
+            warmup = get_int(
+                context,
+                'ng_runtime.radar_jump_filter_warmup_ticks',
+                env_var='FENRIL_RADAR_JUMP_FILTER_WARMUP_TICKS',
+                default=5,
+            )
             max_jump = get_int(
                 context,
                 'ng_runtime.radar_max_jump',
@@ -94,7 +102,10 @@ def setRadarMiddleware(context: Context) -> Context:
             )
             dx = abs(int(coordinate[0]) - int(prev_coord[0]))
             dy = abs(int(coordinate[1]) - int(prev_coord[1]))
-            if dx > int(max_jump) or dy > int(max_jump):
+            if lock_age >= int(warmup) and (dx > int(max_jump) or dy > int(max_jump)):
+                if debug is not None:
+                    debug['radar_candidate_coordinate'] = coordinate
+                    debug['radar_jump_dxdy'] = (dx, dy)
                 coordinate = None
                 if debug is not None:
                     debug['last_tick_reason'] = 'radar jump rejected'
@@ -141,6 +152,13 @@ def setRadarMiddleware(context: Context) -> Context:
 
     if coordinate is not None:
         context['ng_radar']['previousCoordinate'] = coordinate
+        try:
+            if context.get('ng_radar', {}).get('lockConfirmed'):
+                context['ng_radar']['lockAgeTicks'] = int(context['ng_radar'].get('lockAgeTicks', 0) or 0) + 1
+            else:
+                context['ng_radar']['lockAgeTicks'] = 0
+        except Exception:
+            pass
         diag['consecutive_radar_tools_missing'] = 0
         diag['consecutive_game_window_arrows_missing'] = 0
         if context.get('ng_debug') is not None:

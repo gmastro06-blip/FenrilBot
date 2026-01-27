@@ -31,12 +31,12 @@ def _phase_correlate_shift(prev_img: np.ndarray, curr_img: np.ndarray) -> tuple[
         if h <= 8 or w <= 8:
             return 0.0, 0.0, 0.0
 
-        a = prev_img[:h, :w].astype(np.float32)
-        b = curr_img[:h, :w].astype(np.float32)
+        a: Any = prev_img[:h, :w].astype(np.float32)
+        b: Any = curr_img[:h, :w].astype(np.float32)
 
         # Reduce low-frequency brightness/banding effects.
-        a = a - cv2.GaussianBlur(a, (0, 0), 2.0)
-        b = b - cv2.GaussianBlur(b, (0, 0), 2.0)
+        a = (a - cv2.GaussianBlur(a, (0, 0), 2.0)).astype(np.float32)
+        b = (b - cv2.GaussianBlur(b, (0, 0), 2.0)).astype(np.float32)
 
         win = cv2.createHanningWindow((w, h), cv2.CV_32F)
         (dx, dy), resp = cv2.phaseCorrelate(a, b, win)
@@ -47,6 +47,7 @@ def _phase_correlate_shift(prev_img: np.ndarray, curr_img: np.ndarray) -> tuple[
 
 def _scales_for_floor(floor_level: int) -> tuple[float, ...]:
     hint = _radar_match_scale_hint.get(int(floor_level))
+    default = (0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.0, 1.05, 1.10)
     if hint is not None and hint > 0:
         # Try the hint first, then a small neighborhood.
         base = float(hint)
@@ -57,9 +58,12 @@ def _scales_for_floor(floor_level: int) -> tuple[float, ...]:
             s = float(round(s, 3))
             if s not in out and 0.4 <= s <= 1.6:
                 out.append(s)
+        for s in default:
+            if s not in out:
+                out.append(float(s))
         return tuple(out)
     # Default: include smaller scales (minimap zoomed-out) and near-1.0.
-    return (0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.0, 1.05, 1.10)
+    return default
 
 
 # TODO: add unit tests
@@ -126,6 +130,17 @@ def getCoordinate(
         x0 = max(0, cx - 4)
         x1 = min(rw, cx + 4)
         radarImage[y0:y1, x0:x1] = 128
+
+        # Also de-emphasize the outer border; it can vary with UI/capture scaling.
+        border = int(os.getenv('FENRIL_RADAR_BORDER_MASK_PX', '2'))
+        # Only apply border masking when the crop is close to the canonical minimap size.
+        # If we've trimmed a bottom band, the crop can be smaller and the border is often
+        # actual map content.
+        if border > 0 and rh >= 105 and rh > 2 * border and rw > 2 * border:
+            radarImage[:border, :] = 128
+            radarImage[-border:, :] = 128
+            radarImage[:, :border] = 128
+            radarImage[:, -border:] = 128
     except Exception:
         pass
     if previousCoordinate is not None:
@@ -180,6 +195,12 @@ def getCoordinate(
             except Exception:
                 pass
             return (currentCoordinateX, currentCoordinateY, floorLevel)
+
+        # When we already have a coordinate, prefer stability over risky global reacquisition.
+        # Global matching can jump to a wrong area under low-confidence zoomed minimap.
+        if debug is not None:
+            debug['radar_local_match_failed'] = True
+        return None
     imgCoordinate = locate(floorsImgs[floorLevel], radarImage, confidence=0.75)
     if imgCoordinate is None:
         # Full-floor multiscale match (expensive): only used when single-scale fails.

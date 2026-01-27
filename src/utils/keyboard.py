@@ -1,8 +1,12 @@
 from typing import List, Optional, Tuple
 
 import pyautogui
+from src.utils.runtime_settings import get_bool
 
 from .ino import sendCommandArduino
+
+
+_DISABLE_INPUT: bool = get_bool({}, '_', env_var='FENRIL_DISABLE_INPUT', default=False, prefer_env=True)
 
 def getAsciiFromKey(key: Optional[str]) -> int:
     if not key:
@@ -71,6 +75,8 @@ def _normalize_keys(args: Tuple[object, ...]) -> Tuple[List[str], bool]:
     return [str(key) for key in args], False
 
 def hotkey(*args: object) -> None:
+    if _DISABLE_INPUT:
+        return
     keys, had_list = _normalize_keys(args)
     commands = []
     for key in keys:
@@ -89,18 +95,24 @@ def hotkey(*args: object) -> None:
             pyautogui.hotkey(*keys)
 
 def keyDown(key: str) -> None:
+    if _DISABLE_INPUT:
+        return
     asciiKey = getAsciiFromKey(key)
     if asciiKey != 0:
         if not sendCommandArduino(f"keyDown,{asciiKey}"):
             pyautogui.keyDown(key)
 
 def keyUp(key: str) -> None:
+    if _DISABLE_INPUT:
+        return
     asciiKey = getAsciiFromKey(key)
     if asciiKey != 0:
         if not sendCommandArduino(f"keyUp,{asciiKey}"):
             pyautogui.keyUp(key)
 
 def press(*args: object) -> None:
+    if _DISABLE_INPUT:
+        return
     keys, had_list = _normalize_keys(args)
     commands = []
     for key in keys:
@@ -115,5 +127,7 @@ def press(*args: object) -> None:
             pyautogui.press(*keys)
 
 def write(phrase: str) -> None:
+    if _DISABLE_INPUT:
+        return
     if not sendCommandArduino(f"write,{phrase}"):
         pyautogui.write(phrase)

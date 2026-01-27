@@ -363,11 +363,14 @@ class ClickInClosestCreatureTask(BaseTask):
         attacking = bool(ng_cave.get('isAttackingSomeCreature', False))
 
         battle_click = None
+        probe_idx: int | None = None
+        probe_name: str | None = None
+        probe_reason: str | None = None
         if get_bool(context, 'ng_runtime.attack_from_battlelist', env_var='FENRIL_ATTACK_FROM_BATTLELIST', default=False) and context.get('ng_screenshot') is not None:
             # If we can locate the battle list click coordinate and we still don't have an on-screen
             # targetCreature, treat "attacking" as untrusted and keep trying to acquire a target.
             if ng_cave.get('targetCreature') is None:
-                probe_idx, _, _ = choose_target_index(context)
+                probe_idx, probe_name, probe_reason = choose_target_index(context)
                 if probe_idx is not None:
                     battle_click = battlelist_extractors.getCreatureClickCoordinate(context['ng_screenshot'], index=probe_idx)
                     if battle_click is not None:
@@ -427,11 +430,32 @@ class ClickInClosestCreatureTask(BaseTask):
             target_idx: int | None = None
             name: str | None = None
             reason: str = 'n/a'
-            if battle_click is None and context.get('ng_screenshot') is not None:
+            if battle_click is not None:
+                # We already resolved the battle click from the probe above.
+                target_idx = probe_idx
+                name = probe_name
+                reason = probe_reason or 'probe'
+            elif context.get('ng_screenshot') is not None:
                 target_idx, name, reason = choose_target_index(context)
                 if target_idx is not None:
                     battle_click = battlelist_extractors.getCreatureClickCoordinate(context['ng_screenshot'], index=target_idx)
             if battle_click is not None:
+                # Cooldown to avoid spamming battle list clicks when the "attacking" signal
+                # (battle list being-attacked marker / on-screen target) is unreliable.
+                try:
+                    import time as _time
+
+                    now_s = float(_time.time())
+                    last_s = context.get('ng_cave', {}).get('_last_battlelist_attack_click_s')
+                    min_interval = 0.75
+                    if isinstance(last_s, (int, float)) and (now_s - float(last_s)) < min_interval:
+                        if isinstance(context.get('ng_debug'), dict):
+                            context['ng_debug']['last_tick_reason'] = 'attack click: battleList (cooldown)'
+                        return context
+                    context.setdefault('ng_cave', {})['_last_battlelist_attack_click_s'] = now_s
+                except Exception:
+                    pass
+
                 # Battle list clicks tend to work without Ctrl, and holding Ctrl can
                 # open menus / behave unexpectedly depending on Tibia settings.
                 self._with_modifier_click(

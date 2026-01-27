@@ -4,6 +4,7 @@ import numpy as np
 import hashlib
 import os
 import time
+import base64
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, cast
 from src.shared.typings import BBox, GrayImage
 
@@ -59,10 +60,10 @@ except Exception:
         )
 
 
-_camera_cache: Dict[int, dxcam.DXCamera] = {}
+_camera_cache: Dict[Tuple[int, int], dxcam.DXCamera] = {}
 
 
-def _create_camera(output_idx: int) -> dxcam.DXCamera:
+def _create_camera(output_idx: int, *, device_idx: int = 0) -> dxcam.DXCamera:
     """Create (or reuse) a DXCamera for a given output.
 
     dxcam internally caches instances and prints a message when create() is called
@@ -70,15 +71,17 @@ def _create_camera(output_idx: int) -> dxcam.DXCamera:
     output switching to avoid that spam.
     """
     idx = int(output_idx)
-    cached = _camera_cache.get(idx)
+    dev = int(device_idx)
+    cache_key = (dev, idx)
+    cached = _camera_cache.get(cache_key)
     if cached is not None:
         return cached
-    cam = dxcam.create(device_idx=0, output_idx=idx, output_color='BGRA')
-    _camera_cache[idx] = cam
+    cam = dxcam.create(device_idx=dev, output_idx=idx, output_color='BGRA')
+    _camera_cache[cache_key] = cam
     return cam
 
 
-def _recreate_camera(output_idx: int) -> dxcam.DXCamera:
+def _recreate_camera(output_idx: int, *, device_idx: int = 0) -> dxcam.DXCamera:
     """Force-recreate a DXCamera instance for an output.
 
     We normally cache to avoid dxcam's stdout spam, but when dxcam starts
@@ -86,7 +89,9 @@ def _recreate_camera(output_idx: int) -> dxcam.DXCamera:
     instance (best-effort) and creates a fresh one.
     """
     idx = int(output_idx)
-    old = _camera_cache.get(idx)
+    dev = int(device_idx)
+    cache_key = (dev, idx)
+    old = _camera_cache.get(cache_key)
     if old is not None:
         try:
             # stop() is safe even if not started; release() frees resources.
@@ -98,13 +103,89 @@ def _recreate_camera(output_idx: int) -> dxcam.DXCamera:
         except Exception:
             pass
         try:
-            del _camera_cache[idx]
+            del _camera_cache[cache_key]
         except Exception:
             pass
 
-    cam = dxcam.create(device_idx=0, output_idx=idx, output_color='BGRA')
-    _camera_cache[idx] = cam
+    cam = dxcam.create(device_idx=dev, output_idx=idx, output_color='BGRA')
+    _camera_cache[cache_key] = cam
     return cam
+
+
+def _frame_is_hard_black(frame: np.ndarray) -> bool:
+    try:
+        mean_val = float(np.mean(frame))
+        std_val = float(np.std(frame))
+        return mean_val <= 0.5 and std_val <= 0.5
+    except Exception:
+        return False
+
+
+def _probe_dxcam_for_region(
+    region: Tuple[int, int, int, int],
+    *,
+    device_candidates: Sequence[int],
+    output_candidates: Sequence[int],
+) -> Optional[Tuple[int, int, dxcam.DXCamera]]:
+    """Try multiple dxcam device/output combinations for a region.
+
+    Returns (device_idx, output_idx, camera) for the first combo that yields a
+    non-black frame for the provided region.
+    """
+    for dev in device_candidates:
+        for out in output_candidates:
+            try:
+                cam = _recreate_camera(out, device_idx=int(dev))
+                shot = cam.grab()
+            except Exception:
+                shot = None
+            if shot is None:
+                continue
+            try:
+                full = cv2.cvtColor(shot, cv2.COLOR_BGRA2GRAY)
+                frame = _crop_gray_frame(cast(GrayImage, full), region)
+                if not _frame_is_hard_black(cast(np.ndarray, frame)):
+                    return int(dev), int(out), cam
+            except Exception:
+                continue
+    return None
+
+
+def _try_autoprobe_camera_for_abs_region(
+    abs_region: Tuple[int, int, int, int],
+    *,
+    device_candidates: Sequence[int] = (0, 1, 2),
+    output_candidates: Sequence[int] = (0, 1, 2),
+) -> Optional[Tuple[int, int, dxcam.DXCamera, Tuple[int, int, int, int]]]:
+    """Autoprobe a working dxcam camera for an absolute region.
+
+    We map abs_region into a per-monitor relative region using Win32 monitor
+    rectangles, then probe dxcam combos using that relative region.
+
+    Returns (device_idx, output_idx, camera, relative_region) on success.
+    """
+    try:
+        left, top, right, bottom = abs_region
+        cx = int((left + right) / 2)
+        cy = int((top + bottom) / 2)
+    except Exception:
+        return None
+
+    mon = getMonitorRectForPoint(cx, cy)
+    if mon is None:
+        return None
+    ml, mt, _, _ = mon
+    rel_raw = (int(left - ml), int(top - mt), int(right - ml), int(bottom - mt))
+    rel_opt = _sanitize_region(rel_raw, clamp_non_negative=True)
+    if rel_opt is None:
+        return None
+    rel = rel_opt
+
+    found = _probe_dxcam_for_region(rel, device_candidates=device_candidates, output_candidates=output_candidates)
+    if found is None:
+        return None
+    dev, out, cam = found
+    return dev, out, cam, rel
 
 
 try:
@@ -114,8 +195,19 @@ try:
     _preferred_output_idx = _rs_get_int({}, '_', env_var='FENRIL_OUTPUT_IDX', default=1, prefer_env=True)
 except Exception:
     _preferred_output_idx = 1
-camera = _create_camera(_preferred_output_idx)
-_camera_output_idx = _preferred_output_idx
+
+# Always initialize a camera at import time (best-effort).
+_camera_output_idx: int = 0
+_camera_device_idx: int = 0
+try:
+    camera = _create_camera(_preferred_output_idx, device_idx=0)
+    _camera_output_idx = int(_preferred_output_idx)
+    _camera_device_idx = 0
+except Exception:
+    # Last-resort fallback: keep the module importable.
+    camera = _create_camera(0, device_idx=0)
+    _camera_output_idx = 0
+    _camera_device_idx = 0
 latestScreenshot = None
 _last_grab_was_none: bool = False
 _consecutive_none_frames: int = 0
@@ -147,7 +239,20 @@ def _env_float(name: str, default: float) -> float:
         return float(default)
 
 
+def _env_str(name: str, default: str) -> str:
+    try:
+        val = os.getenv(name)
+        if val is None:
+            return str(default)
+        return str(val)
+    except Exception:
+        return str(default)
+
+
 _CAPTURE_CFG: Dict[str, Any] = {
+    # Primary capture backend (dxcam by default)
+    # Supported: 'dxcam', 'obsws'
+    'backend': _env_str('FENRIL_CAPTURE_BACKEND', 'dxcam').strip().lower(),
     # MSS fallback
     'mss_fallback_on_none': _env_bool('FENRIL_MSS_FALLBACK_ON_NONE', False),
     'mss_fallback': _env_bool('FENRIL_MSS_FALLBACK', False),
@@ -163,8 +268,105 @@ _CAPTURE_CFG: Dict[str, Any] = {
     'same_frame_threshold': _env_int('FENRIL_SAME_FRAME_THRESHOLD', 300),
     'dxcam_recover_on_stale': _env_bool('FENRIL_DXCAM_RECOVER_ON_STALE', True),
     'dxcam_recover_on_black': _env_bool('FENRIL_DXCAM_RECOVER_ON_BLACK', True),
+    'dxcam_autoprobe_on_black': _env_bool('FENRIL_DXCAM_AUTOPROBE_ON_BLACK', True),
+    # OBS fallback
+    'obs_fallback_on_black': _env_bool('FENRIL_OBS_FALLBACK_ON_BLACK', True),
     'log_dxcam_recovery': _env_bool('FENRIL_LOG_DXCAM_RECOVERY', True),
 }
+
+
+_obs_client: Any = None
+_last_obs_error: Optional[str] = None
+_last_obs_error_time: float = 0.0
+
+
+def _get_obs_client() -> Optional[Any]:
+    global _obs_client, _last_obs_error, _last_obs_error_time
+    if _obs_client is not None:
+        return _obs_client
+    try:
+        from obsws_python import ReqClient
+    except Exception as e:
+        _last_obs_error = f"obsws_python import failed: {e}"
+        _last_obs_error_time = time.time()
+        return None
+
+    host = _env_str('FENRIL_OBS_HOST', '127.0.0.1')
+    port = int(os.getenv('FENRIL_OBS_PORT', '4455'))
+    password = os.getenv('FENRIL_OBS_PASSWORD', '')
+    try:
+        _obs_client = ReqClient(host=host, port=port, password=password)
+        return _obs_client
+    except Exception as e:
+        _last_obs_error = f"OBS connect failed ({host}:{port}): {e}"
+        _last_obs_error_time = time.time()
+        _obs_client = None
+        return None
+
+
+def _grab_obs_source_gray() -> Optional[GrayImage]:
+    """Grab a grayscale screenshot from OBS via WebSocket.
+
+    Requires env:
+      - FENRIL_OBS_SOURCE (source name)
+    Optional:
+      - FENRIL_OBS_HOST (default 127.0.0.1)
+      - FENRIL_OBS_PORT (default 4455)
+      - FENRIL_OBS_PASSWORD
+      - FENRIL_OBS_WIDTH / FENRIL_OBS_HEIGHT (0 means native)
+      - FENRIL_OBS_QUALITY (default -1)
+    """
+    source = _env_str('FENRIL_OBS_SOURCE', '').strip()
+    if not source:
+        return None
+    client = _get_obs_client()
+    if client is None:
+        return None
+
+    try:
+        width = int(os.getenv('FENRIL_OBS_WIDTH', '0'))
+        height = int(os.getenv('FENRIL_OBS_HEIGHT', '0'))
+        quality = int(os.getenv('FENRIL_OBS_QUALITY', '-1'))
+    except Exception:
+        width, height, quality = 0, 0, -1
+
+    try:
+        # Use raw request to allow omitting width/height (native source resolution).
+        payload: Dict[str, Any] = {
+            'sourceName': source,
+            'imageFormat': 'png',
+            'imageCompressionQuality': int(quality),
+        }
+        if int(width) >= 8:
+            payload['imageWidth'] = int(width)
+        if int(height) >= 8:
+            payload['imageHeight'] = int(height)
+
+        resp = client.send('GetSourceScreenshot', payload, raw=True)
+        b64 = None
+        if isinstance(resp, dict):
+            b64 = resp.get('imageData')
+        if not b64:
+            return None
+
+        # Response may include a data URI prefix.
+        if isinstance(b64, str) and ',' in b64 and b64.strip().lower().startswith('data:'):
+            b64 = b64.split(',', 1)[1]
+        raw = base64.b64decode(b64)
+        buf = np.frombuffer(raw, dtype=np.uint8)
+        img = cv2.imdecode(buf, cv2.IMREAD_UNCHANGED)
+        if img is None:
+            return None
+        if len(img.shape) == 2:
+            return cast(GrayImage, img)
+        if img.shape[2] == 4:
+            return cast(GrayImage, cv2.cvtColor(img, cv2.COLOR_BGRA2GRAY))
+        return cast(GrayImage, cv2.cvtColor(img, cv2.COLOR_BGR2GRAY))
+    except Exception as e:
+        global _last_obs_error, _last_obs_error_time
+        _last_obs_error = f"OBS screenshot failed: {e}"
+        _last_obs_error_time = time.time()
+        return None
 
 
 def configure_capture(
@@ -181,8 +383,15 @@ def configure_capture(
     same_frame_threshold: Optional[int] = None,
     dxcam_recover_on_stale: Optional[bool] = None,
     dxcam_recover_on_black: Optional[bool] = None,
+    dxcam_autoprobe_on_black: Optional[bool] = None,
+    obs_fallback_on_black: Optional[bool] = None,
     log_dxcam_recovery: Optional[bool] = None,
 ) -> None:
+    # backend
+    if 'backend' in _CAPTURE_CFG:
+        b = _CAPTURE_CFG.get('backend', 'dxcam')
+        if isinstance(b, str):
+            _CAPTURE_CFG['backend'] = b.strip().lower()
     if mss_fallback_on_none is not None:
         _CAPTURE_CFG['mss_fallback_on_none'] = bool(mss_fallback_on_none)
     if mss_fallback is not None:
@@ -207,6 +416,10 @@ def configure_capture(
         _CAPTURE_CFG['dxcam_recover_on_stale'] = bool(dxcam_recover_on_stale)
     if dxcam_recover_on_black is not None:
         _CAPTURE_CFG['dxcam_recover_on_black'] = bool(dxcam_recover_on_black)
+    if dxcam_autoprobe_on_black is not None:
+        _CAPTURE_CFG['dxcam_autoprobe_on_black'] = bool(dxcam_autoprobe_on_black)
+    if obs_fallback_on_black is not None:
+        _CAPTURE_CFG['obs_fallback_on_black'] = bool(obs_fallback_on_black)
     if log_dxcam_recovery is not None:
         _CAPTURE_CFG['log_dxcam_recovery'] = bool(log_dxcam_recovery)
 
@@ -217,12 +430,20 @@ def get_capture_config() -> Dict[str, Any]:
 
 def getScreenshotDebugInfo() -> Dict[str, Any]:
     return {
+        'device_idx': _camera_device_idx,
         'output_idx': _camera_output_idx,
         'last_grab_was_none': _last_grab_was_none,
         'consecutive_none_frames': _consecutive_none_frames,
         'consecutive_black_frames': _consecutive_black_frames,
         'consecutive_same_frames': _consecutive_same_frames,
         'last_stats': _last_screenshot_stats,
+        'obs': {
+            'last_error': _last_obs_error,
+            'last_error_time': _last_obs_error_time,
+            'source': os.getenv('FENRIL_OBS_SOURCE'),
+            'host': os.getenv('FENRIL_OBS_HOST', '127.0.0.1'),
+            'port': os.getenv('FENRIL_OBS_PORT', '4455'),
+        },
     }
 
 
@@ -240,13 +461,51 @@ def _frame_fingerprint(frame: np.ndarray) -> int:
         return _hash_bytes(bytes(sample.shape))
 
 
+def _crop_gray_frame(
+    frame: GrayImage,
+    region: Optional[Tuple[int, int, int, int]],
+) -> GrayImage:
+    if region is None:
+        return frame
+    try:
+        left, top, right, bottom = region
+        h, w = frame.shape[:2]
+        left_i = max(0, min(int(left), int(w)))
+        right_i = max(0, min(int(right), int(w)))
+        top_i = max(0, min(int(top), int(h)))
+        bottom_i = max(0, min(int(bottom), int(h)))
+        if right_i <= left_i or bottom_i <= top_i:
+            return frame
+        return cast(GrayImage, frame[top_i:bottom_i, left_i:right_i])
+    except Exception:
+        return frame
+
+
 def setScreenshotOutputIdx(output_idx: int) -> None:
     global camera, _camera_output_idx
     idx = int(output_idx)
     if idx == _camera_output_idx and camera is not None:
         return
-    camera = _create_camera(idx)
-    _camera_output_idx = idx
+    try:
+        camera = _create_camera(idx, device_idx=_camera_device_idx)
+        _camera_output_idx = idx
+    except Exception:
+        # Fall back to output 0 if dxcam reports fewer outputs than expected.
+        camera = _create_camera(0, device_idx=_camera_device_idx)
+        _camera_output_idx = 0
+
+
+def setScreenshotDeviceIdx(device_idx: int) -> None:
+    global camera, _camera_device_idx, _camera_output_idx
+    dev = int(device_idx)
+    if dev == _camera_device_idx and camera is not None:
+        return
+    try:
+        camera = _create_camera(_camera_output_idx, device_idx=dev)
+        _camera_device_idx = dev
+    except Exception:
+        # Keep the previous device/output if switching fails.
+        return
 
 
 def _sanitize_region(
@@ -426,7 +685,8 @@ def locateMultiple(compareImg: GrayImage, img: GrayImage, confidence: float = 0.
     loc = np.where(match >= confidence)
     resultList = []
     for pt in zip(*loc[::-1]):
-        resultList.append((pt[0], pt[1], len(compareImg[0]), len(compareImg)))
+        # Return bbox in compareImg coordinates with the *template* size.
+        resultList.append((pt[0], pt[1], len(img[0]), len(img)))
     return resultList
 
 
@@ -435,7 +695,7 @@ def getScreenshot(
     region: Optional[Tuple[int, int, int, int]] = None,
     absolute_region: Optional[Tuple[int, int, int, int]] = None,
 ) -> Optional[GrayImage]:
-    global camera, latestScreenshot, _camera_output_idx
+    global camera, latestScreenshot, _camera_output_idx, _camera_device_idx
     global _last_grab_was_none, _consecutive_none_frames, _consecutive_black_frames, _consecutive_same_frames, _last_screenshot_stats
     global _last_frame_fingerprint
     global _last_dxcam_recover_log_time
@@ -444,8 +704,28 @@ def getScreenshot(
     # absolute_region is in virtual-desktop coordinates and may be negative
     # (e.g. when a secondary monitor is placed left/up of the primary).
     abs_region = _sanitize_region(absolute_region, clamp_non_negative=False)
+
+    backend = str(_CAPTURE_CFG.get('backend', 'dxcam')).strip().lower()
+    if backend == 'obsws':
+        obs_frame = _grab_obs_source_gray()
+        if obs_frame is not None:
+            latestScreenshot = obs_frame
+            try:
+                mean_val = float(np.mean(obs_frame))
+                std_val = float(np.std(obs_frame))
+                _last_screenshot_stats = {
+                    'shape': tuple(obs_frame.shape),
+                    'mean': mean_val,
+                    'std': std_val,
+                    'backend': 'obsws',
+                }
+            except Exception:
+                pass
+            return latestScreenshot
+    # NOTE: dxcam's region-based grab() is unreliable on some setups (can return
+    # hard-black frames or None). We always grab the full frame and crop locally.
     try:
-        screenshot = camera.grab(region=region) if region is not None else camera.grab()
+        screenshot = camera.grab()
     except Exception:
         screenshot = None
 
@@ -459,7 +739,7 @@ def getScreenshot(
     if screenshot is None and _camera_output_idx != 0:
         try:
             setScreenshotOutputIdx(0)
-            screenshot = camera.grab(region=region) if region is not None else camera.grab()
+            screenshot = camera.grab()
         except Exception:
             screenshot = None
 
@@ -497,7 +777,8 @@ def getScreenshot(
 
     if screenshot is None:
         return latestScreenshot
-    latestScreenshot = cv2.cvtColor(screenshot, cv2.COLOR_BGRA2GRAY)
+    full_gray = cast(GrayImage, cv2.cvtColor(screenshot, cv2.COLOR_BGRA2GRAY))
+    latestScreenshot = _crop_gray_frame(full_gray, region)
 
     # Lightweight stats + black-frame heuristic (used by diagnostics).
     try:
@@ -523,6 +804,8 @@ def getScreenshot(
             'region': region,
             'absolute_region': abs_region,
             'backend': 'dxcam',
+            'device_idx': _camera_device_idx,
+            'output_idx': _camera_output_idx,
         }
         std_thr = float(_CAPTURE_CFG.get('black_std_threshold', 2.0))
         mean_thr = float(_CAPTURE_CFG.get('black_mean_threshold', 10.0))
@@ -540,9 +823,10 @@ def getScreenshot(
             try:
                 # Re-grab once without recreating the camera.
                 # Calling dxcam.create repeatedly can spam stdout.
-                shot2 = camera.grab(region=region) if region is not None else camera.grab()
+                shot2 = camera.grab()
                 if shot2 is not None:
-                    frame2 = cv2.cvtColor(shot2, cv2.COLOR_BGRA2GRAY)
+                    full2 = cast(GrayImage, cv2.cvtColor(shot2, cv2.COLOR_BGRA2GRAY))
+                    frame2 = _crop_gray_frame(full2, region)
                     mean2 = float(np.mean(frame2))
                     std2 = float(np.std(frame2))
                     if not (mean2 <= 0.5 and std2 <= 0.5):
@@ -559,6 +843,8 @@ def getScreenshot(
                             'region': region,
                             'absolute_region': abs_region,
                             'backend': 'dxcam',
+                            'device_idx': _camera_device_idx,
+                            'output_idx': _camera_output_idx,
                             'retried_hard_black': True,
                         }
                         is_probably_black = (mean_val < mean_thr) and (
@@ -573,6 +859,32 @@ def getScreenshot(
     except Exception:
         _last_screenshot_stats = None
 
+    # If dxcam is effectively black and OBS fallback is enabled, try pulling frames
+    # directly from OBS WebSocket (bypasses Windows "exclude from capture" issues).
+    # This is especially useful when only the taskbar is visible to desktop capture.
+    if (
+        bool(_CAPTURE_CFG.get('obs_fallback_on_black', True))
+        and abs_region is not None
+        and _consecutive_black_frames >= int(_CAPTURE_CFG.get('black_frame_threshold', 8))
+    ):
+        obs_frame = _grab_obs_source_gray()
+        if obs_frame is not None:
+            latestScreenshot = obs_frame
+            _consecutive_black_frames = 0
+            try:
+                mean_val = float(np.mean(obs_frame))
+                std_val = float(np.std(obs_frame))
+                _last_screenshot_stats = {
+                    'shape': tuple(obs_frame.shape),
+                    'mean': mean_val,
+                    'std': std_val,
+                    'backend': 'obsws',
+                    'switched_due_to_black_frames': True,
+                }
+            except Exception:
+                pass
+            return latestScreenshot
+
     black_threshold = int(_CAPTURE_CFG.get('black_frame_threshold', 8))
 
     # Detect frozen capture (same frame for a long time) and try to recover.
@@ -580,13 +892,14 @@ def getScreenshot(
     recover_on_stale = bool(_CAPTURE_CFG.get('dxcam_recover_on_stale', True))
     if recover_on_stale and _consecutive_same_frames >= stale_threshold:
         try:
-            camera = _recreate_camera(_camera_output_idx)
-            shot2 = camera.grab(region=region) if region is not None else camera.grab()
+            camera = _recreate_camera(_camera_output_idx, device_idx=_camera_device_idx)
+            shot2 = camera.grab()
         except Exception:
             shot2 = None
         if shot2 is not None:
             try:
-                frame2 = cv2.cvtColor(shot2, cv2.COLOR_BGRA2GRAY)
+                full2 = cast(GrayImage, cv2.cvtColor(shot2, cv2.COLOR_BGRA2GRAY))
+                frame2 = _crop_gray_frame(full2, region)
                 latestScreenshot = cast(GrayImage, frame2)
                 _consecutive_same_frames = 0
                 _last_frame_fingerprint = _frame_fingerprint(cast(np.ndarray, frame2))
@@ -597,7 +910,7 @@ def getScreenshot(
                         _last_dxcam_recover_log_time = now
                         try:
                             print(
-                                f"[fenril][dxcam] Recovered from stale frames (output_idx={_camera_output_idx} region={region})"
+                                f"[fenril][dxcam] Recovered from stale frames (device_idx={_camera_device_idx} output_idx={_camera_output_idx} region={region})"
                             )
                         except Exception:
                             pass
@@ -609,13 +922,14 @@ def getScreenshot(
     dxcam_recover = bool(_CAPTURE_CFG.get('dxcam_recover_on_black', True))
     if dxcam_recover and _consecutive_black_frames >= black_threshold:
         try:
-            camera = _recreate_camera(_camera_output_idx)
-            shot2 = camera.grab(region=region) if region is not None else camera.grab()
+            camera = _recreate_camera(_camera_output_idx, device_idx=_camera_device_idx)
+            shot2 = camera.grab()
         except Exception:
             shot2 = None
         if shot2 is not None:
             try:
-                frame2 = cv2.cvtColor(shot2, cv2.COLOR_BGRA2GRAY)
+                full2 = cast(GrayImage, cv2.cvtColor(shot2, cv2.COLOR_BGRA2GRAY))
+                frame2 = _crop_gray_frame(full2, region)
                 mean2 = float(np.mean(frame2))
                 std2 = float(np.std(frame2))
                 dark_px_thr = int(_CAPTURE_CFG.get('black_dark_pixel_threshold', 8))
@@ -638,6 +952,8 @@ def getScreenshot(
                         'region': region,
                         'absolute_region': abs_region,
                         'backend': 'dxcam',
+                        'device_idx': _camera_device_idx,
+                        'output_idx': _camera_output_idx,
                         'recovered_dxcam': True,
                     }
 
@@ -648,13 +964,69 @@ def getScreenshot(
                             _last_dxcam_recover_log_time = now
                             try:
                                 print(
-                                    f"[fenril][dxcam] Recovered from black frames (output_idx={_camera_output_idx} region={region})"
+                                    f"[fenril][dxcam] Recovered from black frames (device_idx={_camera_device_idx} output_idx={_camera_output_idx} region={region})"
                                 )
                             except Exception:
                                 pass
                     return latestScreenshot
             except Exception:
                 pass
+
+            # If recreating the camera didn't help, try probing other device/output combinations.
+            # This addresses cases where monitors are split across GPUs or dxcam's output
+            # enumeration differs from Win32 monitor indexing.
+            if abs_region is not None and bool(_CAPTURE_CFG.get('dxcam_autoprobe_on_black', True)):
+                probed = _try_autoprobe_camera_for_abs_region(abs_region)
+                if probed is not None:
+                    dev, out, cam, rel_region = probed
+                    try:
+                        camera = cam
+                        _camera_device_idx = int(dev)
+                        _camera_output_idx = int(out)
+                        shot3 = camera.grab()
+                    except Exception:
+                        shot3 = None
+                    if shot3 is not None:
+                        try:
+                            full3 = cast(GrayImage, cv2.cvtColor(shot3, cv2.COLOR_BGRA2GRAY))
+                            frame3 = _crop_gray_frame(full3, rel_region)
+                            if not _frame_is_hard_black(cast(np.ndarray, frame3)):
+                                latestScreenshot = cast(GrayImage, frame3)
+                                _consecutive_black_frames = 0
+                                try:
+                                    mean3 = float(np.mean(frame3))
+                                    std3 = float(np.std(frame3))
+                                    dark_px_thr = int(_CAPTURE_CFG.get('black_dark_pixel_threshold', 8))
+                                    dark_fraction3 = float(np.mean(frame3 <= dark_px_thr))
+                                except Exception:
+                                    mean3 = 0.0
+                                    std3 = 0.0
+                                    dark_fraction3 = 1.0
+                                _last_screenshot_stats = {
+                                    'shape': tuple(frame3.shape),
+                                    'mean': mean3,
+                                    'std': std3,
+                                    'dark_fraction': dark_fraction3,
+                                    'region': rel_region,
+                                    'absolute_region': abs_region,
+                                    'backend': 'dxcam',
+                                    'device_idx': _camera_device_idx,
+                                    'output_idx': _camera_output_idx,
+                                    'autoprobed_dxcam': True,
+                                }
+                                if bool(_CAPTURE_CFG.get('log_dxcam_recovery', True)):
+                                    now = time.time()
+                                    if now - _last_dxcam_recover_log_time >= 5.0:
+                                        _last_dxcam_recover_log_time = now
+                                        try:
+                                            print(
+                                                f"[fenril][dxcam] Autoprobed working camera (device_idx={_camera_device_idx} output_idx={_camera_output_idx} rel_region={rel_region})"
+                                            )
+                                        except Exception:
+                                            pass
+                                return latestScreenshot
+                        except Exception:
+                            pass
 
     # Optional MSS fallback when dxcam is producing black frames.
     # Disabled by default because it commonly returns black for OBS/projectors.

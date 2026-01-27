@@ -23,6 +23,11 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from src.utils.esc_stop import install_esc_stop
+
+# Allow aborting any preflight run with ESC.
+install_esc_stop(exit_process=True)
+
 from src.gameplay.core.middlewares.window import setTibiaWindowMiddleware
 from src.gameplay.core.middlewares.screenshot import setScreenshotMiddleware
 

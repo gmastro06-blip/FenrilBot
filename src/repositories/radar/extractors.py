@@ -2,6 +2,8 @@ from src.repositories.radar import config
 from src.shared.typings import BBox, GrayImage
 
 import cv2
+import numpy as np
+import os
 
 
 def _clamp(v: int, lo: int, hi: int) -> int:
@@ -51,25 +53,49 @@ def getRadarImage(screenshot: GrayImage, radarToolsPosition: BBox) -> GrayImage:
 
     # Some UI layouts/minimap sizes include a non-map band at the bottom of this crop
     # (often pure black). Trim trailing rows with near-zero variance so matching doesn't fail.
+    did_trim = False
     try:
         row_std = crop.std(axis=1)
-        thr = 0.5
+        row_mean = crop.mean(axis=1)
+
+        # Heuristics for trimming: require the row to be both low-variance and "dark-ish"
+        # (otherwise we might cut valid map rows that happen to be uniform).
+        std_thr = float(os.getenv('FENRIL_RADAR_TRIM_STD_THR', '0.5'))
+        mean_thr = float(os.getenv('FENRIL_RADAR_TRIM_MEAN_THR', '10.0'))
+        dark_px_thr = int(os.getenv('FENRIL_RADAR_TRIM_DARK_PX_THR', '12'))
+        dark_frac_thr = float(os.getenv('FENRIL_RADAR_TRIM_DARK_FRAC_THR', '0.98'))
+        row_dark_frac = (crop <= dark_px_thr).mean(axis=1)
+
         bottom = int(crop.shape[0])
-        while bottom > 1 and float(row_std[bottom - 1]) <= thr:
-            bottom -= 1
+        while bottom > 1:
+            i = bottom - 1
+            if float(row_std[i]) > std_thr:
+                break
+            if float(row_mean[i]) <= mean_thr or float(row_dark_frac[i]) >= dark_frac_thr:
+                bottom -= 1
+                continue
+            break
         if bottom != crop.shape[0]:
             crop = crop[:bottom, :]
+            did_trim = True
     except Exception:
         pass
 
-    # Normalize crop back to canonical radar dimensions so matching is consistent.
-    # This addresses OBS projector scaling / Windows DPI scaling. (Not minimap zoom.)
+    # Optional: normalize crop back to canonical radar dimensions.
+    # In practice, scaling is already handled by the tools-bbox-based crop. Resizing can
+    # *hurt* matching when we trimmed a bottom black band (it stretches the map).
     try:
         target_w = int(config.dimensions['width'])
         target_h = int(config.dimensions['height'])
-        if crop.shape[0] != target_h or crop.shape[1] != target_w:
-            interp = cv2.INTER_AREA if (crop.shape[0] > target_h or crop.shape[1] > target_w) else cv2.INTER_LINEAR
-            crop = cv2.resize(crop, (target_w, target_h), interpolation=interp)
+        normalize = os.getenv('FENRIL_RADAR_NORMALIZE_SIZE', '0').strip() in ('1', 'true', 'True')
+
+        if normalize and not did_trim:
+            dh = abs(int(crop.shape[0]) - target_h)
+            dw = abs(int(crop.shape[1]) - target_w)
+            # Only fix tiny rounding differences; let locateMultiScale handle the rest.
+            if (dh != 0 or dw != 0) and dh <= 3 and dw <= 3:
+                interp = cv2.INTER_AREA if (crop.shape[0] > target_h or crop.shape[1] > target_w) else cv2.INTER_LINEAR
+                crop = cv2.resize(crop, (target_w, target_h), interpolation=interp)
     except Exception:
         pass
 

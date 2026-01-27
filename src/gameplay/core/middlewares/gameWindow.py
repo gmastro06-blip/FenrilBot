@@ -6,6 +6,8 @@ from src.repositories.gameWindow.creatures import getCreatures, getCreaturesByTy
 from ...comboSpells.core import spellsPath
 from ...typings import Context
 from ..tasks.selectChatTab import SelectChatTabTask
+from src.utils.console_log import log_throttled
+from src.utils.runtime_settings import get_bool
 
 import time
 
@@ -51,6 +53,18 @@ def setHandleLootMiddleware(context: Context) -> Context:
             context['ng_tasksOrchestrator'].setRootTask(
                 context, SelectChatTabTask('loot'))
     if hasNewLoot(context['ng_screenshot']):
+        log_loot = get_bool(
+            context,
+            'ng_runtime.log_loot_events',
+            env_var='FENRIL_LOG_LOOT_EVENTS',
+            default=False,
+        )
+
+        radar_state = context.get('ng_radar')
+        if not isinstance(radar_state, dict):
+            radar_state = {}
+        radar_coord = radar_state.get('coordinate') or radar_state.get('previousCoordinate')
+
         # Primary signal: last known target creature.
         corpse = context['ng_cave'].get('previousTargetCreature')
         # Fallback: current target creature (can still be selected when loot message arrives).
@@ -58,12 +72,59 @@ def setHandleLootMiddleware(context: Context) -> Context:
             corpse = context['ng_cave'].get('targetCreature')
 
         if corpse is not None:
+            # Mark a death/loot event so later in this middleware we can force-clear
+            # the target for at least one tick (avoids phantom targeting/attacking).
+            context.setdefault('ng_cave', {})['_force_clear_target_once'] = True
             context['loot']['corpsesToLoot'].append(corpse)
             context['ng_cave']['previousTargetCreature'] = None
+            if log_loot:
+                name = None
+                try:
+                    if isinstance(corpse, dict):
+                        name = corpse.get('name')
+                except Exception:
+                    name = None
+                log_throttled(
+                    'loot.chat.queued',
+                    'info',
+                    f"Death/loot event: queued corpse from target ({name or 'unknown'})",
+                    0.5,
+                )
         else:
+            # Fallback: we got a loot message but couldn't resolve the on-screen target.
+            # Still trigger a single loot around the player (CollectDeadCorpseTask loots the 3x3 area).
+            # To avoid repeated looting forever, enqueue a synthetic corpse with the player's coordinate
+            # so CollectDeadCorpseTask.onComplete can remove it after one attempt.
+            fallback_name = None
             dbg = context.get('ng_debug')
             if isinstance(dbg, dict):
-                dbg['last_tick_reason'] = 'loot msg detected but no target creature'
+                fallback_name = dbg.get('battleList_target_name') or None
+                dbg['last_tick_reason'] = 'loot msg detected but no target creature (fallback loot)'
+
+            if isinstance(radar_coord, (list, tuple)) and len(radar_coord) >= 3:
+                try:
+                    corpse_fallback = {
+                        'name': str(fallback_name) if fallback_name else 'unknown',
+                        'coordinate': (int(radar_coord[0]), int(radar_coord[1]), int(radar_coord[2])),
+                    }
+                    context.setdefault('ng_cave', {})['_force_clear_target_once'] = True
+                    context['loot']['corpsesToLoot'].append(corpse_fallback)
+                    if log_loot:
+                        log_throttled(
+                            'loot.chat.fallback.queued',
+                            'info',
+                            f"Death/loot event: no target resolved; queued fallback loot at player ({corpse_fallback['name']})",
+                            0.5,
+                        )
+                except Exception:
+                    pass
+
+            if log_loot:
+                if isinstance(radar_coord, (list, tuple)) and len(radar_coord) >= 3:
+                    msg = 'Death/loot event: loot signal detected but no target creature found; using fallback loot near player'
+                else:
+                    msg = 'Loot signal detected but no target and no radar coordinate; ignoring (likely stale chat)'
+                log_throttled('loot.chat.no_target', 'warn', msg, 2.0)
         # has spelled exori category
         if context['ng_comboSpells']['lastUsedSpell'] is not None and context['ng_comboSpells']['lastUsedSpell'] in ['exori', 'exori gran', 'exori mas']:
             spellPath = spellsPath.get(
@@ -82,6 +143,10 @@ def setHandleLootMiddleware(context: Context) -> Context:
         now = time.time()
         attacking = bool(context.get('ng_cave', {}).get('isAttackingSomeCreature', False))
         tgt = context.get('ng_cave', {}).get('targetCreature')
+        if tgt is None:
+            # Sometimes visual target detection lags even while battle list shows we're attacking.
+            # Use the last known target as a better fallback for death/loot handling.
+            tgt = context.get('ng_cave', {}).get('previousTargetCreature')
         if attacking and tgt is not None:
             context['ng_cave']['_last_attack_ts'] = now
             context['ng_cave']['_last_attack_target'] = tgt
@@ -96,18 +161,55 @@ def setHandleLootMiddleware(context: Context) -> Context:
             and last_tgt is not None
         ):
             context['loot']['corpsesToLoot'].append(last_tgt)
+            context.setdefault('ng_cave', {})['_force_clear_target_once'] = True
             # Clear so we don't enqueue repeatedly.
             context['ng_cave']['_last_attack_ts'] = None
             context['ng_cave']['_last_attack_target'] = None
             dbg = context.get('ng_debug')
             if isinstance(dbg, dict):
                 dbg['last_tick_reason'] = 'loot fallback: fight ended'
+            if get_bool(
+                context,
+                'ng_runtime.log_loot_events',
+                env_var='FENRIL_LOG_LOOT_EVENTS',
+                default=False,
+            ):
+                name = None
+                try:
+                    if isinstance(last_tgt, dict):
+                        name = last_tgt.get('name')
+                except Exception:
+                    name = None
+                log_throttled(
+                    'loot.fallback.queued',
+                    'info',
+                    f"Death/fight-end event: queued corpse fallback ({name or 'unknown'})",
+                    0.5,
+                )
     except Exception:
         pass
-    context['ng_cave']['targetCreature'] = getTargetCreature(
-        context['gameWindow']['monsters'])
-    if context['ng_cave']['targetCreature'] is not None:
-        context['ng_cave']['previousTargetCreature'] = context['ng_cave']['targetCreature']
+
+    # Update targetCreature. If a death/loot event was detected this tick, force-clear
+    # target once (prevents "phantom" targeting persisting after a kill).
+    force_clear = bool(context.get('ng_cave', {}).pop('_force_clear_target_once', False))
+    if force_clear:
+        context['ng_cave']['targetCreature'] = None
+        dbg = context.get('ng_debug')
+        if isinstance(dbg, dict):
+            # Keep existing reason if set to something more specific.
+            dbg.setdefault('last_tick_reason', 'death event: cleared target')
+        if get_bool(
+            context,
+            'ng_runtime.log_loot_events',
+            env_var='FENRIL_LOG_LOOT_EVENTS',
+            default=False,
+        ):
+            log_throttled('loot.death.clear_target', 'info', 'Death event: cleared current target', 0.5)
+    else:
+        context['ng_cave']['targetCreature'] = getTargetCreature(
+            context['gameWindow']['monsters'])
+        if context['ng_cave']['targetCreature'] is not None:
+            context['ng_cave']['previousTargetCreature'] = context['ng_cave']['targetCreature']
     return context
 
 

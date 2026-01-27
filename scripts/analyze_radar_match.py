@@ -39,7 +39,14 @@ def main() -> int:
     cand = []
     cand.extend(Path('debug').glob('dual_diag_radar_match_not_found_*.json'))
     cand.extend(Path('debug').glob('preflight_radar_match_not_found_*.json'))
-    jsons = sorted(cand)
+    def _ts(p: Path) -> int:
+        # filenames end with _<unix>.json
+        try:
+            return int(p.stem.split('_')[-1])
+        except Exception:
+            return 0
+
+    jsons = sorted(cand, key=_ts)
     if not jsons:
         print('No radar debug json found (dual_diag/preflight)')
         return 1

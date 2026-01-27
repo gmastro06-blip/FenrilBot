@@ -141,7 +141,20 @@ def _best_fuzzy_match(row: np.ndarray, preferred_names: list[str]) -> str | None
 # TODO: add unit tests
 def setBattleListMiddleware(context: Context) -> Context:
     screenshot = context.get('ng_screenshot')
-    content = getContent(screenshot) if screenshot is not None else None
+
+    dump_on_empty = get_bool(
+        context,
+        'ng_runtime.dump_battlelist_on_empty',
+        env_var='FENRIL_DUMP_BATTLELIST_ON_EMPTY',
+        default=False,
+    )
+    targeting_diag = get_bool(context, 'ng_runtime.targeting_diag', env_var='FENRIL_TARGETING_DIAG', default=False)
+
+    content_diag: dict | None = None
+    if dump_on_empty or targeting_diag:
+        content_diag = {'want_images': bool(dump_on_empty)}
+
+    content = getContent(screenshot, diag=content_diag) if screenshot is not None else None
     creatures = getCreatures(content) if content is not None else np.array([], dtype=Creature)
 
     # If names are coming back as "Unknown" (common on different Tibia themes/capture gamma),
@@ -234,35 +247,29 @@ def setBattleListMiddleware(context: Context) -> Context:
         and content is not None
         and len(context['ng_battleList']['creatures']) == 0
     ):
-        icon_pos = getBattleListIconPosition(screenshot)
-        raw_list = None
-        bottom_pos = None
+        diag_icon = None
+        diag_bottom = None
+        diag_scale = None
         try:
-            if icon_pos is not None:
-                raw_list = screenshot[
-                    icon_pos[1] + icon_pos[3] + 1:,
-                    icon_pos[0] - 1:icon_pos[0] - 1 + 156,
-                ]
-                bottom_pos = getContainerBottomBarPosition(raw_list)
+            if isinstance(content_diag, dict):
+                diag_icon = content_diag.get('icon_pos')
+                diag_bottom = content_diag.get('bottom_bar')
+                diag_scale = content_diag.get('scale')
         except Exception:
-            raw_list = None
-            bottom_pos = None
+            diag_icon = None
+            diag_bottom = None
+            diag_scale = None
 
         log_throttled(
             'battleList.empty',
             'warn',
-            'Battle list detected but has 0 entries. Check Tibia battle list filters (Players/NPCs/Monsters) and ensure the list is visible in the capture. '
-            f"(diag: icon={icon_pos is not None} bottom={bottom_pos is not None} grace={dbg.get('battleList_used_grace')})",
-            10.0,
+            'Battle list detected but has 0 entries. If there are no nearby creatures this is OK; otherwise check battle list filters and visibility. '
+            f"(diag: icon={diag_icon is not None} bottom={diag_bottom is not None} scale={diag_scale} grace={dbg.get('battleList_used_grace')})",
+            60.0,
         )
 
         # Optional: dump images to help debug why parsing is empty.
-        if get_bool(
-            context,
-            'ng_runtime.dump_battlelist_on_empty',
-            env_var='FENRIL_DUMP_BATTLELIST_ON_EMPTY',
-            default=False,
-        ):
+        if dump_on_empty:
             # Throttle dumps to avoid flooding the debug folder.
             last_dump_s = dbg.get('battleList_empty_last_dump_s')
             # Default interval is intentionally high to avoid flooding `debug/`.
@@ -281,19 +288,39 @@ def setBattleListMiddleware(context: Context) -> Context:
 
                     full_path = debug_dir / f'battlelist_empty_{ts}_full.png'
                     content_path = debug_dir / f'battlelist_empty_{ts}_content.png'
+                    meta_path = debug_dir / f'battlelist_empty_{ts}.json'
 
                     cv2.imwrite(str(full_path), np.ascontiguousarray(screenshot))
                     cv2.imwrite(str(content_path), np.ascontiguousarray(content))
 
-                    # Also dump the raw list crop (icon->bottom), if we can reproduce it.
-                    icon_pos = getBattleListIconPosition(screenshot)
-                    if icon_pos is not None:
-                        raw_list = screenshot[
-                            icon_pos[1] + icon_pos[3] + 1:,
-                            icon_pos[0] - 1:icon_pos[0] - 1 + 156,
-                        ]
-                        raw_path = debug_dir / f'battlelist_empty_{ts}_raw.png'
-                        cv2.imwrite(str(raw_path), np.ascontiguousarray(raw_list))
+                    # Dump extractor internals (scale-aware) when available.
+                    if isinstance(content_diag, dict):
+                        try:
+                            import json
+
+                            list_img = content_diag.get('list_img')
+                            content_pre = content_diag.get('content_pre_norm')
+                            if isinstance(list_img, np.ndarray) and list_img.size > 0:
+                                list_path = debug_dir / f'battlelist_empty_{ts}_list.png'
+                                cv2.imwrite(str(list_path), np.ascontiguousarray(list_img))
+                            if isinstance(content_pre, np.ndarray) and content_pre.size > 0:
+                                pre_path = debug_dir / f'battlelist_empty_{ts}_content_pre_norm.png'
+                                cv2.imwrite(str(pre_path), np.ascontiguousarray(content_pre))
+
+                            meta = {
+                                'icon_pos': content_diag.get('icon_pos'),
+                                'scale': content_diag.get('scale'),
+                                'list_bbox': content_diag.get('list_bbox'),
+                                'list_img_shape': content_diag.get('list_img_shape'),
+                                'bottom_bar': content_diag.get('bottom_bar'),
+                                'bottom_bar_source': content_diag.get('bottom_bar_source'),
+                                'header_h_scaled': content_diag.get('header_h_scaled'),
+                                'content_pre_norm_shape': content_diag.get('content_pre_norm_shape'),
+                                'content_shape': content_diag.get('content_shape'),
+                            }
+                            meta_path.write_text(json.dumps(meta, indent=2, ensure_ascii=False), encoding='utf-8')
+                        except Exception:
+                            pass
 
                     # Tell the user exactly where to look.
                     log_throttled(
@@ -302,33 +329,31 @@ def setBattleListMiddleware(context: Context) -> Context:
                         f"battleList empty dump: full={full_path} content={content_path}",
                         1.0,
                     )
-                except Exception:
+                except Exception as e:
                     # Never let debug dumping break the bot loop.
+                    log_throttled(
+                        'battleList.empty.dump.failed',
+                        'warn',
+                        f"battleList empty dump failed: {type(e).__name__}: {e}",
+                        10.0,
+                    )
                     pass
 
     # Extra diagnostics: when the bot never attacks, the root cause is often that
     # the capture does not include the battle list (or it can't be matched).
-    if get_bool(context, 'ng_runtime.targeting_diag', env_var='FENRIL_TARGETING_DIAG', default=False):
+    if targeting_diag:
         dbg = context.get('ng_debug')
         if not isinstance(dbg, dict):
             dbg = {}
             context['ng_debug'] = dbg
 
-        icon_pos = getBattleListIconPosition(screenshot) if screenshot is not None else None
-        dbg['battleList_icon_found'] = icon_pos is not None
+        dbg['battleList_icon_found'] = bool(isinstance(content_diag, dict) and content_diag.get('icon_pos') is not None)
         dbg['battleList_content_found'] = content is not None
-
-        raw_list = None
-        bottom_pos = None
-        if screenshot is not None and icon_pos is not None:
-            raw_list = screenshot[
-                icon_pos[1] + icon_pos[3] + 1:,
-                icon_pos[0] - 1:icon_pos[0] - 1 + 156,
-            ]
-            bottom_pos = getContainerBottomBarPosition(raw_list)
-
-        dbg['battleList_bottomBar_found'] = bottom_pos is not None
-        dbg['battleList_raw_shape'] = getattr(raw_list, 'shape', None)
+        dbg['battleList_bottomBar_found'] = bool(isinstance(content_diag, dict) and content_diag.get('bottom_bar') is not None)
+        dbg['battleList_scale'] = (content_diag.get('scale') if isinstance(content_diag, dict) else None)
+        dbg['battleList_list_bbox'] = (content_diag.get('list_bbox') if isinstance(content_diag, dict) else None)
+        dbg['battleList_list_img_shape'] = (content_diag.get('list_img_shape') if isinstance(content_diag, dict) else None)
+        dbg['battleList_content_pre_norm_shape'] = (content_diag.get('content_pre_norm_shape') if isinstance(content_diag, dict) else None)
         dbg['battleList_content_shape'] = getattr(content, 'shape', None)
 
         log_throttled(

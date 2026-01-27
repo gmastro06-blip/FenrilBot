@@ -33,6 +33,25 @@ def _get_client_rect_screen(window: object) -> Optional[Tuple[int, int, int, int
         return None
 
 
+def _restore_if_minimized(window: object) -> None:
+    """Best-effort restore for minimized windows.
+
+    This is primarily for the OBS projector capture window. If it's minimized,
+    PyGetWindow may report (0,0,0,0) which yields a 1x1 capture region.
+    """
+    try:
+        import win32con
+        import win32gui
+
+        hwnd = getattr(window, '_hWnd', None)
+        if hwnd is None:
+            return
+        if win32gui.IsIconic(hwnd):
+            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+    except Exception:
+        return
+
+
 # TODO: add unit tests
 def setScreenshotMiddleware(context: Context) -> Context:
     region = None
@@ -42,17 +61,20 @@ def setScreenshotMiddleware(context: Context) -> Context:
 
     capture_rect = None
     action_rect = None
+    action_rect_is_client = False
 
     if action_window is not None:
         try:
             client = _get_client_rect_screen(action_window)
             if client is not None:
                 action_left, action_top, action_w, action_h = client
+                action_rect_is_client = True
             else:
                 action_left = int(action_window.left)
                 action_top = int(action_window.top)
                 action_w = int(action_window.width)
                 action_h = int(action_window.height)
+                action_rect_is_client = False
             action_right = action_left + action_w
             action_bottom = action_top + action_h
             ax = action_left + max(0, action_w // 2)
@@ -77,6 +99,10 @@ def setScreenshotMiddleware(context: Context) -> Context:
 
     if capture_window is not None:
         try:
+            # If the capture window is minimized, restore it so we can read a
+            # correct rect and capture meaningful pixels.
+            _restore_if_minimized(capture_window)
+
             client = _get_client_rect_screen(capture_window)
             if client is not None:
                 left, top, w, h = client
@@ -85,6 +111,21 @@ def setScreenshotMiddleware(context: Context) -> Context:
                 top = int(capture_window.top)
                 w = int(capture_window.width)
                 h = int(capture_window.height)
+
+            # Some window APIs report 0x0 immediately after restore; re-read once.
+            if w <= 10 or h <= 10:
+                try:
+                    time.sleep(0.05)
+                except Exception:
+                    pass
+                client = _get_client_rect_screen(capture_window)
+                if client is not None:
+                    left, top, w, h = client
+                else:
+                    left = int(getattr(capture_window, 'left', left))
+                    top = int(getattr(capture_window, 'top', top))
+                    w = int(getattr(capture_window, 'width', w))
+                    h = int(getattr(capture_window, 'height', h))
             right = left + w
             bottom = top + h
 
@@ -145,9 +186,40 @@ def setScreenshotMiddleware(context: Context) -> Context:
         context['ng_capture_output_idx'] = getScreenshotDebugInfo().get('output_idx')
     except Exception:
         context['ng_capture_output_idx'] = None
-    set_window_transform(capture_rect, action_rect)
+    action_hwnd = getattr(action_window, '_hWnd', None) if action_window is not None else None
+    action_title = getattr(action_window, 'title', None) if action_window is not None else None
+    set_window_transform(
+        capture_rect,
+        action_rect,
+        action_hwnd=action_hwnd,
+        action_title=action_title,
+        action_rect_is_client=action_rect_is_client,
+    )
 
     context['ng_screenshot'] = getScreenshot(region=region, absolute_region=absolute_region)
+
+    # If we are capturing via OBS WebSocket, the screenshot is not tied to the
+    # projector window geometry. Use the screenshot dimensions as the
+    # "capture rect" for coordinate transforms to keep clicks aligned even if
+    # the projector window is resized or moved.
+    try:
+        backend = (getScreenshotDebugInfo().get('last_stats') or {}).get('backend')
+    except Exception:
+        backend = None
+    if backend == 'obsws' and action_rect is not None and context.get('ng_screenshot') is not None:
+        try:
+            shot = context.get('ng_screenshot')
+            h, w = shot.shape[:2]
+            if int(w) > 0 and int(h) > 0:
+                set_window_transform(
+                    (0, 0, int(w), int(h)),
+                    action_rect,
+                    action_hwnd=action_hwnd,
+                    action_title=action_title,
+                    action_rect_is_client=action_rect_is_client,
+                )
+        except Exception:
+            pass
 
     # Diagnostics: detect black/empty capture and dump a frame periodically.
     diag = context.get('ng_diag') if isinstance(context.get('ng_diag'), dict) else None

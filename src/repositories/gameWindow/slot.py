@@ -23,18 +23,15 @@ def moveToSlot(slot: Slot, gameWindowPosition: BBox) -> None:
 # TODO: add unit tests
 # TODO: add perf
 def clickSlot(slot: Slot, gameWindowPosition: BBox) -> None:
-    moveToSlot(slot, gameWindowPosition)
-    leftClick()
+    slotPosition = getSlotPosition(slot, gameWindowPosition)
+    leftClick(slotPosition)
 
 # TODO: add unit tests
 # TODO: add perf
 def rightClickSlot(slot: Slot, gameWindowPosition: BBox) -> None:
-    moveToSlot(slot, gameWindowPosition)
-    # TODO: remove this
-    # sleep(1)
-    rightClick()
+    slotPosition = getSlotPosition(slot, gameWindowPosition)
+    rightClick(slotPosition)
 
 def clickUseBySlot(slot: Slot, gameWindowPosition: BBox) -> None:
     xPos, yPos = getSlotPosition(slot, gameWindowPosition)
-    moveTo((xPos + 15, yPos + 25))
-    leftClick()
+    leftClick((xPos + 15, yPos + 25))

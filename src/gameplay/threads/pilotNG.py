@@ -97,10 +97,32 @@ class PilotNGThread:
                 except Exception:
                     pass
 
+                bl_creatures = self.context.context.get('ng_battleList', {}).get('creatures')
+                try:
+                    bl_count = int(len(bl_creatures)) if bl_creatures is not None else 0
+                except Exception:
+                    bl_count = 0
+
+                tgt_name = None
+                try:
+                    tgt = cave.get('targetCreature')
+                    if isinstance(tgt, dict):
+                        tgt_name = tgt.get('name')
+                except Exception:
+                    tgt_name = None
+
+                loot_q = 0
+                try:
+                    loot_q = int(len(self.context.context.get('loot', {}).get('corpsesToLoot') or []))
+                except Exception:
+                    loot_q = 0
+
                 status_msg = (
                     f"cave_enabled={cave.get('enabled')} runToCreatures={cave.get('runToCreatures')} "
                     f"way={self.context.context.get('way')} coord={coord} "
-                    f"task={task_name} root={root_name} reason={reason}"
+                    f"task={task_name} root={root_name} "
+                    f"bl={bl_count} attacking={cave.get('isAttackingSomeCreature')} target={tgt_name} lootQ={loot_q} "
+                    f"reason={reason}"
                 )
 
                 if get_bool(self.context.context, 'ng_runtime.window_diag', env_var='FENRIL_WINDOW_DIAG', default=False):
@@ -439,7 +461,14 @@ class PilotNGThread:
                     bl_creatures = context.get('ng_battleList', {}).get('creatures')
                     bl_count = len(bl_creatures) if bl_creatures is not None else 0
                     if bl_count > 0 and get_bool(context, 'ng_runtime.attack_from_battlelist', env_var='FENRIL_ATTACK_FROM_BATTLELIST', default=False):
-                        context['way'] = 'ng_cave'
+                        try:
+                            idx, _, _ = choose_target_index(context)
+                        except Exception:
+                            idx = None
+                        if idx is not None:
+                            context['way'] = 'ng_cave'
+                        else:
+                            context['way'] = 'waypoint'
                     else:
                         context['way'] = 'waypoint'
             else:

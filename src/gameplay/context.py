@@ -154,6 +154,7 @@ context = {
         'pendingCoordinate': None,
         'pendingCoordinateTicks': 0,
         'lockConfirmed': False,
+        'lockAgeTicks': 0,
     },
     'ng_resolution': 1080,
     'ng_statusBar': {

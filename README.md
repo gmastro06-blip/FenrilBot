@@ -87,6 +87,24 @@ TESTED ONLY ON WIN10
 - [VIRTUAL DISPLAY](https://www.amyuni.com/downloads/usbmmidd_v2.zip&v=ybHKFZjSkVY)
 - [OBS](https://obsproject.com/pt-br/download)
 
+### Capture troubleshooting (black screenshots)
+
+Some Windows setups return black frames (sometimes only the taskbar is visible) when using screen-capture APIs. If this happens, you can capture directly from OBS using OBS WebSocket.
+
+1) In OBS: Tools → WebSocket Server Settings → Enable WebSocket server (default port `4455`).
+2) Set environment variables before running the bot:
+
+```bash
+set FENRIL_CAPTURE_BACKEND=obsws
+set FENRIL_OBS_SOURCE=Tibia_Fuente
+set FENRIL_OBS_HOST=127.0.0.1
+set FENRIL_OBS_PORT=4455
+rem optional:
+rem set FENRIL_OBS_PASSWORD=your_password
+```
+
+`FENRIL_OBS_SOURCE` must match the exact OBS source name (e.g. the Game Capture source).
+
 COMMANDS TO ACTIVATE THE VIRTUAL DISPLAY:
 
 - Extract the file, then:

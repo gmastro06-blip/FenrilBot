@@ -10,6 +10,11 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from src.utils.esc_stop import install_esc_stop
+
+# Allow aborting long diagnostics with ESC.
+install_esc_stop(exit_process=True)
+
 from src.gameplay.core.middlewares.window import setTibiaWindowMiddleware
 from src.gameplay.core.middlewares.screenshot import setScreenshotMiddleware
 from src.gameplay.core.middlewares.radar import setRadarMiddleware
@@ -51,6 +56,7 @@ def main() -> int:
             'previousRadarImage': None,
             'pendingCoordinate': None,
             'pendingCoordinateTicks': 0,
+            'lockConfirmed': False,
         },
     }
 
@@ -64,11 +70,19 @@ def main() -> int:
     for i in range(n):
         ctx = setScreenshotMiddleware(ctx)
         ctx = setRadarMiddleware(ctx)
-        coord = ctx.get('ng_radar', {}).get('coordinate')
-        reason = ctx.get('ng_debug', {}).get('last_tick_reason')
+        radar = ctx.get('ng_radar', {}) if isinstance(ctx.get('ng_radar'), dict) else {}
+        coord = radar.get('coordinate')
+        prev = radar.get('previousCoordinate')
+        pend_ticks = radar.get('pendingCoordinateTicks')
+        lock_ok = radar.get('lockConfirmed')
+        lock_age = radar.get('lockAgeTicks')
+        dbg = ctx.get('ng_debug', {}) if isinstance(ctx.get('ng_debug'), dict) else {}
+        reason = dbg.get('last_tick_reason')
+        cand = dbg.get('radar_candidate_coordinate')
+        jump = dbg.get('radar_jump_dxdy')
         diag = ctx.get('ng_diag', {}) if isinstance(ctx.get('ng_diag'), dict) else {}
         miss = diag.get('consecutive_radar_coord_missing')
-        print(f"{i:02d} coord={coord} reason={reason} miss={miss}")
+        print(f"{i:02d} coord={coord} prev={prev} pend_ticks={pend_ticks} lock={lock_ok} age={lock_age} reason={reason} miss={miss} cand={cand} jump={jump}")
         time.sleep(sleep_s)
 
     return 0

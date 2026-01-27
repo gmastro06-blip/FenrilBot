@@ -17,6 +17,18 @@ def hasCreaturesToAttack(context: Context) -> bool:
         bl_creatures = context.get('ng_battleList', {}).get('creatures')
         bl_count = len(bl_creatures) if bl_creatures is not None else 0
         if bl_count > 0 and get_bool(context, 'ng_runtime.attack_from_battlelist', env_var='FENRIL_ATTACK_FROM_BATTLELIST', default=False):
+            # Only treat battle list as "attackable" if we can actually pick a target
+            # based on names/ignore lists. This prevents infinite attacking when the
+            # battle list contains only ignored entries (players/NPCs/Unknown).
+            try:
+                from src.repositories.battleList.selection import choose_target_index
+
+                idx, _, _ = choose_target_index(context)
+            except Exception:
+                idx = None
+            if idx is None:
+                context['ng_targeting']['canIgnoreCreatures'] = True
+                return False
             context['ng_targeting']['canIgnoreCreatures'] = True
             return True
 

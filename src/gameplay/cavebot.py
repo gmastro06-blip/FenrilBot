@@ -16,6 +16,14 @@ def resolveCavebotTasks(context: Context) -> Union[AttackClosestCreatureTask, No
             bl_creatures = context.get('ng_battleList', {}).get('creatures')
             bl_count = len(bl_creatures) if bl_creatures is not None else 0
             if bl_count > 0 and get_bool(context, 'ng_runtime.attack_from_battlelist', env_var='FENRIL_ATTACK_FROM_BATTLELIST', default=False):
+                try:
+                    from src.repositories.battleList.selection import choose_target_index
+
+                    idx, _, _ = choose_target_index(context)
+                except Exception:
+                    idx = None
+                if idx is None:
+                    return context
                 context['ng_tasksOrchestrator'].setRootTask(
                     context, AttackClosestCreatureTask())
             return context
@@ -34,6 +42,14 @@ def resolveCavebotTasks(context: Context) -> Union[AttackClosestCreatureTask, No
         bl_creatures = context.get('ng_battleList', {}).get('creatures')
         bl_count = len(bl_creatures) if bl_creatures is not None else 0
         if bl_count > 0 and get_bool(context, 'ng_runtime.attack_from_battlelist', env_var='FENRIL_ATTACK_FROM_BATTLELIST', default=False):
+            try:
+                from src.repositories.battleList.selection import choose_target_index
+
+                idx, _, _ = choose_target_index(context)
+            except Exception:
+                idx = None
+            if idx is None:
+                return context
             context['ng_tasksOrchestrator'].setRootTask(
                 context, AttackClosestCreatureTask())
         return context
