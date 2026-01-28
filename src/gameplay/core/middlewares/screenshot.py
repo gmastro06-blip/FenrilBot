@@ -234,9 +234,9 @@ def setScreenshotMiddleware(context: Context) -> Context:
             std_val = float(np.std(screenshot))
             diag['capture_mean'] = mean_val
             diag['capture_std'] = std_val
-            std_thr = get_float(context, 'ng_runtime.black_std_threshold', env_var='FENRIL_BLACK_STD_THRESHOLD', default=2.0)
-            mean_thr = get_float(context, 'ng_runtime.black_mean_threshold', env_var='FENRIL_BLACK_MEAN_THRESHOLD', default=10.0)
-            mean_force_thr = get_float(context, 'ng_runtime.black_mean_force_threshold', env_var='FENRIL_BLACK_MEAN_FORCE_THRESHOLD', default=3.0)
+            std_thr = get_float(context, 'ng_runtime.black_std_threshold', env_var='FENRIL_BLACK_STD_THRESHOLD', default=1.0)
+            mean_thr = get_float(context, 'ng_runtime.black_mean_threshold', env_var='FENRIL_BLACK_MEAN_THRESHOLD', default=2.0)
+            mean_force_thr = get_float(context, 'ng_runtime.black_mean_force_threshold', env_var='FENRIL_BLACK_MEAN_FORCE_THRESHOLD', default=2.0)
             dark_px_thr = get_int(context, 'ng_runtime.black_dark_pixel_threshold', env_var='FENRIL_BLACK_DARK_PIXEL_THRESHOLD', default=8)
             dark_frac_thr = get_float(context, 'ng_runtime.black_dark_fraction_threshold', env_var='FENRIL_BLACK_DARK_FRACTION_THRESHOLD', default=0.98)
             dark_fraction = float(np.mean(screenshot <= dark_px_thr))

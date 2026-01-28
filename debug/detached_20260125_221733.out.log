@@ -1,7 +1,0 @@
-[22:17:45][fenril][info] cave_enabled=True runToCreatures=True way=None coord=None task=None root=None reason=radar tools not found
-[22:17:45][fenril][info] Tick reason changed: radar tools not found
-[22:17:47][fenril][info] cave_enabled=True runToCreatures=True way=None coord=None task=None root=None reason=radar tools not found
-[22:17:47][fenril][warn] Battle list detected but has 0 entries. Check Tibia battle list filters (Players/NPCs/Monsters) and ensure the list is visible in the capture. (diag: icon=True bottom=True grace=False)
-[22:17:47][fenril][info] Tick reason changed: set task: useLadder
-[22:17:49][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32681, 31685, 7) task=walk root=useLadderWaypoint reason=set task: useLadder
-[22:17:51][fenril][info] cave_enabled=True runToCreatures=True way=waypoint coord=(32681, 31685, 7) task=walk root=useLadderWaypoint reason=set task: useLadder

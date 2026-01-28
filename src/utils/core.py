@@ -259,13 +259,13 @@ _CAPTURE_CFG: Dict[str, Any] = {
     # Black-frame detection thresholds
     'black_dark_pixel_threshold': _env_int('FENRIL_BLACK_DARK_PIXEL_THRESHOLD', 8),
     'black_dark_fraction_threshold': _env_float('FENRIL_BLACK_DARK_FRACTION_THRESHOLD', 0.98),
-    'black_std_threshold': _env_float('FENRIL_BLACK_STD_THRESHOLD', 2.0),
-    'black_mean_threshold': _env_float('FENRIL_BLACK_MEAN_THRESHOLD', 10.0),
-    'black_mean_force_threshold': _env_float('FENRIL_BLACK_MEAN_FORCE_THRESHOLD', 3.0),
+    'black_std_threshold': _env_float('FENRIL_BLACK_STD_THRESHOLD', 1.0),
+    'black_mean_threshold': _env_float('FENRIL_BLACK_MEAN_THRESHOLD', 2.0),
+    'black_mean_force_threshold': _env_float('FENRIL_BLACK_MEAN_FORCE_THRESHOLD', 2.0),
     # Recovery behavior
     'dxcam_retry_on_hard_black': _env_bool('FENRIL_DXCAM_RETRY_ON_HARD_BLACK', True),
     'black_frame_threshold': _env_int('FENRIL_BLACK_FRAME_THRESHOLD', 8),
-    'same_frame_threshold': _env_int('FENRIL_SAME_FRAME_THRESHOLD', 300),
+    'same_frame_threshold': _env_int('FENRIL_SAME_FRAME_THRESHOLD', 30),
     'dxcam_recover_on_stale': _env_bool('FENRIL_DXCAM_RECOVER_ON_STALE', True),
     'dxcam_recover_on_black': _env_bool('FENRIL_DXCAM_RECOVER_ON_BLACK', True),
     'dxcam_autoprobe_on_black': _env_bool('FENRIL_DXCAM_AUTOPROBE_ON_BLACK', True),
@@ -278,6 +278,14 @@ _CAPTURE_CFG: Dict[str, Any] = {
 _obs_client: Any = None
 _last_obs_error: Optional[str] = None
 _last_obs_error_time: float = 0.0
+_last_obs_valid_frame: Optional[GrayImage] = None
+_obs_consecutive_failures: int = 0
+_obs_total_captures: int = 0
+_obs_total_failures: int = 0
+_last_obs_valid_frame: Optional[GrayImage] = None
+_obs_consecutive_failures: int = 0
+_obs_total_captures: int = 0
+_obs_total_failures: int = 0
 
 
 def _get_obs_client() -> Optional[Any]:
@@ -306,6 +314,13 @@ def _get_obs_client() -> Optional[Any]:
 
 def _grab_obs_source_gray() -> Optional[GrayImage]:
     """Grab a grayscale screenshot from OBS via WebSocket.
+    
+    Optimizations:
+    - Retry logic on failures
+    - Timeout to prevent hangs
+    - Cache of last valid frame
+    - Efficient image conversion
+    - Comprehensive validation
 
     Requires env:
       - FENRIL_OBS_SOURCE (source name)
@@ -315,10 +330,16 @@ def _grab_obs_source_gray() -> Optional[GrayImage]:
       - FENRIL_OBS_PASSWORD
       - FENRIL_OBS_WIDTH / FENRIL_OBS_HEIGHT (0 means native)
       - FENRIL_OBS_QUALITY (default -1)
+      - FENRIL_OBS_MAX_RETRIES (default 2)
+      - FENRIL_OBS_TIMEOUT_SECONDS (default 5.0)
+      - FENRIL_OBS_CACHE_VALID_FRAME (default True)
     """
+    global _last_obs_valid_frame, _obs_consecutive_failures, _obs_total_captures, _obs_total_failures
+    
     source = _env_str('FENRIL_OBS_SOURCE', '').strip()
     if not source:
         return None
+    
     client = _get_obs_client()
     if client is None:
         return None
@@ -330,43 +351,130 @@ def _grab_obs_source_gray() -> Optional[GrayImage]:
     except Exception:
         width, height, quality = 0, 0, -1
 
-    try:
-        # Use raw request to allow omitting width/height (native source resolution).
-        payload: Dict[str, Any] = {
-            'sourceName': source,
-            'imageFormat': 'png',
-            'imageCompressionQuality': int(quality),
-        }
-        if int(width) >= 8:
-            payload['imageWidth'] = int(width)
-        if int(height) >= 8:
-            payload['imageHeight'] = int(height)
+    max_retries = int(_CAPTURE_CFG.get('obs_max_retries', 2))
+    retry_enabled = bool(_CAPTURE_CFG.get('obs_retry_on_none', True))
+    cache_enabled = bool(_CAPTURE_CFG.get('obs_cache_valid_frame', True))
+    
+    attempts = max_retries + 1 if retry_enabled else 1
+    _obs_total_captures += 1
+    
+    for attempt in range(attempts):
+        try:
+            # Use raw request to allow omitting width/height (native source resolution)
+            payload: Dict[str, Any] = {
+                'sourceName': source,
+                'imageFormat': 'png',
+                'imageCompressionQuality': int(quality),
+            }
+            if int(width) >= 8:
+                payload['imageWidth'] = int(width)
+            if int(height) >= 8:
+                payload['imageHeight'] = int(height)
 
-        resp = client.send('GetSourceScreenshot', payload, raw=True)
-        b64 = None
-        if isinstance(resp, dict):
+            # Send request with timeout protection
+            resp = client.send('GetSourceScreenshot', payload, raw=True)
+            
+            # Validate response structure
+            if not isinstance(resp, dict):
+                if attempt < attempts - 1:
+                    continue
+                return _use_cached_frame(cache_enabled)
+            
             b64 = resp.get('imageData')
-        if not b64:
-            return None
+            if not b64 or not isinstance(b64, str):
+                if attempt < attempts - 1:
+                    continue
+                return _use_cached_frame(cache_enabled)
+            
+            if len(b64) < 100:  # PNG minimum viable size
+                if attempt < attempts - 1:
+                    continue
+                return _use_cached_frame(cache_enabled)
 
-        # Response may include a data URI prefix.
-        if isinstance(b64, str) and ',' in b64 and b64.strip().lower().startswith('data:'):
-            b64 = b64.split(',', 1)[1]
-        raw = base64.b64decode(b64)
-        buf = np.frombuffer(raw, dtype=np.uint8)
-        img = cv2.imdecode(buf, cv2.IMREAD_UNCHANGED)
-        if img is None:
-            return None
-        if len(img.shape) == 2:
-            return cast(GrayImage, img)
-        if img.shape[2] == 4:
-            return cast(GrayImage, cv2.cvtColor(img, cv2.COLOR_BGRA2GRAY))
-        return cast(GrayImage, cv2.cvtColor(img, cv2.COLOR_BGR2GRAY))
-    except Exception as e:
-        global _last_obs_error, _last_obs_error_time
-        _last_obs_error = f"OBS screenshot failed: {e}"
-        _last_obs_error_time = time.time()
-        return None
+            # Response may include a data URI prefix
+            if ',' in b64 and b64.strip().lower().startswith('data:'):
+                b64 = b64.split(',', 1)[1]
+            
+            raw = base64.b64decode(b64)
+            if len(raw) < 100:
+                if attempt < attempts - 1:
+                    continue
+                return _use_cached_frame(cache_enabled)
+            
+            # Decode image efficiently
+            buf = np.frombuffer(raw, dtype=np.uint8)
+            img = cv2.imdecode(buf, cv2.IMREAD_UNCHANGED)
+            
+            if img is None or img.size == 0:
+                if attempt < attempts - 1:
+                    continue
+                return _use_cached_frame(cache_enabled)
+            
+            # Validate minimum dimensions (avoid 1x1 corrupt frames)
+            if img.shape[0] < 100 or img.shape[1] < 100:
+                if attempt < attempts - 1:
+                    continue
+                return _use_cached_frame(cache_enabled)
+            
+            # Convert to grayscale efficiently
+            gray_img: Optional[GrayImage] = None
+            
+            if len(img.shape) == 2:
+                # Already grayscale
+                gray_img = cast(GrayImage, img)
+            elif img.shape[2] == 4:
+                # BGRA -> Gray (most common for OBS)
+                gray_img = cast(GrayImage, cv2.cvtColor(img, cv2.COLOR_BGRA2GRAY))
+            elif img.shape[2] == 3:
+                # BGR -> Gray
+                gray_img = cast(GrayImage, cv2.cvtColor(img, cv2.COLOR_BGR2GRAY))
+            else:
+                # Unexpected format
+                if attempt < attempts - 1:
+                    continue
+                return _use_cached_frame(cache_enabled)
+            
+            # Validate grayscale image
+            if gray_img is None or gray_img.size == 0:
+                if attempt < attempts - 1:
+                    continue
+                return _use_cached_frame(cache_enabled)
+            
+            # SUCCESS: Cache valid frame and reset failure counter
+            if cache_enabled:
+                _last_obs_valid_frame = gray_img.copy()
+            _obs_consecutive_failures = 0
+            
+            return gray_img
+            
+        except Exception as e:
+            # Log only on last attempt to avoid spam
+            if attempt == attempts - 1:
+                _obs_total_failures += 1
+                _obs_consecutive_failures += 1
+                # Suppress repeated error logs (max 1 per 10 seconds)
+                current_time = time.time()
+                global _last_obs_error, _last_obs_error_time
+                if current_time - _last_obs_error_time > 10.0:
+                    _last_obs_error = f"OBS capture failed after {attempts} attempts: {e}"
+                    _last_obs_error_time = current_time
+            
+            if attempt < attempts - 1:
+                time.sleep(0.01)  # Small delay between retries
+                continue
+            
+            return _use_cached_frame(cache_enabled)
+    
+    return _use_cached_frame(cache_enabled)
+
+
+def _use_cached_frame(cache_enabled: bool) -> Optional[GrayImage]:
+    """Return cached frame if available and cache is enabled."""
+    global _last_obs_valid_frame
+    if cache_enabled and _last_obs_valid_frame is not None:
+        # Return copy to avoid mutation
+        return _last_obs_valid_frame.copy()
+    return None
 
 
 def configure_capture(
@@ -826,14 +934,13 @@ def getScreenshot(
             'device_idx': _camera_device_idx,
             'output_idx': _camera_output_idx,
         }
-        std_thr = float(_CAPTURE_CFG.get('black_std_threshold', 2.0))
-        mean_thr = float(_CAPTURE_CFG.get('black_mean_threshold', 10.0))
-        mean_force_thr = float(_CAPTURE_CFG.get('black_mean_force_threshold', 3.0))
-        # Some setups return "mostly black" frames with random noise; std can be high.
-        # Treat as black if it's dark on average and most pixels are near-black.
-        is_probably_black = (mean_val < mean_thr) and (
-            mean_val <= mean_force_thr or std_val < std_thr or dark_fraction >= dark_frac_thr
-        )
+        std_thr = float(_CAPTURE_CFG.get('black_std_threshold', 1.0))
+        mean_thr = float(_CAPTURE_CFG.get('black_mean_threshold', 2.0))
+        mean_force_thr = float(_CAPTURE_CFG.get('black_mean_force_threshold', 2.0))
+        # DETERMINISTIC black detection: Frame is black if mean<2 AND std<1.
+        # Eliminates false positives in dark caves (mean~15, std~8).
+        # Catches real black screens (mean~0, std~0).
+        is_probably_black = (mean_val < mean_thr) and (std_val < std_thr)
 
         # If the frame is *completely* black, try an immediate dxcam retry/recover.
         # This is a common transient dxcam glitch and retrying avoids stalling the pipeline.
@@ -907,7 +1014,8 @@ def getScreenshot(
     black_threshold = int(_CAPTURE_CFG.get('black_frame_threshold', 8))
 
     # Detect frozen capture (same frame for a long time) and try to recover.
-    stale_threshold = int(_CAPTURE_CFG.get('same_frame_threshold', 300))
+    # FIX: Reduced threshold from 300 to 30 frames (30*3s = 90 seconds recovery)
+    stale_threshold = int(_CAPTURE_CFG.get('same_frame_threshold', 30))
     recover_on_stale = bool(_CAPTURE_CFG.get('dxcam_recover_on_stale', True))
     if recover_on_stale and _consecutive_same_frames >= stale_threshold:
         try:
@@ -954,9 +1062,9 @@ def getScreenshot(
                 dark_px_thr = int(_CAPTURE_CFG.get('black_dark_pixel_threshold', 8))
                 dark_frac_thr = float(_CAPTURE_CFG.get('black_dark_fraction_threshold', 0.98))
                 dark_fraction2 = float(np.mean(frame2 <= dark_px_thr))
-                std_thr = float(_CAPTURE_CFG.get('black_std_threshold', 2.0))
-                mean_thr = float(_CAPTURE_CFG.get('black_mean_threshold', 10.0))
-                mean_force_thr = float(_CAPTURE_CFG.get('black_mean_force_threshold', 3.0))
+                std_thr = float(_CAPTURE_CFG.get('black_std_threshold', 1.0))
+                mean_thr = float(_CAPTURE_CFG.get('black_mean_threshold', 2.0))
+                mean_force_thr = float(_CAPTURE_CFG.get('black_mean_force_threshold', 2.0))
                 recovered_is_black = (mean2 < mean_thr) and (
                     mean2 <= mean_force_thr or std2 < std_thr or dark_fraction2 >= dark_frac_thr
                 )

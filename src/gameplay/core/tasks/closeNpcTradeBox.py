@@ -14,9 +14,15 @@ class CloseNpcTradeBoxTask(BaseTask):
 
     # TODO: add unit tests
     def do(self, context: Context) -> Context:
-        tradeTopPosition = refillCore.getTradeTopPosition(
-            context['ng_screenshot'])
-        if tradeTopPosition is None:
-            return context
-        mouse.leftClick((tradeTopPosition[0] + 165, tradeTopPosition[1] + 7))
+        screenshot = context['ng_screenshot']
+        tradeTopPosition = refillCore.getTradeTopPosition(screenshot)
+        
+        if tradeTopPosition is not None:
+            # UI antigua detectada
+            mouse.leftClick((tradeTopPosition[0] + 165, tradeTopPosition[1] + 7))
+        else:
+            # Intentar cerrar la UI moderna
+            from src.repositories.refill.modern_ui import closeModernTradeWindow
+            closeModernTradeWindow(screenshot)
+        
         return context

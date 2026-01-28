@@ -9,7 +9,19 @@ from src.utils.array import getNextArrayIndex
 from src.gameplay.core.waypoint import resolveGoalCoordinate
 
 
-# TODO: check if gold was deposited successfully by shouldRestartAfterAllChildrensComplete
+# LIMITATION: Gold deposit validation not implemented (requires OCR).
+# System assumes NPC responds to "deposit all". If NPC is unresponsive,
+# task will timeout (default 25s) and skip to next waypoint.
+# 
+# HARDENING RECOMMENDATION: Monitor timeout frequency. High timeout rate
+# indicates NPC interaction issues.
+# 
+# FUTURE IMPROVEMENT: Implement gold OCR
+#   1. Capture gold amount before "deposit all" (getGold(screenshot))
+#   2. Capture gold amount after NPC response
+#   3. Validate: gold_after < gold_before (if not, deposit failed)
+#   4. Retry or skip based on validation
+#   See: HARDENING_RECOMMENDATIONS.md Section 1
 class DepositGoldTask(VectorTask):
     def __init__(self) -> None:
         super().__init__()

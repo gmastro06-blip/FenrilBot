@@ -5,6 +5,16 @@ from .core.tasks.attackClosestCreature import AttackClosestCreatureTask
 from .typings import Context
 from src.utils.runtime_settings import get_bool
 
+# HARDENING STATUS: Target management improved (2026-01-28)
+# ✅ Explicitly clears dead target (targetCreature = None)
+# ✅ Logs when no closestCreature (visibility into idle state)
+# ✅ Battle list fallback for flaky on-screen detection
+# ✅ Attack task reset bounded (70 ticks → press ESC)
+# 
+# OPTIONAL IMPROVEMENT: Consider battle list as primary source
+#   Set FENRIL_ATTACK_FROM_BATTLELIST=true for more reliability
+#   See: HARDENING_RECOMMENDATIONS.md Section 4
+
 
 # TODO: add unit tests
 def resolveCavebotTasks(context: Context) -> Union[AttackClosestCreatureTask, None]:
@@ -29,7 +39,19 @@ def resolveCavebotTasks(context: Context) -> Union[AttackClosestCreatureTask, No
             return context
         if hasTargetToCreature(
                 context['gameWindow']['monsters'], context['ng_cave']['targetCreature'], context['ng_radar']['coordinate']) == False:
+            # HARDENING: Target muerto/desaparecido - limpiar y retarget
+            context['ng_cave']['targetCreature'] = None
+            
             if context['ng_cave']['closestCreature'] is None:
+                # HARDENING: No hay closestCreature, pero puede haber mobs.
+                # Forzar re-scan en siguiente tick en vez de quedarse idle
+                from src.utils.console_log import log_throttled
+                log_throttled(
+                    'cavebot.retarget_needed',
+                    'warn',
+                    'Cavebot: Target lost and no closestCreature. Waiting for next scan.',
+                    5.0
+                )
                 return context
             context['ng_tasksOrchestrator'].setRootTask(
                 context, AttackClosestCreatureTask())

@@ -58,21 +58,26 @@ def getRadarImage(screenshot: GrayImage, radarToolsPosition: BBox) -> GrayImage:
         row_std = crop.std(axis=1)
         row_mean = crop.mean(axis=1)
 
-        # Heuristics for trimming: require the row to be both low-variance and "dark-ish"
-        # (otherwise we might cut valid map rows that happen to be uniform).
-        std_thr = float(os.getenv('FENRIL_RADAR_TRIM_STD_THR', '0.5'))
-        mean_thr = float(os.getenv('FENRIL_RADAR_TRIM_MEAN_THR', '10.0'))
+        # FIX: More restrictive thresholds to avoid trimming valid dark map content.
+        # Only trim if mean<3 AND std<0.3 AND dark_frac>0.99 (actual UI artifacts).
+        # Limits trim to 5 rows maximum to prevent over-trimming.
+        std_thr = float(os.getenv('FENRIL_RADAR_TRIM_STD_THR', '0.3'))
+        mean_thr = float(os.getenv('FENRIL_RADAR_TRIM_MEAN_THR', '3.0'))
         dark_px_thr = int(os.getenv('FENRIL_RADAR_TRIM_DARK_PX_THR', '12'))
-        dark_frac_thr = float(os.getenv('FENRIL_RADAR_TRIM_DARK_FRAC_THR', '0.98'))
+        dark_frac_thr = float(os.getenv('FENRIL_RADAR_TRIM_DARK_FRAC_THR', '0.99'))
         row_dark_frac = (crop <= dark_px_thr).mean(axis=1)
 
         bottom = int(crop.shape[0])
-        while bottom > 1:
+        max_trim_rows = 5
+        trimmed_rows = 0
+        while bottom > 1 and trimmed_rows < max_trim_rows:
             i = bottom - 1
             if float(row_std[i]) > std_thr:
                 break
-            if float(row_mean[i]) <= mean_thr or float(row_dark_frac[i]) >= dark_frac_thr:
+            # FIX: Require BOTH conditions (more restrictive)
+            if float(row_mean[i]) <= mean_thr and float(row_dark_frac[i]) >= dark_frac_thr:
                 bottom -= 1
+                trimmed_rows += 1
                 continue
             break
         if bottom != crop.shape[0]:

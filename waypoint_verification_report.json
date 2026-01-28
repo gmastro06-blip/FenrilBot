@@ -1,0 +1,767 @@
+[
+  {
+    "directory": "bonelord_liberty_bay",
+    "pilotscripts": 1,
+    "html_files": 8,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "braindeath",
+    "pilotscripts": 1,
+    "html_files": 4,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "buy_blessing",
+    "pilotscripts": 1,
+    "html_files": 14,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "carlin_amazon_tower",
+    "pilotscripts": 1,
+    "html_files": 7,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "cormaya_werecave",
+    "pilotscripts": 1,
+    "html_files": 4,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "cults_ankrahmun",
+    "pilotscripts": 1,
+    "html_files": 8,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "dark_cathedral",
+    "pilotscripts": 1,
+    "html_files": 4,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "dawnport",
+    "pilotscripts": 1,
+    "html_files": 7,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "deepsea_blood_crabs",
+    "pilotscripts": 1,
+    "html_files": 3,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "demon_hero_cave",
+    "pilotscripts": 1,
+    "html_files": 10,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "drefia_wyrms_box",
+    "pilotscripts": 1,
+    "html_files": 12,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "edron_cults",
+    "pilotscripts": 1,
+    "html_files": 7,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "edron_werecave",
+    "pilotscripts": 1,
+    "html_files": 4,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "elvenbane",
+    "pilotscripts": 1,
+    "html_files": 7,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "elves_venore",
+    "pilotscripts": 1,
+    "html_files": 4,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "feyrist_dark_faun",
+    "pilotscripts": 1,
+    "html_files": 7,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "feyrist_mountain",
+    "pilotscripts": 1,
+    "html_files": 6,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "feyrist_nightmare_cave",
+    "pilotscripts": 1,
+    "html_files": 5,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "feyrist_nightmare_cave_down",
+    "pilotscripts": 1,
+    "html_files": 6,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "forest_fury",
+    "pilotscripts": 1,
+    "html_files": 6,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "general",
+    "pilotscripts": 22,
+    "html_files": 0,
+    "issues": [
+      "⚠️  No se encontraron archivos TibiaMaps HTML para verificación"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "giant_spider_cave",
+    "pilotscripts": 1,
+    "html_files": 6,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "glooth_bandit_east",
+    "pilotscripts": 1,
+    "html_files": 6,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "glooth_bandit_south",
+    "pilotscripts": 1,
+    "html_files": 6,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "glooth_bandit_west",
+    "pilotscripts": 1,
+    "html_files": 6,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "goblin_train_ab",
+    "pilotscripts": 1,
+    "html_files": 3,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "hero_fortress",
+    "pilotscripts": 1,
+    "html_files": 4,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "hero_fortress_box",
+    "pilotscripts": 1,
+    "html_files": 4,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "hero_fortress_down",
+    "pilotscripts": 1,
+    "html_files": 5,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "ice_fishing",
+    "pilotscripts": 1,
+    "html_files": 2,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "ice_witch",
+    "pilotscripts": 1,
+    "html_files": 4,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "kazz_dragon",
+    "pilotscripts": 1,
+    "html_files": 5,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "killer_caimans",
+    "pilotscripts": 1,
+    "html_files": 12,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "krailos_nightmare",
+    "pilotscripts": 1,
+    "html_files": 4,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "krailos_nightmare_box",
+    "pilotscripts": 1,
+    "html_files": 4,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "krailos_spider_cave",
+    "pilotscripts": 1,
+    "html_files": 4,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "laguna_island_tortoises",
+    "pilotscripts": 1,
+    "html_files": 10,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "liberty_bay_cults_before_piano",
+    "pilotscripts": 1,
+    "html_files": 7,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "library_tomb",
+    "pilotscripts": 1,
+    "html_files": 7,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "magician_quarter",
+    "pilotscripts": 1,
+    "html_files": 5,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "market_thais",
+    "pilotscripts": 1,
+    "html_files": 3,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "medusa_tower",
+    "pilotscripts": 1,
+    "html_files": 7,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "meriana_gargoyle",
+    "pilotscripts": 1,
+    "html_files": 8,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "minotaur_cults",
+    "pilotscripts": 1,
+    "html_files": 10,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "minotaur_darashia",
+    "pilotscripts": 1,
+    "html_files": 8,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "mother_of_scarab",
+    "pilotscripts": 1,
+    "html_files": 9,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "mount_sternum",
+    "pilotscripts": 1,
+    "html_files": 3,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "mutated_humans",
+    "pilotscripts": 1,
+    "html_files": 6,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "mutated_temple_complex",
+    "pilotscripts": 1,
+    "html_files": 4,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "oramond_demon_sewers",
+    "pilotscripts": 1,
+    "html_files": 7,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "oramond_hydra_task",
+    "pilotscripts": 1,
+    "html_files": 7,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "oramond_sewers_box",
+    "pilotscripts": 1,
+    "html_files": 5,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "oramond_tower_box",
+    "pilotscripts": 1,
+    "html_files": 5,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "oramond_west",
+    "pilotscripts": 1,
+    "html_files": 4,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "oramond_west_tasker",
+    "pilotscripts": 1,
+    "html_files": 4,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "orc_fortress_shaman",
+    "pilotscripts": 1,
+    "html_files": 3,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "outside_orc_fortress",
+    "pilotscripts": 1,
+    "html_files": 5,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "peninsula_tomb_ankrahmun",
+    "pilotscripts": 1,
+    "html_files": 11,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "pirates_yalahar",
+    "pilotscripts": 1,
+    "html_files": 4,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "putrid_mummy",
+    "pilotscripts": 1,
+    "html_files": 10,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "putrid_mummy_mage",
+    "pilotscripts": 1,
+    "html_files": 10,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "quaras_liberty_bay",
+    "pilotscripts": 1,
+    "html_files": 9,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "rotworm_venore_southeast",
+    "pilotscripts": 1,
+    "html_files": 3,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "salamander_cave",
+    "pilotscripts": 1,
+    "html_files": 5,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "sea_serpent",
+    "pilotscripts": 1,
+    "html_files": 5,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "sell_npc",
+    "pilotscripts": 1,
+    "html_files": 10,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "stonerefiner",
+    "pilotscripts": 1,
+    "html_files": 8,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "swamp_troll",
+    "pilotscripts": 1,
+    "html_files": 7,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "tarantula_cave",
+    "pilotscripts": 1,
+    "html_files": 4,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "thais_cyclops_south",
+    "pilotscripts": 1,
+    "html_files": 3,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "train_slime",
+    "pilotscripts": 1,
+    "html_files": 3,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "train_venore_rotworm_north",
+    "pilotscripts": 1,
+    "html_files": 4,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "vampire_crypt_edron",
+    "pilotscripts": 1,
+    "html_files": 7,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "vampire_crypt_edron_box",
+    "pilotscripts": 1,
+    "html_files": 7,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "vampire_crypt_edron_mage",
+    "pilotscripts": 1,
+    "html_files": 8,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "vampire_crypt_edron_upper",
+    "pilotscripts": 1,
+    "html_files": 5,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "venore_amazon_camp",
+    "pilotscripts": 1,
+    "html_files": 4,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "wasp_ab",
+    "pilotscripts": 2,
+    "html_files": 5,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "wasp_darashia",
+    "pilotscripts": 1,
+    "html_files": 6,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "wasp_thais",
+    "pilotscripts": 1,
+    "html_files": 4,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "wyrm_liberty_bay",
+    "pilotscripts": 1,
+    "html_files": 8,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "yalahar_cults",
+    "pilotscripts": 1,
+    "html_files": 9,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "yalahar_dragons",
+    "pilotscripts": 1,
+    "html_files": 9,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "yalahar_elves",
+    "pilotscripts": 1,
+    "html_files": 6,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  },
+  {
+    "directory": "yalahar_necromancer",
+    "pilotscripts": 1,
+    "html_files": 6,
+    "issues": [
+      "⚠️  No se pudieron extraer coordenadas de archivos TibiaMaps HTML"
+    ],
+    "stats": {}
+  }
+]

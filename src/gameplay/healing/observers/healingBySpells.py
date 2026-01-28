@@ -9,6 +9,16 @@ from src.utils.safety import safe_int
 
 tasksOrchestrator = TasksOrchestrator()
 
+# HARDENING STATUS: Cooldown verification implemented
+# ✅ Checks spell cooldown before casting (hasCooldownByName)
+# ✅ Checks mana requirement before casting
+# ✅ Respects potion priorities (won't spell if should pot)
+# ❌ No verification that spell actually worked (HP/MP change)
+# 
+# FUTURE IMPROVEMENT: Spell cast verification
+#   Capture HP before spell → cast → verify HP increased
+#   See: HARDENING_RECOMMENDATIONS.md Section 3
+
 
 # TODO: add unit tests
 def healingBySpells(context: Context) -> None:

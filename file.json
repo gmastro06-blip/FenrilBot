@@ -13,28 +13,14 @@
           "waypoints": {
             "items": [
               {
-                "label": "refill",
+                "label": "depot_exit",
                 "type": "walk",
-                "coordinate": [
-                  32681,
-                  31686,
-                  6
-                ],
-                "options": {},
-                "ignore": true,
-                "passinho": false
-              },
-              {
-                "label": "depot abdendriel z6",
-                "type": "depositItems",
                 "coordinate": [
                   32681,
                   31687,
                   6
                 ],
-                "options": {
-                  "city": "ab_dendriel"
-                },
+                "options": {},
                 "ignore": false,
                 "passinho": false
               },
@@ -47,7 +33,7 @@
                   6
                 ],
                 "options": {},
-                "ignore": true,
+                "ignore": false,
                 "passinho": false
               },
               {
@@ -59,7 +45,7 @@
                   6
                 ],
                 "options": {},
-                "ignore": true,
+                "ignore": false,
                 "passinho": false
               },
               {
@@ -71,7 +57,7 @@
                   6
                 ],
                 "options": {},
-                "ignore": false,
+                "ignore": true,
                 "passinho": false
               },
               {
@@ -111,7 +97,7 @@
                   6
                 ],
                 "options": {},
-                "ignore": false,
+                "ignore": true,
                 "passinho": false
               },
               {
@@ -124,8 +110,8 @@
                 ],
                 "options": {
                   "minimumAmountOfHealthPotions": 0,
-                  "minimumAmountOfManaPotions": 1,
-                  "minimumAmountOfCap": 8,
+                  "minimumAmountOfManaPotions": 10,
+                  "minimumAmountOfCap": 50,
                   "healthEnabled": false,
                   "waypointLabelToRedirect": "go_hunt"
                 },
@@ -141,7 +127,7 @@
                   6
                 ],
                 "options": {},
-                "ignore": true,
+                "ignore": false,
                 "passinho": false
               },
               {
@@ -153,7 +139,7 @@
                   6
                 ],
                 "options": {},
-                "ignore": true,
+                "ignore": false,
                 "passinho": false
               },
               {
@@ -486,8 +472,8 @@
                 ],
                 "options": {
                   "minimumAmountOfHealthPotions": 0,
-                  "minimumAmountOfManaPotions": 1,
-                  "minimumAmountOfCap": 8,
+                  "minimumAmountOfManaPotions": 10,
+                  "minimumAmountOfCap": 50,
                   "healthEnabled": false,
                   "waypointLabelToRedirect": "leave"
                 },
@@ -814,11 +800,14 @@
           "warn_on_window_miss": false,
           "action_window_title": "Tibia - Onniwabanshu",
           "capture_window_title": "Proyector en ventana (Fuente) - Tibia_Fuente",
+          "capture_window_match_mode": "exact",
           "start_paused": true,
           "depot_open_button": "left",
           "battlelist_prefer_names": "Orc Warrior,Orc Spearman,Orc,Wasp",
           "battlelist_ignore_names": "Deer",
           "attack_while_waypointing": false,
+          "dump_radar_match_on_fail": true,
+          "dump_radar_match_min_interval_s": 5,
           "dump_radar_on_fail": false,
           "dump_radar_min_interval_s": 60,
           "dump_radar_persistent": false,
@@ -826,7 +815,12 @@
           "dump_radar_persistent_min_interval_s": 120,
           "account_type": "free",
           "loot_method": "open_drag",
-          "loot_click_button": "right"
+          "loot_click_button": "right",
+          "radar_tools_confidence": 0.65,
+          "radar_tools_min_scale": 0.50,
+          "radar_tools_max_scale": 2.00,
+          "radar_tools_scale_steps": 25,
+          "allow_walk_without_coord": true
         }
       }
     }

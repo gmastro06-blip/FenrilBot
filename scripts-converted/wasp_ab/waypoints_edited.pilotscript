@@ -3,8 +3,8 @@
         "label": "refill",
         "type": "walk",
         "coordinate": [
-            32681,
-            31686,
+            32679,
+            31687,
             6
         ],
         "options": {},
@@ -15,12 +15,14 @@
         "label": "",
         "type": "depositItems",
         "coordinate": [
-            32681,
-            31686,
+            32679,
+            31687,
             6
         ],
-        "options": {},
-        "ignore": false,
+        "options": {
+            "city": "AbDendriel"
+        },
+        "ignore": true,
         "passinho": false
     },
     {
@@ -32,7 +34,7 @@
             6
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -44,7 +46,7 @@
             6
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -126,7 +128,7 @@
             6
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -138,7 +140,7 @@
             6
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -164,7 +166,7 @@
             7
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -176,7 +178,7 @@
             7
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -188,7 +190,7 @@
             7
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -200,7 +202,7 @@
             7
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -238,7 +240,7 @@
             8
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -302,7 +304,7 @@
             10
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -314,7 +316,7 @@
             10
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -326,7 +328,7 @@
             10
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -350,7 +352,7 @@
             9
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -362,7 +364,7 @@
             9
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -374,7 +376,7 @@
             9
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -386,7 +388,7 @@
             9
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -398,7 +400,7 @@
             9
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -422,7 +424,7 @@
             8
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -488,7 +490,7 @@
             7
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -500,7 +502,7 @@
             7
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -512,7 +514,7 @@
             7
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -524,7 +526,7 @@
             7
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
@@ -548,26 +550,26 @@
             6
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
         "label": "",
         "type": "walk",
         "coordinate": [
-            32681,
+            32679,
             31687,
             6
         ],
         "options": {},
-        "ignore": true,
+        "ignore": false,
         "passinho": false
     },
     {
         "label": "",
         "type": "walk",
         "coordinate": [
-            32681,
+            32679,
             31687,
             6
         ],
@@ -582,7 +584,7 @@
         "label": "train",
         "type": "walk",
         "coordinate": [
-            32681,
+            32679,
             31687,
             6
         ],

@@ -33,6 +33,40 @@ class WalkToCoordinateTask(VectorTask):
             coord_history.pop(0)
         context[history_key] = coord_history
         
+        # FIX: Validar progreso hacia el objetivo (distancia decreciente)
+        if len(coord_history) >= 5:
+            import math
+            # Calcular distancia actual al objetivo
+            curr_dist = math.sqrt(
+                (currentCoord[0] - self.coordinate[0])**2 + 
+                (currentCoord[1] - self.coordinate[1])**2
+            )
+            
+            # Calcular distancia hace 5 ticks
+            old_coord = coord_history[-5]
+            old_dist = math.sqrt(
+                (old_coord[0] - self.coordinate[0])**2 + 
+                (old_coord[1] - self.coordinate[1])**2
+            )
+            
+            # Si NO estamos acercándonos (distancia no disminuye) y llevamos 5+ ticks
+            if curr_dist >= old_dist - 1.0:  # Tolerance 1 sqm
+                progress_key = f'walk_no_progress_{self.coordinate[0]}_{self.coordinate[1]}_{self.coordinate[2]}'
+                no_progress_count = context.get(progress_key, 0) + 1
+                context[progress_key] = no_progress_count
+                
+                if no_progress_count >= 3:  # 15 ticks sin progreso (3 grupos de 5)
+                    print(f'[WalkToCoordinate] NO PROGRESS: Distance not decreasing ({old_dist:.1f} → {curr_dist:.1f} sqm). Recalculating path...')
+                    context[progress_key] = 0  # Reset
+                    # Force recalculation by clearing tasks
+                    self.tasks = []
+                    return True  # Restart to recalculate
+            else:
+                # Making progress, reset counter
+                progress_key = f'walk_no_progress_{self.coordinate[0]}_{self.coordinate[1]}_{self.coordinate[2]}'
+                if progress_key in context:
+                    context[progress_key] = 0
+        
         # Check if stuck (oscillating between same 2-3 coordinates OR staying in same spot)
         if len(coord_history) >= 10:
             uniqueCoords = list(set(coord_history[-10:]))

@@ -146,11 +146,20 @@ def clearSearchBox(screenshot: GrayImage) -> None:
 # TODO: add unit tests
 # TODO: add perf
 def buyItem(screenshot: GrayImage, itemName: str, itemQuantity: int) -> None:
-    findItem(screenshot, itemName)
-    sleep(1)
-    setAmount(screenshot, itemQuantity)
-    sleep(1)
-    confirmBuyItem(screenshot)
-    sleep(1)
-    clearSearchBox(screenshot)
-    sleep(1)
+    # Intentar detectar la ventana de trade antigua
+    tradeBottomPos = getTradeBottomPos(screenshot)
+    
+    if tradeBottomPos is not None:
+        # UI antigua detectada, usar el sistema legacy
+        findItem(screenshot, itemName)
+        sleep(1)
+        setAmount(screenshot, itemQuantity)
+        sleep(1)
+        confirmBuyItem(screenshot)
+        sleep(1)
+        clearSearchBox(screenshot)
+        sleep(1)
+    else:
+        # UI antigua no detectada, intentar con la UI moderna
+        from .modern_ui import buyItemModern
+        buyItemModern(screenshot, itemName, itemQuantity)

@@ -48,12 +48,12 @@ class Context:
                 mss_fallback=get_bool(self.context, 'ng_runtime.mss_fallback', env_var='FENRIL_MSS_FALLBACK', default=False),
                 black_dark_pixel_threshold=get_int(self.context, 'ng_runtime.black_dark_pixel_threshold', env_var='FENRIL_BLACK_DARK_PIXEL_THRESHOLD', default=8),
                 black_dark_fraction_threshold=get_float(self.context, 'ng_runtime.black_dark_fraction_threshold', env_var='FENRIL_BLACK_DARK_FRACTION_THRESHOLD', default=0.98),
-                black_std_threshold=get_float(self.context, 'ng_runtime.black_std_threshold', env_var='FENRIL_BLACK_STD_THRESHOLD', default=2.0),
-                black_mean_threshold=get_float(self.context, 'ng_runtime.black_mean_threshold', env_var='FENRIL_BLACK_MEAN_THRESHOLD', default=10.0),
-                black_mean_force_threshold=get_float(self.context, 'ng_runtime.black_mean_force_threshold', env_var='FENRIL_BLACK_MEAN_FORCE_THRESHOLD', default=3.0),
+                black_std_threshold=get_float(self.context, 'ng_runtime.black_std_threshold', env_var='FENRIL_BLACK_STD_THRESHOLD', default=1.0),
+                black_mean_threshold=get_float(self.context, 'ng_runtime.black_mean_threshold', env_var='FENRIL_BLACK_MEAN_THRESHOLD', default=2.0),
+                black_mean_force_threshold=get_float(self.context, 'ng_runtime.black_mean_force_threshold', env_var='FENRIL_BLACK_MEAN_FORCE_THRESHOLD', default=2.0),
                 dxcam_retry_on_hard_black=get_bool(self.context, 'ng_runtime.dxcam_retry_on_hard_black', env_var='FENRIL_DXCAM_RETRY_ON_HARD_BLACK', default=True),
                 black_frame_threshold=get_int(self.context, 'ng_runtime.black_frame_threshold', env_var='FENRIL_BLACK_FRAME_THRESHOLD', default=8),
-                same_frame_threshold=get_int(self.context, 'ng_runtime.same_frame_threshold', env_var='FENRIL_SAME_FRAME_THRESHOLD', default=300),
+                same_frame_threshold=get_int(self.context, 'ng_runtime.same_frame_threshold', env_var='FENRIL_SAME_FRAME_THRESHOLD', default=30),
                 dxcam_recover_on_stale=get_bool(self.context, 'ng_runtime.dxcam_recover_on_stale', env_var='FENRIL_DXCAM_RECOVER_ON_STALE', default=True),
                 dxcam_recover_on_black=get_bool(self.context, 'ng_runtime.dxcam_recover_on_black', env_var='FENRIL_DXCAM_RECOVER_ON_BLACK', default=True),
                 log_dxcam_recovery=get_bool(self.context, 'ng_runtime.log_dxcam_recovery', env_var='FENRIL_LOG_DXCAM_RECOVERY', default=True),
@@ -220,12 +220,12 @@ class Context:
                     'mss_fallback': False,
                     'black_dark_pixel_threshold': 8,
                     'black_dark_fraction_threshold': 0.98,
-                    'black_std_threshold': 2.0,
-                    'black_mean_threshold': 10.0,
-                    'black_mean_force_threshold': 3.0,
+                    'black_std_threshold': 1.0,
+                    'black_mean_threshold': 2.0,
+                    'black_mean_force_threshold': 2.0,
                     'dxcam_retry_on_hard_black': True,
                     'black_frame_threshold': 8,
-                    'same_frame_threshold': 300,
+                    'same_frame_threshold': 30,
                     'dxcam_recover_on_stale': True,
                     'dxcam_recover_on_black': True,
                     'log_dxcam_recovery': True,
@@ -800,12 +800,12 @@ class Context:
         self.context['ng_runtime'].setdefault('mss_fallback', False)
         self.context['ng_runtime'].setdefault('black_dark_pixel_threshold', 8)
         self.context['ng_runtime'].setdefault('black_dark_fraction_threshold', 0.98)
-        self.context['ng_runtime'].setdefault('black_std_threshold', 2.0)
-        self.context['ng_runtime'].setdefault('black_mean_threshold', 10.0)
-        self.context['ng_runtime'].setdefault('black_mean_force_threshold', 3.0)
+        self.context['ng_runtime'].setdefault('black_std_threshold', 1.0)
+        self.context['ng_runtime'].setdefault('black_mean_threshold', 2.0)
+        self.context['ng_runtime'].setdefault('black_mean_force_threshold', 2.0)
         self.context['ng_runtime'].setdefault('dxcam_retry_on_hard_black', True)
         self.context['ng_runtime'].setdefault('black_frame_threshold', 8)
-        self.context['ng_runtime'].setdefault('same_frame_threshold', 300)
+        self.context['ng_runtime'].setdefault('same_frame_threshold', 30)
         self.context['ng_runtime'].setdefault('dxcam_recover_on_stale', True)
         self.context['ng_runtime'].setdefault('dxcam_recover_on_black', True)
         self.context['ng_runtime'].setdefault('log_dxcam_recovery', True)

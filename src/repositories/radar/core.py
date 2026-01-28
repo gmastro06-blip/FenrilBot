@@ -16,6 +16,11 @@ from .typings import FloorLevel, TileFriction
 # Cache a per-floor scale hint for minimap matching (helps with Tibia minimap zoom changes).
 _radar_match_scale_hint: Dict[int, float] = {}
 
+# FIX: Persistent coordinate cache - NEVER lose player position
+_last_known_coordinate: Optional[Coordinate] = None
+_coordinate_fail_count: int = 0
+_max_coordinate_fails: int = 10  # After 10 fails, allow reacquisition
+
 
 def _phase_correlate_shift(prev_img: np.ndarray, curr_img: np.ndarray) -> tuple[float, float, float]:
     """Estimate shift between two radar crops.
@@ -196,18 +201,42 @@ def getCoordinate(
                 pass
             return (currentCoordinateX, currentCoordinateY, floorLevel)
 
+        # COMMENTED OUT: This was preventing global match fallback when phase correlation fails.
         # When we already have a coordinate, prefer stability over risky global reacquisition.
         # Global matching can jump to a wrong area under low-confidence zoomed minimap.
+        # if debug is not None:
+        #     debug['radar_local_match_failed'] = True
+        # return None
+        
+        # FALLTHROUGH: If phase correlation fails, try global matching below
         if debug is not None:
             debug['radar_local_match_failed'] = True
-        return None
-    imgCoordinate = locate(floorsImgs[floorLevel], radarImage, confidence=0.75)
+
+    # FIX: Lowered confidence thresholds for OBS capture compatibility
+    # OBS projector introduces pixel-level variations that prevent high-confidence matches
+    # Single-scale: 0.75 → 0.60, Multiscale: 0.48 → 0.40
+    imgCoordinate = locate(floorsImgs[floorLevel], radarImage, confidence=0.60)
     if imgCoordinate is None:
         # Full-floor multiscale match (expensive): only used when single-scale fails.
         scales = _scales_for_floor(int(floorLevel))
-        imgCoordinate = locateMultiScale(floorsImgs[floorLevel], radarImage, confidence=0.48, scales=scales)
+        imgCoordinate = locateMultiScale(floorsImgs[floorLevel], radarImage, confidence=0.40, scales=scales)
+    
+    # FIX: If matching failed, return cached coordinate instead of None
     if imgCoordinate is None:
+        global _last_known_coordinate, _coordinate_fail_count
+        _coordinate_fail_count += 1
+        if _last_known_coordinate is not None and _coordinate_fail_count < _max_coordinate_fails:
+            import logging
+            logging.warning(f"[RADAR] Match failed ({_coordinate_fail_count}/{_max_coordinate_fails}), using cached: {_last_known_coordinate}")
+            if debug is not None:
+                debug['radar_using_cache'] = True
+                debug['radar_fail_count'] = _coordinate_fail_count
+            return _last_known_coordinate
         return None
+    
+    # Reset fail counter on successful match
+    _coordinate_fail_count = 0
+    
     xImgCoordinate = imgCoordinate[0] + int(imgCoordinate[2] // 2)
     yImgCoordinate = imgCoordinate[1] + int(imgCoordinate[3] // 2)
     try:
@@ -217,7 +246,41 @@ def getCoordinate(
         pass
     xCoordinate, yCoordinate = getCoordinateFromPixel(
         (xImgCoordinate, yImgCoordinate))
-    return (xCoordinate, yCoordinate, floorLevel)
+    
+    # FIX: Validate jump distance when we have a previous coordinate
+    # Reject global matches that are too far from the last known position (>200 sqm)
+    # This prevents matching against the wrong area of the map when OBS capture has issues
+    if previousCoordinate is not None:
+        prevX, prevY, prevZ = previousCoordinate
+        if prevZ == floorLevel:  # Only check distance on same floor
+            import math
+            distance = math.sqrt((xCoordinate - prevX)**2 + (yCoordinate - prevY)**2)
+            if distance > 200:  # Reject jumps > 200 sqm
+                import logging
+                logging.warning(f"[RADAR] Jump rejected: {distance:.1f} sqm from ({prevX},{prevY},{prevZ}) to ({xCoordinate},{yCoordinate},{floorLevel})")
+                if debug is not None:
+                    debug['radar_jump_rejected'] = True
+                    debug['radar_jump_distance'] = distance
+                    debug['radar_jump_from'] = (prevX, prevY, prevZ)
+                    debug['radar_jump_to'] = (xCoordinate, yCoordinate, floorLevel)
+                # Return cached coordinate instead of None
+                if _last_known_coordinate is not None:
+                    return _last_known_coordinate
+                return None
+            else:
+                # Log accepted jumps for debugging
+                if distance > 50:
+                    import logging
+                    logging.info(f"[RADAR] Jump accepted: {distance:.1f} sqm from ({prevX},{prevY},{prevZ}) to ({xCoordinate},{yCoordinate},{floorLevel})")
+    else:
+        # Log first match (no validation - user must be in correct location)
+        import logging
+        logging.info(f"[RADAR] First match: ({xCoordinate},{yCoordinate},{floorLevel})")
+    
+    # Update cache with successful coordinate
+    result = (xCoordinate, yCoordinate, floorLevel)
+    _last_known_coordinate = result
+    return result
 
 
 # TODO: add unit tests

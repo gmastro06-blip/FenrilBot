@@ -16,6 +16,16 @@ from src.gameplay.core.waypoint import resolveGoalCoordinate
 from src.utils.console_log import log_throttled
 from src.utils.runtime_settings import get_bool
 
+# HARDENING STATUS: Partial validation implemented
+# ✅ Validates backpack templates exist before execution
+# ✅ Timeout tracking (3x consecutive → alert)
+# ✅ Bounded timeout (no infinite loops)
+# ❌ No validation that items actually moved to depot
+# 
+# FUTURE IMPROVEMENT: Item count validation
+#   Compare loot backpack item count before/after drag
+#   See: HARDENING_RECOMMENDATIONS.md Section 2
+
 class DepositItemsTask(VectorTask):
     def __init__(self: "DepositItemsTask", waypoint: Waypoint) -> None:
         super().__init__()
@@ -103,6 +113,22 @@ class DepositItemsTask(VectorTask):
         return context
 
     def onTimeout(self, context: Context) -> Context:
+        # HARDENING: Track consecutive deposit failures
+        timeout_key = 'deposit_timeouts'
+        current_timeouts = context.get('ng_runtime', {}).get(timeout_key, 0) + 1
+        
+        if isinstance(context.get('ng_runtime'), dict):
+            context['ng_runtime'][timeout_key] = current_timeouts
+            
+            if current_timeouts >= 3:
+                log_throttled(
+                    'depositItems.consecutive_timeouts',
+                    'error',
+                    f'depositItems: {current_timeouts} consecutive timeouts. Check depot access/backpack config.',
+                    30.0
+                )
+                # Don't pause bot, but alert user
+        
         try:
             items = context.get('ng_cave', {}).get('waypoints', {}).get('items')
             current_idx = context.get('ng_cave', {}).get('waypoints', {}).get('currentIndex')
@@ -118,4 +144,10 @@ class DepositItemsTask(VectorTask):
                 context['ng_debug']['last_tick_reason'] = 'depositItems timeout (skipping)'
         except Exception:
             return context
+        return context
+    
+    def onComplete(self, context: Context) -> Context:
+        # HARDENING: Reset timeout counter on success
+        if isinstance(context.get('ng_runtime'), dict):
+            context['ng_runtime']['deposit_timeouts'] = 0
         return context

@@ -136,7 +136,7 @@ class RefillTask(VectorTask):
         return context
     
     def onComplete(self, context: Context) -> Context:
-        """ALTO: Verificar que las potions realmente aumentaron después del refill."""
+        """Validar que el refill fue exitoso verificando inventory."""
         try:
             screenshot = context.get('ng_screenshot')
             if screenshot is None:
@@ -153,20 +153,76 @@ class RefillTask(VectorTask):
                 expected_mana = self.waypoint.get('options', {}).get('manaPotion', {}).get('quantity', 0)
                 expected_health = self.waypoint.get('options', {}).get('healthPotion', {}).get('quantity', 0)
                 
-                if mana_after and mana_after < expected_mana * 0.8:
+                # VALIDACIÓN ESTRICTA: Si las potions no llegaron al mínimo esperado, es FALLO
+                refill_failed = False
+                
+                if mana_after and mana_after < expected_mana * 0.5:
                     log_throttled(
-                        'refill.incomplete_mana',
-                        'warn',
-                        f'refill: mana potions expected={expected_mana}, got={mana_after}. Refill may have failed.',
+                        'refill.critical_failure_mana',
+                        'error',
+                        f'REFILL CRITICAL FAILURE: mana potions expected={expected_mana}, got={mana_after}. Purchases did not complete.',
                         10.0,
                     )
-                if health_after and expected_health > 0 and health_after < expected_health * 0.8:
+                    refill_failed = True
+                    
+                if health_after and expected_health > 0 and health_after < expected_health * 0.5:
                     log_throttled(
-                        'refill.incomplete_health',
-                        'warn',
-                        f'refill: health potions expected={expected_health}, got={health_after}. Refill may have failed.',
+                        'refill.critical_failure_health',
+                        'error',
+                        f'REFILL CRITICAL FAILURE: health potions expected={expected_health}, got={health_after}. Purchases did not complete.',
                         10.0,
                     )
+                    refill_failed = True
+                
+                # Si el refill falló críticamente, marcar en contexto para que el sistema lo maneje
+                if refill_failed:
+                    if isinstance(context.get('ng_runtime'), dict):
+                        if 'refill_failures' not in context['ng_runtime']:
+                            context['ng_runtime']['refill_failures'] = 0
+                        context['ng_runtime']['refill_failures'] += 1
+                        
+                        # HARDENING: Structured diagnostic log
+                        log_throttled(
+                            'refill.failure_increment',
+                            'warn',
+                            f'REFILL FAILURE #{context["ng_runtime"]["refill_failures"]} | '
+                            f'mana={mana_after}/{expected_mana} | health={health_after}/{expected_health} | '
+                            f'threshold=50% | validation=inventory_count',
+                            5.0,
+                        )
+                        
+                        # Si hay múltiples fallos consecutivos, detener el bot
+                        if context['ng_runtime']['refill_failures'] >= 3:
+                            log_throttled(
+                                'refill.abort',
+                                'error',
+                                f'REFILL ABORT | failures=3/3 | action=pause_bot | '
+                                f'final_mana={mana_after}/{expected_mana} | final_health={health_after}/{expected_health} | '
+                                f'diagnosis=purchases_not_completing | recommended_action=check_modern_ui_detection',
+                                30.0,
+                            )
+                            # Marcar para pausar el bot
+                            context['ng_pause'] = 1
+                            
+                            # AUTO-DIAGNÓSTICO: Reset state para evitar flags corruptos
+                            if isinstance(context.get('ng_debug'), dict):
+                                context['ng_debug']['refill_abort_reason'] = 'consecutive_failures'
+                                context['ng_debug']['refill_abort_timestamp'] = __import__('time').time()
+                else:
+                    # Refill exitoso, resetear contador
+                    if isinstance(context.get('ng_runtime'), dict):
+                        previous_failures = context['ng_runtime'].get('refill_failures', 0)
+                        context['ng_runtime']['refill_failures'] = 0
+                        
+                        # HARDENING: Log recovery si hubo failures previos
+                        if previous_failures > 0:
+                            log_throttled(
+                                'refill.recovery',
+                                'info',
+                                f'REFILL RECOVERED | previous_failures={previous_failures} | '
+                                f'mana={mana_after}/{expected_mana} | health={health_after}/{expected_health}',
+                                10.0,
+                            )
         except Exception:
             pass
         return context
