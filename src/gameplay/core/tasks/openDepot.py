@@ -89,4 +89,14 @@ class OpenDepotTask(BaseTask):
         return context
 
     def did(self, context: Context) -> bool:
-        return self.shouldIgnore(context)
+        # ALTO: Solo marcar como exitoso si el depot REALMENTE se abrió
+        screenshot = context.get('ng_screenshot') if isinstance(context, dict) else None
+        if screenshot is None:
+            return False
+        for key in ('depot chest 1', 'depot chest 2', 'depot chest 3', 'depot chest 4'):
+            try:
+                if coreUtils.locate(screenshot, images['slots'][key]) is not None:
+                    return True
+            except Exception:
+                continue
+        return False

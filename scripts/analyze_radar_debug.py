@@ -16,7 +16,7 @@ from src.repositories.radar.extractors import getRadarImage
 from src.repositories.radar.locators import getRadarToolsPosition
 
 
-def _phase_shift(prev_img: np.ndarray, curr_img: np.ndarray):
+def _phase_shift(prev_img: np.ndarray, curr_img: np.ndarray) -> tuple[float, float, float, tuple[int, int]]:
     h = min(prev_img.shape[0], curr_img.shape[0])
     w = min(prev_img.shape[1], curr_img.shape[1])
     a = prev_img[:h, :w].astype(np.float32)

@@ -1,0 +1,13 @@
+{
+  "tag": "no_nonempty_slot_found",
+  "account_type": "free",
+  "loot_method": "open_drag",
+  "loot_click": "left",
+  "loot_modifier": "none",
+  "loot_click_raw": "left",
+  "loot_modifier_raw": "shift",
+  "ng_backpacks": {
+    "main": "Green Backpack",
+    "loot": "Red Backpack"
+  }
+}

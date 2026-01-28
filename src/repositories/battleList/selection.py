@@ -62,7 +62,13 @@ def choose_target_index(context: Any) -> Tuple[Optional[int], Optional[str], str
 
     # No parsed creatures -> do NOT click battle list by default.
     # (Clicking index 0 on an empty list leads to "phantom attacking".)
-    if creatures is None or not hasattr(creatures, "__len__") or len(creatures) == 0:
+    # CRÍTICO: numpy arrays tienen __len__ pero len() puede ser 0. Verificar solo len().
+    try:
+        creatures_len = len(creatures) if creatures is not None else 0
+    except Exception:
+        creatures_len = 0
+    
+    if creatures_len == 0:
         if get_bool(
             context,
             'ng_runtime.battlelist_click_when_empty',
@@ -76,11 +82,12 @@ def choose_target_index(context: Any) -> Tuple[Optional[int], Optional[str], str
     # Convert to plain strings.
     names: list[str] = []
     try:
-        for c in creatures:
-            try:
-                names.append(str(c["name"]))
-            except Exception:
-                names.append(str(c))
+        if creatures is not None:
+            for c in creatures:
+                try:
+                    names.append(str(c["name"]))
+                except Exception:
+                    names.append(str(c))
     except Exception:
         # Keep old safety behavior (index 0) only when explicitly allowed.
         if get_bool(

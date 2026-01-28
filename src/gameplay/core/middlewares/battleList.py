@@ -227,6 +227,7 @@ def setBattleListMiddleware(context: Context) -> Context:
             and isinstance(last_s, (int, float))
             and (now_s - float(last_s)) <= float(grace_s)
             and last_creatures is not None
+            and hasattr(last_creatures, '__len__')
             and len(last_creatures) > 0
         ):
             creatures = last_creatures

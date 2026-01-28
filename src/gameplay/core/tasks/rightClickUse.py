@@ -38,8 +38,15 @@ class RightClickUseTask(BaseTask):
         return context
 
     def did(self, context: Context) -> bool:
+        # MEDIO: Si no esperamos cambio de piso, dar tiempo razonable para procesar la acción
         if self.expectedZ is None:
-            return True
+            if self.startedAt is None:
+                return False
+            import time
+            elapsed = time.time() - self.startedAt
+            # Mínimo 0.5s para que el servidor procese la acción
+            return elapsed >= 0.5
+        
         coord = context.get('ng_radar', {}).get('coordinate')
         if coord is None:
             return False

@@ -15,6 +15,7 @@ from src.repositories.radar.config import floorsImgs
 
 
 def _prep_raw(img: np.ndarray) -> np.ndarray:
+    """Return image unchanged for raw template matching."""
     return img
 
 
@@ -36,7 +37,7 @@ def _best_match(floor: np.ndarray, tpl: np.ndarray) -> tuple[float, tuple[int, i
 
 
 def main() -> int:
-    cand = []
+    cand: list[Path] = []
     cand.extend(Path('debug').glob('dual_diag_radar_match_not_found_*.json'))
     cand.extend(Path('debug').glob('preflight_radar_match_not_found_*.json'))
     def _ts(p: Path) -> int:
@@ -81,7 +82,7 @@ def main() -> int:
     scales = [0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0, 1.05, 1.1]
 
     for name, fn in preps.items():
-        best = (-999.0, None, None)  # score, scale, loc
+        best: tuple[float, float | None, tuple[int, int] | None] = (-999.0, None, None)  # score, scale, loc
         for s in scales:
             tw = max(8, int(round(radar.shape[1] * s)))
             th = max(8, int(round(radar.shape[0] * s)))

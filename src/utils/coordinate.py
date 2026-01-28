@@ -1,7 +1,51 @@
 from numba import njit
 import numpy as np
-from typing import Any, Union
+from typing import Any, Union, Optional
 from src.shared.typings import Coordinate, CoordinateList, XYCoordinate
+
+
+def is_valid_coordinate(coord: Any, *, log_invalid: bool = False, label: str = "") -> bool:
+    """Validate coordinate is a 3-tuple/list with non-None integer values.
+    
+    Args:
+        coord: The coordinate to validate (expected: (x, y, z) tuple/list)
+        log_invalid: If True, log validation failures for debugging
+        label: Optional label for logging context
+    
+    Returns:
+        True if coord is a valid (x, y, z) coordinate, False otherwise.
+    """
+    if not isinstance(coord, (list, tuple)):
+        if log_invalid:
+            try:
+                print(f"[coordinate] Invalid type for {label or 'coord'}: {type(coord).__name__} (expected list/tuple)")
+            except Exception:
+                pass
+        return False
+    if len(coord) < 3:
+        if log_invalid:
+            try:
+                print(f"[coordinate] Invalid length for {label or 'coord'}: {len(coord)} (expected >= 3)")
+            except Exception:
+                pass
+        return False
+    try:
+        # Validate all three components are not None and can be converted to int
+        if not all(c is not None for c in coord[:3]):
+            if log_invalid:
+                try:
+                    print(f"[coordinate] None values in {label or 'coord'}: {coord[:3]}")
+                except Exception:
+                    pass
+            return False
+        return True
+    except Exception as e:
+        if log_invalid:
+            try:
+                print(f"[coordinate] Exception validating {label or 'coord'}: {type(e).__name__}")
+            except Exception:
+                pass
+        return False
 
 
 # TODO: add unit tests

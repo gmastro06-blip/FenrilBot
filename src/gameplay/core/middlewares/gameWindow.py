@@ -7,7 +7,7 @@ from ...comboSpells.core import spellsPath
 from ...typings import Context
 from ..tasks.selectChatTab import SelectChatTabTask
 from src.utils.console_log import log_throttled
-from src.utils.runtime_settings import get_bool
+from src.utils.runtime_settings import get_bool, get_float
 
 import time
 
@@ -46,13 +46,47 @@ def setDirectionMiddleware(context: Context) -> Context:
 
 # TODO: add unit tests
 def setHandleLootMiddleware(context: Context) -> Context:
+    log_loot = get_bool(
+        context,
+        'ng_runtime.log_loot',
+        env_var='FENRIL_LOG_LOOT',
+        default=False,
+        prefer_env=True,
+    )
     currentTaskName = context['ng_tasksOrchestrator'].getCurrentTaskName(context)
     if (currentTaskName not in ['depositGold', 'refill', 'buyBackpack', 'selectChatTab', 'travel']):
         lootTab = context['ng_chat']['tabs'].get('loot')
         if lootTab is not None and not lootTab['isSelected']:
             context['ng_tasksOrchestrator'].setRootTask(
                 context, SelectChatTabTask('loot'))
-    if hasNewLoot(context['ng_screenshot']):
+    loot_chat = hasNewLoot(context['ng_screenshot'])
+    skip_loot_chat = False
+    if loot_chat:
+        # MEDIO 2.2: Debounce por hash de contenido, no solo por timestamp
+        try:
+            import hashlib
+            loot_tab_msgs = context.get('ng_chat', {}).get('tabs', {}).get('loot', {}).get('messages', [])
+            # Hash del último mensaje de loot para evitar duplicados
+            last_msg = str(loot_tab_msgs[-1] if loot_tab_msgs else '')
+            msg_hash = hashlib.md5(last_msg.encode()).hexdigest()
+            last_hash = context.get('ng_cave', {}).get('_last_loot_msg_hash')
+            if last_hash == msg_hash:
+                skip_loot_chat = True
+            else:
+                context.setdefault('ng_cave', {})['_last_loot_msg_hash'] = msg_hash
+        except Exception:
+            # Fallback a timestamp si el hash falla
+            try:
+                now = time.time()
+                last_ts = context.get('ng_cave', {}).get('_last_loot_chat_ts')
+                if isinstance(last_ts, (int, float)) and (now - float(last_ts)) < 1.25:
+                    skip_loot_chat = True
+                else:
+                    context.setdefault('ng_cave', {})['_last_loot_chat_ts'] = now
+            except Exception:
+                pass
+
+    if loot_chat and not skip_loot_chat:
         log_loot = get_bool(
             context,
             'ng_runtime.log_loot_events',
@@ -82,12 +116,14 @@ def setHandleLootMiddleware(context: Context) -> Context:
                 try:
                     if isinstance(corpse, dict):
                         name = corpse.get('name')
+                        coord = corpse.get('coordinate')
                 except Exception:
                     name = None
+                    coord = None
                 log_throttled(
                     'loot.chat.queued',
                     'info',
-                    f"Death/loot event: queued corpse from target ({name or 'unknown'})",
+                    f"Death/loot event: queued corpse from target ({name or 'unknown'}) at {coord} (queue size: {len(context['loot']['corpsesToLoot'])})",
                     0.5,
                 )
         else:
@@ -95,13 +131,53 @@ def setHandleLootMiddleware(context: Context) -> Context:
             # Still trigger a single loot around the player (CollectDeadCorpseTask loots the 3x3 area).
             # To avoid repeated looting forever, enqueue a synthetic corpse with the player's coordinate
             # so CollectDeadCorpseTask.onComplete can remove it after one attempt.
+
+            # IMPORTANT: Guard against stale/duplicate loot lines being detected while idle.
+            # When we cannot resolve a corpse/target, only enqueue fallback loot if we were in combat
+            # recently (configurable). This prevents the bot from getting wedged in lootCorpses from
+            # old loot history.
+            try:
+                require_combat = get_bool(
+                    context,
+                    'ng_runtime.loot_fallback_requires_combat',
+                    env_var='FENRIL_LOOT_FALLBACK_REQUIRES_COMBAT',
+                    default=True,
+                    prefer_env=True,
+                )
+                if require_combat:
+                    now = time.time()
+                    last_combat = context.get('ng_cave', {}).get('_last_combat_ts')
+                    window_s = get_float(
+                        context,
+                        'ng_runtime.loot_fallback_combat_window_s',
+                        env_var='FENRIL_LOOT_FALLBACK_COMBAT_WINDOW_S',
+                        default=25.0,
+                        prefer_env=True,
+                    )
+                    if not isinstance(last_combat, (int, float)) or (now - float(last_combat)) > float(window_s):
+                        if log_loot:
+                            log_throttled(
+                                'loot.chat.fallback.ignored_idle',
+                                'warn',
+                                'Loot signal detected but no target resolved; ignoring fallback loot because no recent combat (likely stale chat)',
+                                5.0,
+                            )
+                        corpse = None
+                        # Skip the fallback enqueue below.
+                        radar_coord = None
+            except Exception:
+                pass
+
+            from src.utils.coordinate import is_valid_coordinate
             fallback_name = None
             dbg = context.get('ng_debug')
             if isinstance(dbg, dict):
                 fallback_name = dbg.get('battleList_target_name') or None
-                dbg['last_tick_reason'] = 'loot msg detected but no target creature (fallback loot)'
+                # Only set the reason if we actually enqueue fallback loot.
 
-            if isinstance(radar_coord, (list, tuple)) and len(radar_coord) >= 3:
+            # Usar is_valid_coordinate para validación consistente
+            radar_coord = context.get('ng_radar', {}).get('coordinate')
+            if is_valid_coordinate(radar_coord):
                 try:
                     corpse_fallback = {
                         'name': str(fallback_name) if fallback_name else 'unknown',
@@ -109,6 +185,8 @@ def setHandleLootMiddleware(context: Context) -> Context:
                     }
                     context.setdefault('ng_cave', {})['_force_clear_target_once'] = True
                     context['loot']['corpsesToLoot'].append(corpse_fallback)
+                    if isinstance(dbg, dict):
+                        dbg['last_tick_reason'] = 'loot msg detected but no target creature (fallback loot)'
                     if log_loot:
                         log_throttled(
                             'loot.chat.fallback.queued',
@@ -118,9 +196,17 @@ def setHandleLootMiddleware(context: Context) -> Context:
                         )
                 except Exception:
                     pass
+            else:
+                if log_loot:
+                    log_throttled(
+                        'loot.chat.invalid_coord',
+                        'warn',
+                        'Loot signal detected but radar coordinate is invalid; ignoring',
+                        2.0,
+                    )
 
             if log_loot:
-                if isinstance(radar_coord, (list, tuple)) and len(radar_coord) >= 3:
+                if is_valid_coordinate(radar_coord):
                     msg = 'Death/loot event: loot signal detected but no target creature found; using fallback loot near player'
                 else:
                     msg = 'Loot signal detected but no target and no radar coordinate; ignoring (likely stale chat)'

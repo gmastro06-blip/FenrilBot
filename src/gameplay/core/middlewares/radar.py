@@ -403,6 +403,7 @@ def setRadarMiddleware(context: Context) -> Context:
 
 # TODO: add unit tests
 def setWaypointIndexMiddleware(context: Context) -> Context:
+    # Initial waypoint selection (when currentIndex is None)
     if context['ng_cave']['waypoints']['currentIndex'] is None:
         if context['ng_radar']['coordinate'] is None:
             return context
@@ -413,4 +414,73 @@ def setWaypointIndexMiddleware(context: Context) -> Context:
         closest_index = getClosestWaypointIndexFromCoordinate(
             context['ng_radar']['coordinate'], context['ng_cave']['waypoints']['items'])
         context['ng_cave']['waypoints']['currentIndex'] = 0 if closest_index is None else closest_index
+        return context
+    
+    # Periodic waypoint recalibration: check if bot has deviated significantly
+    try:
+        import math
+        current_coord = context.get('ng_radar', {}).get('coordinate')
+        current_idx = context.get('ng_cave', {}).get('waypoints', {}).get('currentIndex')
+        waypoints = context.get('ng_cave', {}).get('waypoints', {}).get('items', [])
+        
+        if current_coord is None or current_idx is None or not waypoints:
+            return context
+        if any(c is None for c in current_coord):
+            return context
+        if current_idx < 0 or current_idx >= len(waypoints):
+            return context
+        
+        current_wp = waypoints[current_idx]
+        wp_coord = current_wp.get('coordinate')
+        if not isinstance(wp_coord, (list, tuple)) or len(wp_coord) < 3:
+            return context
+        
+        # Only recalibrate on the same floor
+        if wp_coord[2] != current_coord[2]:
+            return context
+        
+        # Calculate distance to current waypoint
+        dx = float(current_coord[0]) - float(wp_coord[0])
+        dy = float(current_coord[1]) - float(wp_coord[1])
+        dist = math.hypot(dx, dy)
+        
+        # Recalibrate if distance exceeds threshold (default: 10 sqm - más sensible)
+        threshold = get_float(
+            context,
+            'ng_runtime.waypoint_recalibrate_distance',
+            env_var='FENRIL_WAYPOINT_RECALIBRATE_DISTANCE',
+            default=10.0,
+            prefer_env=True,
+        )
+        
+        if dist > threshold:
+            # Cooldown: avoid recalibrating too frequently (prevents oscillation loops)
+            last_recal = context.get('ng_cave', {}).get('_last_recalibrate_ts')
+            cooldown = get_float(
+                context,
+                'ng_runtime.waypoint_recalibrate_cooldown_s',
+                env_var='FENRIL_WAYPOINT_RECALIBRATE_COOLDOWN_S',
+                default=30.0,
+                prefer_env=True,
+            )
+            if isinstance(last_recal, (int, float)) and (time.time() - float(last_recal)) < cooldown:
+                return context
+            
+            closest_index = getClosestWaypointIndexFromCoordinate(current_coord, waypoints)
+            if closest_index is not None and closest_index != current_idx:
+                from src.utils.console_log import log_throttled
+                log_throttled(
+                    'waypoint.recalibrate',
+                    'info',
+                    f'Waypoint recalibrated: {current_idx} -> {closest_index} (distance: {dist:.1f} sqm)',
+                    5.0,
+                )
+                context.setdefault('ng_cave', {})['_last_recalibrate_ts'] = time.time()
+                context['ng_cave']['waypoints']['currentIndex'] = closest_index
+                # Update goal state for the new waypoint
+                from ..waypoint import resolveGoalCoordinate
+                context['ng_cave']['waypoints']['state'] = resolveGoalCoordinate(current_coord, waypoints[closest_index])
+    except Exception:
+        pass
+    
     return context

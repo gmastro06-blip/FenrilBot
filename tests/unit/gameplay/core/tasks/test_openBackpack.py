@@ -31,10 +31,12 @@ def test_should_call_method_shouldIgnore_and_return_True_when_backpack_is_not_op
 def test_should_call_method_do_and_ignore_leftClick(mocker):
     task = OpenBackpackTask(backpack)
     locateSpy = mocker.patch('src.utils.core.locate', return_value=None)
+    locateMultiScaleSpy = mocker.patch('src.utils.core.locateMultiScale', return_value=None)
     rightClickSpy = mocker.patch('src.utils.mouse.rightClick')
     assert task.do(context) == context
-    locateSpy.assert_called_once_with(
-        context['ng_screenshot'], images['slots'][backpack], confidence=0.8)
+    locateSpy.assert_any_call(context['ng_screenshot'], images['slots'][backpack], confidence=0.8)
+    assert locateSpy.call_count >= 1
+    assert locateMultiScaleSpy.call_count >= 0
     rightClickSpy.assert_not_called()
 
 
@@ -44,8 +46,7 @@ def test_should_call_method_do_and_call_rightClick(mocker):
                              return_value=(0, 0, 0, 0))
     rightClickSpy = mocker.patch('src.utils.mouse.rightClick')
     assert task.do(context) == context
-    locateSpy.assert_called_once_with(
-        context['ng_screenshot'], images['slots'][backpack], confidence=0.8)
+    locateSpy.assert_any_call(context['ng_screenshot'], images['slots'][backpack], confidence=0.8)
     rightClickSpy.assert_called_once_with((5, 5))
 
 

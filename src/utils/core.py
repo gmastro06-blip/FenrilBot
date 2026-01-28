@@ -577,8 +577,14 @@ def cacheObjectPosition(func: Callable[[GrayImage], Optional[BBox]]) -> Callable
             y = cast(int, lastY)
             w = cast(int, lastW)
             h = cast(int, lastH)
-            if hashit(screenshot[y:y + h, x:x + w]) == lastImgHash:
-                return (x, y, w, h)
+            # ERROR 8 FIXED: Validar que coordenadas están dentro del screenshot
+            try:
+                if y + h <= screenshot.shape[0] and x + w <= screenshot.shape[1]:
+                    if hashit(screenshot[y:y + h, x:x + w]) == lastImgHash:
+                        return (x, y, w, h)
+            except Exception:
+                # Cache inválido, buscar de nuevo
+                pass
         res = func(screenshot)
         if res is None:
             return None
@@ -586,8 +592,12 @@ def cacheObjectPosition(func: Callable[[GrayImage], Optional[BBox]]) -> Callable
         lastY = res[1]
         lastW = res[2]
         lastH = res[3]
-        lastImgHash = hashit(
-            screenshot[lastY:lastY + lastH, lastX:lastX + lastW])
+        # ERROR 8 FIXED: Proteger contra errores al calcular hash
+        try:
+            lastImgHash = hashit(
+                screenshot[lastY:lastY + lastH, lastX:lastX + lastW])
+        except Exception:
+            lastImgHash = None
         return res
     # Attach a reset hook for recovery code (e.g., when radar tools can't be found).
     try:
@@ -616,7 +626,16 @@ def locate(compareImage: GrayImage, img: GrayImage, confidence: float = 0.85, ty
         return None
     match = cv2.matchTemplate(compareImage, img, type)
     res = cv2.minMaxLoc(match)
+    # Validar que res tiene la estructura esperada (minVal, maxVal, minLoc, maxLoc)
+    if not isinstance(res, tuple) or len(res) < 4:
+        return None
     if res[1] <= confidence:
+        return None
+    # Validar que res[3] (maxLoc) existe y es indexable
+    if not isinstance(res[3], (tuple, list)) or len(res[3]) < 2:
+        return None
+    # Validar que img tiene al menos una fila para len(img[0])
+    if len(img) == 0 or len(img[0]) == 0:
         return None
     return res[3][0], res[3][1], len(img[0]), len(img)
 

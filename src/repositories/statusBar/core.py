@@ -38,6 +38,9 @@ def getHpPercentage(screenshot: GrayImage) -> Union[int, None]:
     if hpIconPosition is None:
         return None
     bar = getHpBar(screenshot, hpIconPosition)
+    # ERROR 6 FIXED: Validar que bar no esté vacío
+    if bar is None or len(bar) == 0:
+        return None
     return getFilledBarPercentage(bar, allowedPixelsColors=hpBarAllowedPixelsColors)
 
 
@@ -48,4 +51,7 @@ def getManaPercentage(screenshot: GrayImage) -> Union[int, None]:
     if manaIconPosition is None:
         return None
     bar = getManaBar(screenshot, manaIconPosition)
+    # ERROR 6 FIXED: Validar que bar no esté vacío
+    if bar is None or len(bar) == 0:
+        return None
     return getFilledBarPercentage(bar, allowedPixelsColors=manaBarAllowedPixelsColors)

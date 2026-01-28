@@ -150,10 +150,18 @@ def _should_block_click(coord: Optional[XYCoordinate]) -> bool:
         return True
     # If we are clicking at cursor, require focus.
     if coord is None:
-        ok = _ensure_action_window_focused()
-        if not ok:
-            _click_diag(f"[fenril][input] BLOCK click-at-cursor (action window not focused) title={_action_title!r}")
-        return not ok
+        # Retry logic: 2 attempts with 50ms delay to reduce race conditions
+        for attempt in range(2):
+            ok = _ensure_action_window_focused()
+            if ok:
+                return False
+            if attempt < 1:
+                try:
+                    time.sleep(0.05)
+                except Exception:
+                    pass
+        _click_diag(f"[fenril][input] BLOCK click-at-cursor (focus failed after 2 retries) title={_action_title!r}")
+        return True
 
     abs_coord = _transform_capture_to_action(coord)
     if not _point_in_action_rect(abs_coord):
@@ -162,13 +170,20 @@ def _should_block_click(coord: Optional[XYCoordinate]) -> bool:
         )
         return True
 
-    ok = _ensure_action_window_focused()
-    if not ok:
-        _click_diag(
-            f"[fenril][input] BLOCK click (action window not focused) coord={abs_coord} title={_action_title!r}"
-        )
-        return True
-    return False
+    # Retry logic: 2 attempts with 50ms delay to reduce race conditions
+    for attempt in range(2):
+        ok = _ensure_action_window_focused()
+        if ok:
+            return False
+        if attempt < 1:
+            try:
+                time.sleep(0.05)
+            except Exception:
+                pass
+    _click_diag(
+        f"[fenril][input] BLOCK click (focus failed after 2 retries) coord={abs_coord} title={_action_title!r}"
+    )
+    return True
 
 
 def _transform_capture_to_action(coord: XYCoordinate) -> XYCoordinate:

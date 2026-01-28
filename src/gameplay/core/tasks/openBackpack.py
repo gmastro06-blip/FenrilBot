@@ -27,31 +27,64 @@ class OpenBackpackTask(BaseTask):
     def do(self, context: Context) -> Context:
         if context.get('ng_screenshot') is None:
             return context
+        if not self.backpack:
+            return context
+
+        # If it's already open, nothing to do (also avoids requiring a slots icon template).
+        if inventoryCore.isContainerOpen(context['ng_screenshot'], self.backpack):
+            return context
+
+        # Support template variants without changing configured backpack names.
+        # Example: user can add `Camouflage Backpack v2.png` to slots/ and it will be tried too.
+        candidate_keys = [self.backpack]
         try:
-            tpl = images['slots'][self.backpack]
+            candidate_keys.extend(
+                [
+                    k
+                    for k in images.get('slots', {}).keys()
+                    if isinstance(k, str) and k != self.backpack and k.startswith(self.backpack + ' ')
+                ]
+            )
         except Exception:
+            pass
+
+        templates = []
+        for k in candidate_keys:
+            try:
+                templates.append(images['slots'][k])
+            except Exception:
+                continue
+
+        if not templates:
             log_throttled(
                 'openBackpack.unknown_template',
                 'warn',
-                f"openBackpack: unknown backpack template {self.backpack!r}. Pick a backpack that exists in inventory templates.",
+                f"openBackpack: missing slots icon template for {self.backpack!r}. If the backpack is already open, this is fine; otherwise add a slots template (e.g. 'slots/{self.backpack} v2.png').",
                 10.0,
             )
             return context
 
-        backpackPosition = utilsCore.locate(
-            context['ng_screenshot'], tpl, confidence=0.8)
+        backpackPosition = None
+        for tpl in templates:
+            backpackPosition = utilsCore.locate(context['ng_screenshot'], tpl, confidence=0.8)
+            if backpackPosition is None:
+                backpackPosition = utilsCore.locateMultiScale(
+                    context['ng_screenshot'],
+                    tpl,
+                    confidence=0.78,
+                    scales=(0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.0, 1.05, 1.10, 1.15, 1.20, 1.25, 1.30),
+                )
+            if backpackPosition is not None:
+                break
+
         if backpackPosition is None:
-            backpackPosition = utilsCore.locateMultiScale(
-                context['ng_screenshot'],
-                tpl,
-                confidence=0.78,
-                scales=(0.85, 0.90, 0.95, 1.0, 1.05, 1.10, 1.15),
-            )
-        if backpackPosition is None:
+            # If the container is already open, treat as success (no need to click the icon).
+            if inventoryCore.isContainerOpen(context['ng_screenshot'], self.backpack):
+                return context
             log_throttled(
                 'openBackpack.not_found',
                 'warn',
-                f"openBackpack: couldn't locate backpack {self.backpack!r} in capture. Ensure the inventory panel (right side) is visible in OBS capture and UI scaling matches the templates.",
+                f"openBackpack: couldn't locate backpack {self.backpack!r} in capture. Ensure the inventory panel / container with the backpack icon is visible and UI scaling matches the templates.",
                 10.0,
             )
             return context

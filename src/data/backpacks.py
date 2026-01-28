@@ -23,17 +23,36 @@ def _cache_path() -> Path:
 
 def _default_backpacks() -> list[str]:
     # Minimal offline fallback; UI still works even without network/cache.
+    # IMPORTANTE: Estos nombres deben coincidir con los templates en src/repositories/inventory/config.py
     return [
-        "Orange Backpack",
-        "Red Backpack",
-        "Blue Backpack",
-        "Yellow Backpack",
-        "Brown Backpack",
-        "Green Backpack",
-        "Grey Backpack",
-        "Purple Backpack",
+        "25 Years Backpack",
+        "Anniversary Backpack",
+        "Beach Backpack",
+        "Birthday Backpack",
+        "Brocade Backpack",
+        "Buggy Backpack",
+        "Cake Backpack",
+        "Camouflage Backpack",
+        "Crown Backpack",
+        "Crystal Backpack",
+        "Deepling Backpack",
+        "Demon Backpack",
+        "Dragon Backpack",
+        "Expedition Backpack",
+        "Fur Backpack",
+        "Glooth Backpack",
         "Golden Backpack",
-        "Parcel",
+        "Green Backpack",
+        "Heart Backpack",
+        "Minotaur Backpack",
+        "Moon Backpack",
+        "Mushroom Backpack",
+        "Pannier Backpack",
+        "Pirate Backpack",
+        "Raccoon Backpack",
+        "Red Backpack",
+        "Santa Backpack",
+        "Wolf Backpack",
     ]
 
 

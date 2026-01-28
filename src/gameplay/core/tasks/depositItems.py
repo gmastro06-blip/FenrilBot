@@ -45,11 +45,10 @@ class DepositItemsTask(VectorTask):
             return self.onTimeout(context)
 
         try:
-            # Ensure the required templates exist.
+            # Ensure the required containersBars templates exist.
+            # Slots images are optional and loaded via _load_optional().
             _ = images['containersBars'][main_bp]
             _ = images['containersBars'][loot_bp]
-            _ = images['slots'][main_bp]
-            _ = images['slots'][loot_bp]
         except Exception:
             log_throttled(
                 'depositItems.unknown_backpacks',
@@ -59,18 +58,25 @@ class DepositItemsTask(VectorTask):
             )
             return self.onTimeout(context)
 
-        self.tasks = [
+        # Build task list. ScrollToItemTask requires a slots image for the loot backpack;
+        # if it's missing, skip that step.
+        loot_slot_img = images.get('slots', {}).get(loot_bp)
+        tasks = [
             GoToFreeDepotTask(self.waypoint).setParentTask(self).setRootTask(self),
             OpenLockerTask().setParentTask(self).setRootTask(self),
             OpenBackpackTask(main_bp).setParentTask(self).setRootTask(self),
-            ScrollToItemTask(images['containersBars'][main_bp], images['slots'][loot_bp]).setParentTask(self).setRootTask(self),
+        ]
+        if loot_slot_img is not None:
+            tasks.append(ScrollToItemTask(images['containersBars'][main_bp], loot_slot_img).setParentTask(self).setRootTask(self))
+        tasks.extend([
             DropBackpackIntoStashTask(loot_bp).setParentTask(self).setRootTask(self),
             OpenDepotTask().setParentTask(self).setRootTask(self),
             OpenBackpackTask(loot_bp).setParentTask(self).setRootTask(self),
             DragItemsTask(images['containersBars'][loot_bp], images['slots']['depot chest 2']).setParentTask(self).setRootTask(self),
             CloseContainerTask(images['containersBars'][loot_bp]).setParentTask(self).setRootTask(self),
             SetNextWaypointTask().setParentTask(self).setRootTask(self),
-        ]
+        ])
+        self.tasks = tasks
 
         # If radar is currently unavailable, GoToFreeDepot cannot navigate.
         # Allow an opt-in shortcut to run the depot sequence directly when the player is

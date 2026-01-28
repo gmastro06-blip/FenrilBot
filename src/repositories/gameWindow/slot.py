@@ -33,5 +33,14 @@ def rightClickSlot(slot: Slot, gameWindowPosition: BBox) -> None:
     rightClick(slotPosition)
 
 def clickUseBySlot(slot: Slot, gameWindowPosition: BBox) -> None:
+    (gameWindowPositionX, gameWindowPositionY, gameWindowWidth, gameWindowHeight) = gameWindowPosition
+    slotWidth = gameWindowWidth // 15
+    slotHeight = gameWindowHeight // 11
+    
+    # ERROR 3: Offset relativo al tamaño del slot (aprox 1/4 hacia el centro)
+    # Esto escala correctamente entre 720p (32px) y 1080p (64px)
+    offset_x = max(8, slotWidth // 4)
+    offset_y = max(12, slotHeight // 3)
+    
     xPos, yPos = getSlotPosition(slot, gameWindowPosition)
-    leftClick((xPos + 15, yPos + 25))
+    leftClick((xPos + offset_x, yPos + offset_y))

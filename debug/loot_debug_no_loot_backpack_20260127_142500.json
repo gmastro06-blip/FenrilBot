@@ -1,0 +1,11 @@
+{
+  "tag": "no_loot_backpack",
+  "account_type": "free",
+  "loot_method": "",
+  "loot_click": "",
+  "loot_modifier": "shift",
+  "ng_backpacks": {
+    "main": "Camouflage Backpack",
+    "loot": "Crown Backpack"
+  }
+}

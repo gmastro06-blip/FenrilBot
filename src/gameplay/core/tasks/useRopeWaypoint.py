@@ -14,6 +14,7 @@ class UseRopeWaypointTask(VectorTask):
         self.name = 'useRopeWaypoint'
         self.isRootTask = True
         self.waypoint = waypoint
+        self.failedAttempts = 0  # Track failed rope attempts
 
     def onBeforeStart(self, context: Context) -> Context:
         self.tasks = [
@@ -40,11 +41,36 @@ class UseRopeWaypointTask(VectorTask):
         coord = context['ng_radar']['coordinate']
         if coord is None:
             return context
-        if context['ng_radar']['coordinate'][2] != self.waypoint['coordinate'][2] - 1:
-            context['ng_cave']['waypoints']['currentIndex'] = getClosestWaypointIndexFromCoordinate(
-                context['ng_radar']['coordinate'], context['ng_cave']['waypoints']['items'])
+        
+        # Persistent failure tracking key for this specific waypoint
+        waypoint_key = f'rope_fails_{self.waypoint["coordinate"][0]}_{self.waypoint["coordinate"][1]}_{self.waypoint["coordinate"][2]}'
+        
+        expected_z = self.waypoint['coordinate'][2] - 1
+        if context['ng_radar']['coordinate'][2] != expected_z:
+            # Rope failed - increment persistent counter
+            current_fails = context.get(waypoint_key, 0) + 1
+            context[waypoint_key] = current_fails
+            
+            if current_fails >= 3:
+                # After 3 failures, force skip to next waypoint
+                print(f'[UseRopeWaypoint] FAILED {current_fails} times at {self.waypoint["coordinate"]}, expected Z={expected_z}. Auto-skipping.')
+                # Advance manually since rope failed
+                context['ng_cave']['waypoints']['currentIndex'] = min(
+                    context['ng_cave']['waypoints']['currentIndex'] + 1,
+                    len(context['ng_cave']['waypoints']['items']) - 1
+                )
+                # Clean up counter after skip
+                del context[waypoint_key]
+            else:
+                # Still trying - reset to closest waypoint
+                context['ng_cave']['waypoints']['currentIndex'] = getClosestWaypointIndexFromCoordinate(
+                    context['ng_radar']['coordinate'], context['ng_cave']['waypoints']['items'])
             currentWaypoint = context['ng_cave']['waypoints']['items'][context['ng_cave']
                                                                 ['waypoints']['currentIndex']]
             context['ng_cave']['waypoints']['state'] = resolveGoalCoordinate(
                 context['ng_radar']['coordinate'], currentWaypoint)
+        else:
+            # Success - clean up counter
+            if waypoint_key in context:
+                del context[waypoint_key]
         return context

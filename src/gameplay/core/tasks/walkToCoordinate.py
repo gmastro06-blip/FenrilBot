@@ -17,9 +17,63 @@ class WalkToCoordinateTask(VectorTask):
         self.coordinate = coordinate
         self.passinho = passinho
         self.isTrapped = False
+        self.coordinateHistory = []  # Track last coordinates to detect loops
+        self.stuckAttempts = 0  # Counter for failed reach attempts
 
     def shouldRestartAfterAllChildrensComplete(self, context: Context) -> bool:
+        currentCoord = context['ng_radar']['coordinate']
+        
+        # Use persistent coordinate history in context
+        history_key = f'walk_history_{self.coordinate[0]}_{self.coordinate[1]}_{self.coordinate[2]}'
+        coord_history = context.get(history_key, [])
+        
+        # Detect coordinate oscillation loops
+        coord_history.append(tuple(currentCoord))
+        if len(coord_history) > 15:  # Keep last 15 coordinates
+            coord_history.pop(0)
+        context[history_key] = coord_history
+        
+        # Check if stuck (oscillating between same 2-3 coordinates OR staying in same spot)
+        if len(coord_history) >= 10:
+            uniqueCoords = list(set(coord_history[-10:]))
+            if len(uniqueCoords) <= 3 and not gameplayUtils.coordinatesAreEqual(currentCoord, self.coordinate):
+                # Stuck in loop - increment persistent counter
+                stuck_key = f'walk_stuck_{self.coordinate[0]}_{self.coordinate[1]}_{self.coordinate[2]}'
+                stuck_count = context.get(stuck_key, 0) + 1
+                context[stuck_key] = stuck_count
+                
+                if stuck_count >= 3:
+                    print(f'[WalkToCoordinate] STUCK IN LOOP: Oscillating between {uniqueCoords}, target unreachable at {self.coordinate}. Auto-skipping waypoint.')
+                    # Clean up tracking
+                    if history_key in context:
+                        del context[history_key]
+                    if stuck_key in context:
+                        del context[stuck_key]
+                    return False  # Don't restart, let task complete to advance waypoint
+        
+        # CRÍTICO: Si isTrapped, verificar si el camino ahora está libre antes de reiniciar
         if self.isTrapped == True:
+            from src.utils.coordinate import is_valid_coordinate
+            nonWalkableCoordinates = context['ng_cave']['holesOrStairs'].copy()
+            for monster in context['gameWindow']['monsters']:
+                coord = monster.get('coordinate')
+                if is_valid_coordinate(coord):
+                    nonWalkableCoordinates.append(coord)
+            
+            walkpoints = generateFloorWalkpoints(
+                context['ng_radar']['coordinate'], 
+                self.coordinate, 
+                nonWalkableCoordinates=nonWalkableCoordinates
+            )
+            
+            # Si ahora hay camino, desbloquear y reintentar walk
+            if len(walkpoints) > 0:
+                self.isTrapped = False
+                return True
+            # Si sigue bloqueado pero no hay monstruos, no reintentar (dejar que timeout)
+            if len(context['gameWindow']['monsters']) == 0:
+                return False
+            # Si hay monstruos, continuar atacando
             return True
         if len(self.tasks) == 0:
             return True
@@ -40,21 +94,18 @@ class WalkToCoordinateTask(VectorTask):
 
     # TODO: add unit tests
     def calculateWalkpoint(self, context: Context) -> None:
+        from src.utils.coordinate import is_valid_coordinate
         nonWalkableCoordinates = context['ng_cave']['holesOrStairs'].copy()
         for monster in context['gameWindow']['monsters']:
-            # TODO: func to check if coord is none
-            if monster['coordinate'] is not None:
-                hasNoneCoord = any(coord is None for coord in monster['coordinate'])
-                if not hasNoneCoord:
-                    nonWalkableCoordinates.append(monster['coordinate'])
+            coord = monster.get('coordinate')
+            if is_valid_coordinate(coord):
+                nonWalkableCoordinates.append(coord)
         refillCheckerIndexPlayer = next((index for index, item in enumerate(context['ng_cave']['waypoints']['items']) if item['type'] == 'refillChecker'), None)
         if refillCheckerIndexPlayer is None or refillCheckerIndexPlayer is not None and context['ng_cave']['waypoints']['currentIndex'] < refillCheckerIndexPlayer:
             for player in context['gameWindow']['players']:
-                # TODO: func to check if coord is none
-                if player['coordinate'] is not None:
-                    hasNoneCoord = any(coord is None for coord in player['coordinate'])
-                    if not hasNoneCoord:
-                        nonWalkableCoordinates.append(player['coordinate'])
+                coord = player.get('coordinate')
+                if is_valid_coordinate(coord):
+                    nonWalkableCoordinates.append(coord)
         self.tasks = []
         walkpoints = generateFloorWalkpoints(
                 context['ng_radar']['coordinate'], self.coordinate, nonWalkableCoordinates=nonWalkableCoordinates)

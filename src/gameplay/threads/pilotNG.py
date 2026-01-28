@@ -49,115 +49,124 @@ class PilotNGThread:
         self._last_reason = None
 
     def mainloop(self) -> None:
-        while True:
-            try:
-                if self.context.context.get('ng_should_stop'):
-                    break
-                if 'ng_debug' not in self.context.context:
-                    self.context.context['ng_debug'] = {'last_tick_reason': None, 'last_exception': None}
-                if self.context.context['ng_pause']:
-                    # Even when paused, try to resolve windows so the UI can show
-                    # which window would be used and the user can hit Play safely.
+        try:
+            while True:
+                try:
+                    if self.context.context.get('ng_should_stop'):
+                        break
+                    if 'ng_debug' not in self.context.context:
+                        self.context.context['ng_debug'] = {'last_tick_reason': None, 'last_exception': None}
+                    if self.context.context['ng_pause']:
+                        # Even when paused, try to resolve windows so the UI can show
+                        # which window would be used and the user can hit Play safely.
+                        try:
+                            self.context.context = setTibiaWindowMiddleware(self.context.context)
+                        except Exception:
+                            pass
+                        self.context.context['ng_debug']['last_tick_reason'] = 'paused'
+                        interval = get_float(self.context.context, 'ng_runtime.status_log_interval_s', env_var='FENRIL_STATUS_LOG_INTERVAL', default=2.0)
+                        log_throttled('pilot.status.paused', 'info', 'Paused (ng_pause=1)', interval)
+                        sleep(1)
+                        continue
+                    startTime = time()
+                    self.context.context = self.handleGameData(
+                        self.context.context)
+                    self.context.context = self.handleGameplayTasks(
+                        self.context.context)
+                    self.context.context = self.context.context['ng_tasksOrchestrator'].do(
+                        self.context.context)
+
+                    # Periodic status line to make it obvious why cavebot isn't acting.
+                    interval = get_float(self.context.context, 'ng_runtime.status_log_interval_s', env_var='FENRIL_STATUS_LOG_INTERVAL', default=2.0)
+                    dbg = self.context.context.get('ng_debug', {})
+                    reason = dbg.get('last_tick_reason')
+                    cave = self.context.context.get('ng_cave', {})
+                    coord = self.context.context.get('ng_radar', {}).get('coordinate')
+                    current_task = None
                     try:
-                        self.context.context = setTibiaWindowMiddleware(self.context.context)
+                        current_task = self.context.context['ng_tasksOrchestrator'].getCurrentTask(self.context.context)
+                    except Exception:
+                        current_task = None
+
+                    root_name = None
+                    task_name = None
+                    try:
+                        if current_task is not None:
+                            task_name = getattr(current_task, 'name', None)
+                            root = getattr(current_task, 'rootTask', None)
+                            root_name = getattr(root, 'name', None) if root is not None else None
                     except Exception:
                         pass
-                    self.context.context['ng_debug']['last_tick_reason'] = 'paused'
-                    interval = get_float(self.context.context, 'ng_runtime.status_log_interval_s', env_var='FENRIL_STATUS_LOG_INTERVAL', default=2.0)
-                    log_throttled('pilot.status.paused', 'info', 'Paused (ng_pause=1)', interval)
-                    sleep(1)
-                    continue
-                startTime = time()
-                self.context.context = self.handleGameData(
-                    self.context.context)
-                self.context.context = self.handleGameplayTasks(
-                    self.context.context)
-                self.context.context = self.context.context['ng_tasksOrchestrator'].do(
-                    self.context.context)
 
-                # Periodic status line to make it obvious why cavebot isn't acting.
-                interval = get_float(self.context.context, 'ng_runtime.status_log_interval_s', env_var='FENRIL_STATUS_LOG_INTERVAL', default=2.0)
-                dbg = self.context.context.get('ng_debug', {})
-                reason = dbg.get('last_tick_reason')
-                cave = self.context.context.get('ng_cave', {})
-                coord = self.context.context.get('ng_radar', {}).get('coordinate')
-                current_task = None
-                try:
-                    current_task = self.context.context['ng_tasksOrchestrator'].getCurrentTask(self.context.context)
-                except Exception:
-                    current_task = None
+                    bl_creatures = self.context.context.get('ng_battleList', {}).get('creatures')
+                    try:
+                        bl_count = int(len(bl_creatures)) if bl_creatures is not None else 0
+                    except Exception:
+                        bl_count = 0
 
-                root_name = None
-                task_name = None
-                try:
-                    if current_task is not None:
-                        task_name = getattr(current_task, 'name', None)
-                        root = getattr(current_task, 'rootTask', None)
-                        root_name = getattr(root, 'name', None) if root is not None else None
-                except Exception:
-                    pass
-
-                bl_creatures = self.context.context.get('ng_battleList', {}).get('creatures')
-                try:
-                    bl_count = int(len(bl_creatures)) if bl_creatures is not None else 0
-                except Exception:
-                    bl_count = 0
-
-                tgt_name = None
-                try:
-                    tgt = cave.get('targetCreature')
-                    if isinstance(tgt, dict):
-                        tgt_name = tgt.get('name')
-                except Exception:
                     tgt_name = None
+                    try:
+                        tgt = cave.get('targetCreature')
+                        if isinstance(tgt, dict):
+                            tgt_name = tgt.get('name')
+                    except Exception:
+                        tgt_name = None
 
-                loot_q = 0
-                try:
-                    loot_q = int(len(self.context.context.get('loot', {}).get('corpsesToLoot') or []))
-                except Exception:
                     loot_q = 0
+                    try:
+                        loot_q = int(len(self.context.context.get('loot', {}).get('corpsesToLoot') or []))
+                    except Exception:
+                        loot_q = 0
 
-                status_msg = (
-                    f"cave_enabled={cave.get('enabled')} runToCreatures={cave.get('runToCreatures')} "
-                    f"way={self.context.context.get('way')} coord={coord} "
-                    f"task={task_name} root={root_name} "
-                    f"bl={bl_count} attacking={cave.get('isAttackingSomeCreature')} target={tgt_name} lootQ={loot_q} "
-                    f"reason={reason}"
-                )
-
-                if get_bool(self.context.context, 'ng_runtime.window_diag', env_var='FENRIL_WINDOW_DIAG', default=False):
-                    status_msg += (
-                        f" action_title={dbg.get('action_window_title')!r}"
-                        f" capture_title={dbg.get('capture_window_title')!r}"
-                        f" cap_rect={self.context.context.get('ng_capture_rect')}"
-                        f" act_rect={self.context.context.get('ng_action_rect')}"
+                    status_msg = (
+                        f"cave_enabled={cave.get('enabled')} runToCreatures={cave.get('runToCreatures')} "
+                        f"way={self.context.context.get('way')} coord={coord} "
+                        f"task={task_name} root={root_name} "
+                        f"bl={bl_count} attacking={cave.get('isAttackingSomeCreature')} target={tgt_name} lootQ={loot_q} "
+                        f"reason={reason}"
                     )
-                log_throttled('pilot.status', 'info', status_msg, interval)
-                if reason != self._last_reason and reason is not None:
-                    self._last_reason = reason
-                    log('info', f"Tick reason changed: {reason}")
 
-                self.context.context['ng_radar']['lastCoordinateVisited'] = self.context.context['ng_radar']['coordinate']
-                healingByPotions(self.context.context)
-                healingByMana(self.context.context)
-                healingBySpells(self.context.context)
-                comboSpells(self.context.context)
-                swapAmulet(self.context.context)
-                swapRing(self.context.context)
-                clearPoison(self.context.context)
-                autoHur(self.context.context)
-                eatFood(self.context.context)
-                endTime = time()
-                diff = endTime - startTime
-                sleep(max(0.045 - diff, 0))
-            except KeyboardInterrupt:
-                sys.exit()
-            except Exception as e:
-                if 'ng_debug' not in self.context.context:
-                    self.context.context['ng_debug'] = {'last_tick_reason': None, 'last_exception': None}
-                self.context.context['ng_debug']['last_exception'] = f"{type(e).__name__}: {e}"
-                log('error', f"Exception: {type(e).__name__}: {e}")
-                log('error', traceback.format_exc())
+                    if get_bool(self.context.context, 'ng_runtime.window_diag', env_var='FENRIL_WINDOW_DIAG', default=False):
+                        status_msg += (
+                            f" action_title={dbg.get('action_window_title')!r}"
+                            f" capture_title={dbg.get('capture_window_title')!r}"
+                            f" cap_rect={self.context.context.get('ng_capture_rect')}"
+                            f" act_rect={self.context.context.get('ng_action_rect')}"
+                        )
+                    log_throttled('pilot.status', 'info', status_msg, interval)
+                    if reason != self._last_reason and reason is not None:
+                        self._last_reason = reason
+                        log('info', f"Tick reason changed: {reason}")
+
+                    self.context.context['ng_radar']['lastCoordinateVisited'] = self.context.context['ng_radar']['coordinate']
+                    healingByPotions(self.context.context)
+                    healingByMana(self.context.context)
+                    healingBySpells(self.context.context)
+                    comboSpells(self.context.context)
+                    swapAmulet(self.context.context)
+                    swapRing(self.context.context)
+                    clearPoison(self.context.context)
+                    autoHur(self.context.context)
+                    eatFood(self.context.context)
+                    endTime = time()
+                    diff = endTime - startTime
+                    sleep(max(0.045 - diff, 0))
+                except KeyboardInterrupt:
+                    sys.exit()
+                except Exception as e:
+                    if 'ng_debug' not in self.context.context:
+                        self.context.context['ng_debug'] = {'last_tick_reason': None, 'last_exception': None}
+                    self.context.context['ng_debug']['last_exception'] = f"{type(e).__name__}: {e}"
+                    log('error', f"Exception: {type(e).__name__}: {e}")
+                    log('error', traceback.format_exc())
+        finally:
+            # ERROR 2: Emergency cleanup - asegurar que ningún modifier quede presionado
+            try:
+                import src.utils.keyboard as keyboard
+                for mod in ['shift', 'ctrl', 'alt']:
+                    keyboard.keyUp(mod)
+            except Exception:
+                pass
 
     def handleGameData(self, context: GameplayContext) -> GameplayContext:
         if context['ng_pause']:
@@ -298,10 +307,84 @@ class PilotNGThread:
 
         # Attack-only mode: never follow waypoints; only try to acquire/keep a target.
         # This is intended for stationary hunting setups and supervised runs.
-        if get_bool(context, 'ng_runtime.attack_only', env_var='FENRIL_ATTACK_ONLY', default=False):
+        if get_bool(context, 'ng_runtime.attack_only', env_var='FENRIL_ATTACK_ONLY', default=False, prefer_env=True):
+            # Reset per-tick mode marker to avoid it sticking on 'lootCorpses' after the queue drains.
+            # We'll set it explicitly below when we decide what to do this tick.
+            context['way'] = None
+
+            # Diagnostic helper: force a periodic loot attempt around the player.
+            # Useful to validate free-account "open + drag" looting without needing a real kill.
+            try:
+                if get_bool(context, 'ng_runtime.debug_force_loot', env_var='FENRIL_DEBUG_FORCE_LOOT', default=False, prefer_env=True):
+                    now_s = float(time())
+                    last_s = context.get('ng_cave', {}).get('_last_debug_force_loot_s')
+                    if not isinstance(last_s, (int, float)) or (now_s - float(last_s)) >= 6.0:
+                        context.setdefault('ng_cave', {})['_last_debug_force_loot_s'] = now_s
+                        current_coord = context.get('ng_radar', {}).get('coordinate')
+                        if isinstance(current_coord, (list, tuple)) and len(current_coord) >= 3:
+                            corpse_fallback = {
+                                'name': 'debug_force_loot',
+                                'coordinate': (int(current_coord[0]), int(current_coord[1]), int(current_coord[2])),
+                            }
+                            context.setdefault('loot', {}).setdefault('corpsesToLoot', []).append(corpse_fallback)
+            except Exception:
+                pass
             try:
                 context['ng_cave']['closestCreature'] = getClosestCreature(
                     context['gameWindow']['monsters'], context['ng_radar']['coordinate'])
+            except Exception:
+                pass
+
+            # Even in attack-only mode we must still process loot when it is queued.
+            # Otherwise lootQ will grow but looting will never run.
+            try:
+                if (
+                    len(context.get('loot', {}).get('corpsesToLoot') or []) > 0
+                    and context.get('ng_cave', {}).get('runToCreatures') == True
+                    and context.get('ng_cave', {}).get('enabled')
+                ):
+                    context['way'] = 'lootCorpses'
+                    currentTask = context['ng_tasksOrchestrator'].getCurrentTask(context)
+                    if currentTask is not None and currentTask.rootTask is not None and currentTask.rootTask.name != 'lootCorpse':
+                        context['ng_tasksOrchestrator'].setRootTask(context, None)
+                    if context['ng_tasksOrchestrator'].getCurrentTask(context) is None:
+                        from src.utils.coordinate import is_valid_coordinate
+                        current_coord = context.get('ng_radar', {}).get('coordinate')
+                        corpses = context['loot']['corpsesToLoot']
+                        firstDeadCorpse = corpses[0]
+                        if is_valid_coordinate(current_coord):
+                            cx: Optional[int] = None
+                            cy: Optional[int] = None
+                            cz: Optional[int] = None
+                            try:
+                                cx, cy, cz = int(current_coord[0]), int(current_coord[1]), int(current_coord[2])
+                            except Exception:
+                                cx = cy = cz = None
+                            best = None
+                            best_dist: Optional[int] = None
+                            for corpse in corpses:
+                                if cz is None:
+                                    break
+                                corpse_coord = corpse.get('coordinate') if isinstance(corpse, dict) else None
+                                if not is_valid_coordinate(corpse_coord):
+                                    continue
+                                try:
+                                    x, y, z = int(corpse_coord[0]), int(corpse_coord[1]), int(corpse_coord[2])
+                                except Exception:
+                                    continue
+                                if z != cz:
+                                    continue
+                                if cx is None or cy is None:
+                                    continue
+                                dist = abs(x - cx) + abs(y - cy)
+                                if best is None or best_dist is None or dist < best_dist:
+                                    best = corpse
+                                    best_dist = dist
+                            if best is not None:
+                                firstDeadCorpse = best
+                        context['ng_tasksOrchestrator'].setRootTask(context, LootCorpseTask(firstDeadCorpse))
+                    context['gameWindow']['previousMonsters'] = context['gameWindow']['monsters']
+                    return context
             except Exception:
                 pass
 
@@ -420,6 +503,16 @@ class PilotNGThread:
         if context['ng_cave']['runToCreatures'] == True and context['ng_cave']['enabled']:
             hasCreaturesToAttackAfterCheck = hasCreaturesToAttack(context)
 
+            # Diagnostic/testing option: keep the character stationary (do not follow waypoints)
+            # but still allow attacking nearby creatures and looting.
+            freeze_waypoints = get_bool(
+                context,
+                'ng_runtime.freeze_waypoints',
+                env_var='FENRIL_FREEZE_WAYPOINTS',
+                default=False,
+                prefer_env=True,
+            )
+
             # When traveling to the hunt, you may want the bot to prioritize waypoints
             # instead of getting distracted by monsters on the path.
             attack_while_waypointing = get_bool(
@@ -473,6 +566,30 @@ class PilotNGThread:
                         context['way'] = 'waypoint'
             else:
                 context['way'] = 'waypoint'
+
+            if freeze_waypoints and context.get('way') == 'waypoint':
+                # Clear any in-progress waypoint/travel root task to avoid loops (e.g., spamming ladders)
+                # during supervised kill+loot validation.
+                try:
+                    currentTask = context['ng_tasksOrchestrator'].getCurrentTask(context)
+                except Exception:
+                    currentTask = None
+                currentRootTask = currentTask.rootTask if currentTask is not None else None
+                travel_roots = {
+                    'walkToWaypoint',
+                    'useLadderWaypoint',
+                    'useRopeWaypoint',
+                    'useShovelWaypoint',
+                    'rightClickUseWaypoint',
+                    'openDoor',
+                    'rightClickUse',
+                }
+                if currentRootTask is not None and getattr(currentRootTask, 'name', None) in travel_roots:
+                    context['ng_tasksOrchestrator'].setRootTask(context, None)
+                if 'ng_debug' in context and isinstance(context.get('ng_debug'), dict):
+                    context['ng_debug']['last_tick_reason'] = 'freeze waypoints'
+                context['gameWindow']['previousMonsters'] = context['gameWindow']['monsters']
+                return context
 
             # If we're explicitly prioritizing waypoints, ensure we are not stuck running
             # the attack task tree from a previous tick.

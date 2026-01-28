@@ -134,6 +134,42 @@ class RefillTask(VectorTask):
             SetNextWaypointTask().setParentTask(self).setRootTask(self),
         ]
         return context
+    
+    def onComplete(self, context: Context) -> Context:
+        """ALTO: Verificar que las potions realmente aumentaron después del refill."""
+        try:
+            screenshot = context.get('ng_screenshot')
+            if screenshot is None:
+                return context
+            
+            health_slot = context.get('healing', {}).get('potions', {}).get('firstHealthPotion', {}).get('slot')
+            mana_slot = context.get('healing', {}).get('potions', {}).get('firstManaPotion', {}).get('slot')
+            
+            if health_slot is not None and mana_slot is not None:
+                from src.utils.console_log import log_throttled
+                mana_after = getSlotCount(screenshot, mana_slot)
+                health_after = getSlotCount(screenshot, health_slot)
+                
+                expected_mana = self.waypoint.get('options', {}).get('manaPotion', {}).get('quantity', 0)
+                expected_health = self.waypoint.get('options', {}).get('healthPotion', {}).get('quantity', 0)
+                
+                if mana_after and mana_after < expected_mana * 0.8:
+                    log_throttled(
+                        'refill.incomplete_mana',
+                        'warn',
+                        f'refill: mana potions expected={expected_mana}, got={mana_after}. Refill may have failed.',
+                        10.0,
+                    )
+                if health_after and expected_health > 0 and health_after < expected_health * 0.8:
+                    log_throttled(
+                        'refill.incomplete_health',
+                        'warn',
+                        f'refill: health potions expected={expected_health}, got={health_after}. Refill may have failed.',
+                        10.0,
+                    )
+        except Exception:
+            pass
+        return context
 
     def onTimeout(self, context: Context) -> Context:
         try:

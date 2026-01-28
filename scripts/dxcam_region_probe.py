@@ -3,7 +3,7 @@ import dxcam
 import numpy as np
 
 
-def stats(bgra):
+def stats(bgra: np.ndarray) -> tuple[float, float]:
     g = cv2.cvtColor(bgra, cv2.COLOR_BGRA2GRAY)
     return float(np.mean(g)), float(np.std(g))
 

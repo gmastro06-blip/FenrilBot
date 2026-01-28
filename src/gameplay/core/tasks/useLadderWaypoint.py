@@ -14,6 +14,7 @@ class UseLadderWaypointTask(VectorTask):
         self.name = 'useLadderWaypoint'
         self.isRootTask = True
         self.waypoint = waypoint
+        self.failedAttempts = 0  # Track failed ladder attempts
 
     def onBeforeStart(self, context: Context) -> Context:
         self.tasks = [
@@ -35,6 +36,11 @@ class UseLadderWaypointTask(VectorTask):
             region=context.get('ng_capture_region'),
             absolute_region=context.get('ng_capture_absolute_region'),
         )
+        
+        # CRÍTICO: Dar tiempo al radar a actualizarse después del cambio de piso
+        from time import sleep
+        sleep(0.3)
+        
         try:
             coord = getCoordinate(
                 context['ng_screenshot'], previousCoordinate=context['ng_radar']['previousCoordinate'])
@@ -45,11 +51,49 @@ class UseLadderWaypointTask(VectorTask):
         if coord is None:
             return context
 
-        if coord[2] != self.waypoint['coordinate'][2] - 1:
-            context['ng_cave']['waypoints']['currentIndex'] = getClosestWaypointIndexFromCoordinate(
-                coord, context['ng_cave']['waypoints']['items'])
-            currentWaypoint = context['ng_cave']['waypoints']['items'][context['ng_cave']
-                                                                ['waypoints']['currentIndex']]
-            context['ng_cave']['waypoints']['state'] = resolveGoalCoordinate(
-                coord, currentWaypoint)
+        # Persistent failure tracking key for this specific waypoint
+        waypoint_key = f'ladder_fails_{self.waypoint["coordinate"][0]}_{self.waypoint["coordinate"][1]}_{self.waypoint["coordinate"][2]}'
+        
+        # CRÍTICO: Lógica corregida - avanzar waypoint SOLO si el cambio de piso fue exitoso
+        expected_z = self.waypoint['coordinate'][2] - 1
+        if coord[2] == expected_z:
+            # Éxito: avanzar al siguiente waypoint
+            from src.utils.array import getNextArrayIndex
+            next_idx = getNextArrayIndex(
+                context['ng_cave']['waypoints']['items'],
+                context['ng_cave']['waypoints']['currentIndex']
+            )
+            context['ng_cave']['waypoints']['currentIndex'] = next_idx
+            current_wp = context['ng_cave']['waypoints']['items'][next_idx]
+            context['ng_cave']['waypoints']['state'] = resolveGoalCoordinate(coord, current_wp)
+            # Reset failure counter on success
+            if waypoint_key in context:
+                del context[waypoint_key]
+        else:
+            # Fallo: incrementar contador persistente
+            current_fails = context.get(waypoint_key, 0) + 1
+            context[waypoint_key] = current_fails
+            
+            if current_fails >= 3:
+                # After 3 failures, force skip to next waypoint
+                print(f'[UseLadderWaypoint] FAILED {current_fails} times at {self.waypoint["coordinate"]}, expected Z={expected_z}. Auto-skipping.')
+                # Advance manually since ladder failed
+                from src.utils.array import getNextArrayIndex
+                next_idx = getNextArrayIndex(
+                    context['ng_cave']['waypoints']['items'],
+                    context['ng_cave']['waypoints']['currentIndex']
+                )
+                context['ng_cave']['waypoints']['currentIndex'] = next_idx
+                current_wp = context['ng_cave']['waypoints']['items'][next_idx]
+                context['ng_cave']['waypoints']['state'] = resolveGoalCoordinate(coord, current_wp)
+                # Clean up counter after skip
+                del context[waypoint_key]
+            else:
+                # Reposicionar al waypoint más cercano para reintentar
+                context['ng_cave']['waypoints']['currentIndex'] = getClosestWaypointIndexFromCoordinate(
+                    coord, context['ng_cave']['waypoints']['items'])
+                currentWaypoint = context['ng_cave']['waypoints']['items'][context['ng_cave']
+                                                                    ['waypoints']['currentIndex']]
+                context['ng_cave']['waypoints']['state'] = resolveGoalCoordinate(
+                    coord, currentWaypoint)
         return context

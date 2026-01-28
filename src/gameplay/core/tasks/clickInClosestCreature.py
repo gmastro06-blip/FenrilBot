@@ -408,6 +408,12 @@ class ClickInClosestCreatureTask(BaseTask):
                         context=context,
                         click_at_cursor=False,
                     )
+                    try:
+                        import time as _time
+
+                        context.setdefault('ng_cave', {})['_last_combat_ts'] = float(_time.time())
+                    except Exception:
+                        pass
                     if isinstance(context.get('ng_debug'), dict):
                         context['ng_debug']['last_tick_reason'] = 'attack click: closestCreature (safe)'
                     return context
@@ -422,6 +428,12 @@ class ClickInClosestCreatureTask(BaseTask):
                 if get_bool(context, 'ng_runtime.input_diag', env_var='FENRIL_INPUT_DIAG', default=False, prefer_env=True):
                     log_throttled('input.attack.hotkey', 'info', f"input: attack hotkey={hotkey!r}", 1.0)
                 keyboard.press(hotkey)
+                try:
+                    import time as _time
+
+                    context.setdefault('ng_cave', {})['_last_combat_ts'] = float(_time.time())
+                except Exception:
+                    pass
                 if isinstance(context.get('ng_debug'), dict):
                     context['ng_debug']['last_tick_reason'] = f'attack hotkey: {hotkey}'
                 return context
@@ -483,6 +495,12 @@ class ClickInClosestCreatureTask(BaseTask):
                         prefer_env=True,
                     ),
                 )
+                try:
+                    import time as _time
+
+                    context.setdefault('ng_cave', {})['_last_combat_ts'] = float(_time.time())
+                except Exception:
+                    pass
                 if isinstance(context.get('ng_debug'), dict):
                     # Extra structured diagnostics (useful when selection changes by name).
                     context['ng_debug']['battleList_target_index'] = int(target_idx) if target_idx is not None else -1
@@ -521,6 +539,12 @@ class ClickInClosestCreatureTask(BaseTask):
             if get_bool(context, 'ng_runtime.input_diag', env_var='FENRIL_INPUT_DIAG', default=False, prefer_env=True):
                 log_throttled('input.attack.hotkey', 'info', f"input: attack hotkey={hotkey!r}", 1.0)
             keyboard.press(hotkey)
+            try:
+                import time as _time
+
+                context.setdefault('ng_cave', {})['_last_combat_ts'] = float(_time.time())
+            except Exception:
+                pass
             if isinstance(context.get('ng_debug'), dict):
                 context['ng_debug']['last_tick_reason'] = f'attack hotkey: {hotkey}'
 

@@ -128,7 +128,19 @@ class Context:
             self.setWindowTitle(window_title, persist=False)
 
     def updateMainBackpack(self, backpack: str) -> None:
+        # Asegurar que la estructura existe antes de acceder
+        if 'ng_backpacks' not in self.context:
+            self.context['ng_backpacks'] = {}
+        if not isinstance(self.context['ng_backpacks'], dict):
+            self.context['ng_backpacks'] = {}
         self.context['ng_backpacks']['main'] = backpack
+        
+        if not isinstance(self.enabledProfile.get('config'), dict):
+            self.enabledProfile['config'] = {}
+        if 'ng_backpacks' not in self.enabledProfile['config']:
+            self.enabledProfile['config']['ng_backpacks'] = {}
+        if not isinstance(self.enabledProfile['config']['ng_backpacks'], dict):
+            self.enabledProfile['config']['ng_backpacks'] = {}
         self.enabledProfile['config']['ng_backpacks']['main'] = backpack
         self.db.update(self.enabledProfile)
 
@@ -364,7 +376,29 @@ class Context:
         except Exception:
             pass
 
+        # Asegurar que la estructura ng_cave existe
+        if 'ng_cave' not in self.context:
+            self.context['ng_cave'] = {}
+        if not isinstance(self.context['ng_cave'], dict):
+            self.context['ng_cave'] = {}
+        if 'waypoints' not in self.context['ng_cave']:
+            self.context['ng_cave']['waypoints'] = {}
+        if not isinstance(self.context['ng_cave']['waypoints'], dict):
+            self.context['ng_cave']['waypoints'] = {}
+        
         self.context['ng_cave']['waypoints']['items'] = upgraded
+        
+        if not isinstance(self.enabledProfile.get('config'), dict):
+            self.enabledProfile['config'] = {}
+        if 'ng_cave' not in self.enabledProfile['config']:
+            self.enabledProfile['config']['ng_cave'] = {}
+        if not isinstance(self.enabledProfile['config']['ng_cave'], dict):
+            self.enabledProfile['config']['ng_cave'] = {}
+        if 'waypoints' not in self.enabledProfile['config']['ng_cave']:
+            self.enabledProfile['config']['ng_cave']['waypoints'] = {}
+        if not isinstance(self.enabledProfile['config']['ng_cave']['waypoints'], dict):
+            self.enabledProfile['config']['ng_cave']['waypoints'] = {}
+        
         self.enabledProfile['config']['ng_cave']['waypoints']['items'] = upgraded
         self.db.update(self.enabledProfile)
 
@@ -453,19 +487,35 @@ class Context:
     def loadCfg(self, cfg: Dict[str, Any]) -> None:
         load_cfgs = cast(Callable[[Dict[str, Any], Dict[str, Any]], Dict[str, Any]], loadNgCfgs)
         self.context = load_cfgs(cfg, self.context)
-        self.enabledProfile['config']['ng_backpacks'] = self.context['ng_backpacks']
-        self.enabledProfile['config']['general_hotkeys'] = self.context['general_hotkeys']
-        self.enabledProfile['config']['auto_hur'] = self.context['auto_hur']
-        self.enabledProfile['config']['alert'] = self.context['alert']
-        self.enabledProfile['config']['clear_stats'] = self.context['clear_stats']
+        
+        # Validación defensiva: usar .get() para prevenir KeyError
+        if not isinstance(self.enabledProfile.get('config'), dict):
+            self.enabledProfile['config'] = {}
+        
+        self.enabledProfile['config']['ng_backpacks'] = self.context.get('ng_backpacks', {})
+        self.enabledProfile['config']['general_hotkeys'] = self.context.get('general_hotkeys', {})
+        self.enabledProfile['config']['auto_hur'] = self.context.get('auto_hur', {})
+        self.enabledProfile['config']['alert'] = self.context.get('alert', {})
+        self.enabledProfile['config']['clear_stats'] = self.context.get('clear_stats', {})
         self.enabledProfile['config']['manual_auto_attack'] = self.context.get('manual_auto_attack', {})
         self.enabledProfile['config']['ng_runtime'] = self.context.get('ng_runtime', {})
-        self.enabledProfile['config']['ng_comboSpells']['enabled'] = self.context['ng_comboSpells']['enabled']
+        
+        # Validar que ng_comboSpells existe
+        ng_combo = self.context.get('ng_comboSpells', {})
+        if not isinstance(ng_combo, dict):
+            ng_combo = {'enabled': False, 'items': []}
+        if 'ng_comboSpells' not in self.enabledProfile['config']:
+            self.enabledProfile['config']['ng_comboSpells'] = {}
+        
+        self.enabledProfile['config']['ng_comboSpells']['enabled'] = ng_combo.get('enabled', False)
         self.enabledProfile['config']['ng_comboSpells']['items'] = []
-        for comboSpellsItem in self.context['ng_comboSpells']['items']:
-            comboSpellsItem['currentSpellIndex'] = 0
-            self.enabledProfile['config']['ng_comboSpells']['items'].append(comboSpellsItem)
-        self.enabledProfile['config']['healing'] = self.context['healing']
+        
+        for comboSpellsItem in ng_combo.get('items', []):
+            if isinstance(comboSpellsItem, dict):
+                comboSpellsItem['currentSpellIndex'] = 0
+                self.enabledProfile['config']['ng_comboSpells']['items'].append(comboSpellsItem)
+        
+        self.enabledProfile['config']['healing'] = self.context.get('healing', {})
         self.db.update(self.enabledProfile)
 
     def importLegacySetup(self, setup: Dict[str, Any]) -> None:

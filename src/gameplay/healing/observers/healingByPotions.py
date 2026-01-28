@@ -17,10 +17,20 @@ def healingByPotions(context: Context) -> None:
         else:
             tasksOrchestrator.do(context)
             return
-    potion_cfg = context['healing']['potions'].get('firstHealthPotion', {})
+    
+    # ERROR 1 FIXED: Validar que healing config existe
+    healing_cfg = context.get('healing')
+    if not healing_cfg:
+        return
+    
+    potion_cfg = healing_cfg.get('potions', {}).get('firstHealthPotion', {})
     if potion_cfg.get('enabled'):
-        # if matchHpHealing(context['healing']['potions']['firstHealthPotion'], context['ng_statusBar']) and slotIsAvailable(context['ng_screenshot'], context['healing']['potions']['firstHealthPotion']['slot']):
-        if matchHpHealing(potion_cfg, context.get('ng_statusBar')):
+        # ERROR 2 FIXED: Validar statusBar no es None antes de pasar
+        status_bar = context.get('ng_statusBar')
+        if status_bar is None:
+            return
+        
+        if matchHpHealing(potion_cfg, status_bar):
             hotkey = potion_cfg.get('hotkey')
             if not hotkey:
                 return

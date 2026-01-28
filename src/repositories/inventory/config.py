@@ -53,6 +53,31 @@ def _add_optional_slot_hashes(
     except Exception:
         return
 
+
+def _add_optional_templates_from_dir(images_dict: dict, *, dir_path: str, bucket: str) -> None:
+    """Load any extra *.png templates from a directory.
+
+    This lets users add new templates (e.g. 'Camouflage Backpack v2.png')
+    without requiring code changes.
+    """
+    try:
+        p = pathlib.Path(dir_path)
+        if not p.exists():
+            return
+        for file in p.glob('*.png'):
+            try:
+                key = file.stem
+                if key in images_dict.get(bucket, {}):
+                    continue
+                img = _load_optional(str(file))
+                if img is None:
+                    continue
+                images_dict[bucket][key] = img
+            except Exception:
+                continue
+    except Exception:
+        return
+
 images = {
     'containersBars': {
         'backpack bottom': loadFromRGBToGray(f'{containersBarsImagesPath}/backpack bottom.png'),
@@ -72,6 +97,8 @@ images = {
         'Expedition Backpack': loadFromRGBToGray(f'{containersBarsImagesPath}/Expedition Backpack.png'),
         'Fur Backpack': loadFromRGBToGray(f'{containersBarsImagesPath}/Fur Backpack.png'),
         'Glooth Backpack': loadFromRGBToGray(f'{containersBarsImagesPath}/Glooth Backpack.png'),
+        'Golden Backpack': loadFromRGBToGray(f'{containersBarsImagesPath}/Golden Backpack.png'),
+        'Green Backpack': loadFromRGBToGray(f'{containersBarsImagesPath}/Green Backpack v2.png'),
         'Heart Backpack': loadFromRGBToGray(f'{containersBarsImagesPath}/Heart Backpack.png'),
         'locker': loadFromRGBToGray(f'{containersBarsImagesPath}/locker.png'),
         'Minotaur Backpack': loadFromRGBToGray(f'{containersBarsImagesPath}/Minotaur Backpack.png'),
@@ -80,6 +107,7 @@ images = {
         'Pannier Backpack': loadFromRGBToGray(f'{containersBarsImagesPath}/Pannier Backpack.png'),
         'Pirate Backpack': loadFromRGBToGray(f'{containersBarsImagesPath}/Pirate Backpack.png'),
         'Raccoon Backpack': loadFromRGBToGray(f'{containersBarsImagesPath}/Raccoon Backpack.png'),
+        'Red Backpack': loadFromRGBToGray(f'{containersBarsImagesPath}/Red Backpack v2..png'),
         'Santa Backpack': loadFromRGBToGray(f'{containersBarsImagesPath}/Santa Backpack.png'),
         'Wolf Backpack': loadFromRGBToGray(f'{containersBarsImagesPath}/Wolf Backpack.png'),
     },
@@ -135,3 +163,7 @@ _add_optional_slot_hashes(
     canonical_name='empty vial',
     hashes_dict=slotsImagesHashes,
 )
+
+# Load any additional templates added by the user.
+_add_optional_templates_from_dir(images, dir_path=slotsImagesPath, bucket='slots')
+_add_optional_templates_from_dir(images, dir_path=containersBarsImagesPath, bucket='containersBars')

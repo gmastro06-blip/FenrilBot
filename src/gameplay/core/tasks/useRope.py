@@ -55,8 +55,19 @@ class UseRopeTask(BaseTask):
         target = self.waypoint.get('coordinate') if isinstance(self.waypoint, dict) else None
         if coord is None or target is None:
             return False
-        # Success: after using rope on a tile at Z, we should be at Z-1.
+        # MEDIO: Tolerancia a lag - dar tiempo para animación/servidor
         try:
-            return int(coord[2]) == int(target[2]) - 1
+            target_z = int(target[2]) - 1
+            current_z = int(coord[2])
+            # Éxito: estamos en el piso correcto
+            if current_z == target_z:
+                return True
+            # Dar tiempo para animación/lag (hasta 3s)
+            if self.startedAt is None:
+                return False
+            import time
+            elapsed = time.time() - self.startedAt
+            # Si ya pasó suficiente tiempo y no cambiamos de piso, fallar
+            return False if elapsed >= 3.0 and current_z != target_z else (elapsed < 3.0)
         except Exception:
             return False
